@@ -6,8 +6,8 @@ import {
 } from '@mui/material'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight'
-import type { DataTableApi } from '../state/useDataTable.js'
-import type { ColumnDef, DataTableConfig } from '../types/index.js'
+import type { DataTableApi } from '../../state/useDataTable.js'
+import type { ColumnDef, DataTableConfig } from '../../types/index.js'
 
 export interface DataTableProps<Row, Field extends string = string> {
   api: DataTableApi<Row, Field>
