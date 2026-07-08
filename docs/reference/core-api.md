@@ -1,6 +1,33 @@
 # Core API
 
-Everything here is exported from the root: `import { ... } from '@kyrobit/kyro-datatable'`. None of it imports a UI library.
+Everything here is exported from the root: `import { ... } from '@kyrobit/kyro-datatable'`. None of it imports a UI library. Full walkthroughs live in the guides — [Quick start](/guide/quick-start), [Server-side grouping](/guide/grouping), [Favorites](/guide/favorites) — this page is the flat reference for what each thing does.
+
+The full Blog Categories setup from those guides, all in one place:
+
+```ts
+import { useDataTable, usePresets } from '@kyrobit/kyro-datatable'
+import type { FetchParams, FetchResult, FetchGroupsResult } from '@kyrobit/kyro-datatable'
+
+type Field = 'name' | 'created_at' | 'is_active'
+type Filters = { statuses: ('active' | 'inactive')[] }
+
+const table = useDataTable<Category, Field>({
+  columns: [
+    { field: 'name', headerName: 'Name' },
+    { field: 'created_at', headerName: 'Created', render: (row) => new Date(row.created_at).toLocaleDateString() },
+  ],
+  groupByColumns: [{ field: 'is_active', label: 'Status' }],
+  fetchRecords: (params: FetchParams<Field>): Promise<FetchResult<Category>> =>
+    fetchCategories({ ...params, statuses: filters.statuses }),
+  fetchGroups: (params: FetchParams<Field>): Promise<FetchGroupsResult<Field>> =>
+    fetchCategoryGroups(params),
+  getRowId: (row) => row.id,
+  initialSort: { field: 'created_at', direction: 'desc' },
+  initialPageSize: 25,
+})
+
+const presets = usePresets<Filters>('blog-categories', BUILT_IN)
+```
 
 ## `useDataTable(config)`
 

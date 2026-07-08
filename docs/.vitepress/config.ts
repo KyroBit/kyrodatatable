@@ -5,6 +5,12 @@ export default defineConfig({
   description:
     'KyroDataTable — data-table state for React, decoupled from rendering. Search, sort, pagination and server-side grouping in one hook; render it with MUI, Bootstrap, or your own markup.',
 
+  vite: {
+    server: {
+      allowedHosts: true,
+    },
+  },
+
   themeConfig: {
     search: { provider: 'local' },
 
