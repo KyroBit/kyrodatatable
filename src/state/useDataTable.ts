@@ -20,6 +20,7 @@ export interface DataTableApi<Row, Field extends string = string> {
 
   sort: SortState<Field> | null
   toggleSort: (field: Field) => void
+  setSort: (sort: SortState<Field> | null) => void
 
   pagination: PaginationState
   setPage: (page: number) => void
@@ -56,7 +57,7 @@ export function useDataTable<Row, Field extends string = string>(
   const { fetchRecords, fetchGroups, groupByColumns, initialPageSize, initialSort } = config
 
   const [search, setSearch] = useState('')
-  const [sort, setSort] = useState<SortState<Field> | null>(initialSort ?? null)
+  const [sort, setSortInternal] = useState<SortState<Field> | null>(initialSort ?? null)
   const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
     pageSize: initialPageSize ?? DEFAULT_PAGE_SIZE,
@@ -84,11 +85,16 @@ export function useDataTable<Row, Field extends string = string>(
   }, [])
 
   const toggleSort = useCallback((field: Field) => {
-    setSort((current) => {
+    setSortInternal((current) => {
       if (!current || current.field !== field) return { field, direction: 'asc' }
       if (current.direction === 'asc') return { field, direction: 'desc' }
       return null
     })
+    setPagination((p) => ({ ...p, page: 1 }))
+  }, [])
+
+  const setSort = useCallback((next: SortState<Field> | null) => {
+    setSortInternal(next)
     setPagination((p) => ({ ...p, page: 1 }))
   }, [])
 
@@ -204,6 +210,7 @@ export function useDataTable<Row, Field extends string = string>(
 
     sort,
     toggleSort,
+    setSort,
 
     pagination,
     setPage,
@@ -234,7 +241,7 @@ export function useDataTable<Row, Field extends string = string>(
   }), [
     search, sort, pagination, rows, total, loading, error,
     groupByColumns, groupBy, groups, groupsTotal, groupsLoading,
-    toggleSort, setPage, setPageSize, setGroupBy,
+    toggleSort, setSort, setPage, setPageSize, setGroupBy,
     isGroupExpanded, toggleGroup, groupRowsFor, groupTotalFor, groupLoadingFor, groupPaginationFor, setGroupPage,
     refetch,
   ])
