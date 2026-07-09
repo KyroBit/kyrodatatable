@@ -1,10 +1,27 @@
-# Server-side grouping
+# Grouping
 
-This picks up exactly where the [quick start](/guide/quick-start) left off — same 14 categories, same `fetchCategories`. Instead of paging through all of them, group by status: two collapsed rows, "Active" (10) and "Inactive" (4), each loading its own page only once expanded.
+This picks up exactly where the [quick start](/guide/quick-start) left off — same 14 categories. Instead of paging through all of them, group by status: two collapsed rows, "Active" (10) and "Inactive" (4), each loading its own page only once expanded.
 
-This is the one thing MUI X DataGrid can't do without paying for it — row grouping is a **Premium**-only feature there, not included in Community or even Pro. It's a first-class, no-license feature here, because it's just state: a list of groups, and a `Record<groupKey, { rows, total, page }>` alongside the flat list the hook already tracked.
+Grouping works in both modes `useDataTable` supports: pass `data`, and it groups the array in memory with no extra config at all. Pass `fetchRecords`/`fetchGroups` instead, and grouping runs against your API the same way search and sort already do. Client mode first, since it's less to write — then the server-mode version, which is the one that carries over once a real backend is involved.
 
-## Why grouping needs a second fetch function
+This is the one thing MUI X DataGrid can't do without paying for it, in either mode — row grouping is a **Premium**-only feature there, not included in Community or even Pro. It's a first-class, no-license feature here, because it's just state: a list of groups, and a `Record<groupKey, { rows, total, page }>` alongside the flat list the hook already tracked.
+
+## Client mode: nothing to write
+
+If you're on the `data: CATEGORIES` version from the quick start, grouping is one line — `groupByColumns` — and nothing else:
+
+```tsx
+const table = useDataTable<Category, Field>({
+  data: CATEGORIES,
+  columns,
+  groupByColumns: [{ field: 'is_active', label: 'Status' }],
+  getRowId: (row) => row.id,
+})
+```
+
+`useDataTable` buckets `CATEGORIES` by `is_active` itself, counts each bucket, and serves each group's rows out of the same in-memory array once expanded — there's no `fetchGroups` to write, because there's no fetching happening at all. `<DataTable/>` grows the "Group by" control exactly the same way it does in server mode; from the renderer's side, and from `table`'s side, client-mode grouping and server-mode grouping look identical. Everything from here on describes what's happening underneath either way — the "what happens when you expand a group" walkthrough further down applies whether or not you ever write a `fetchGroups`.
+
+## Server mode: why grouping needs a second fetch function
 
 Grouped mode has two different questions to answer, and they're genuinely different queries against your data: *what are the groups, and how many rows are in each* (one query, runs once) versus *what are the rows inside group X, page 2* (a different query, runs per group, only when that group is actually expanded). `fetchRecords` — the one you already wrote — answers the second question, once you pass it `groupBy`/`groupKey`. `fetchGroups` is new, and answers the first.
 

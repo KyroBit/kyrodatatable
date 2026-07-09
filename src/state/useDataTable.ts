@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createClientEngine } from './clientEngine.js'
 import type {
-  DataTableConfig,
-  FetchParams,
-  PaginationState,
-  ResourceGroup,
-  SortState,
+  ColumnDef, DataTableConfig, FetchParams, GroupByColumn, PaginationState,
+  ResourceGroup, SortState, VisibleItem,
 } from '../types/index.js'
 
 interface GroupRuntime<Row> {
@@ -14,9 +12,17 @@ interface GroupRuntime<Row> {
   loading: boolean
 }
 
-export interface DataTableApi<Row, Field extends string = string> {
+export interface DataTableApi<Row, Field extends string = string, Filters = undefined> {
+  // echoed straight back from config, so a renderer only ever needs `api` — never a second copy of these
+  columns: ColumnDef<Row, Field>[]
+  getRowId: (row: Row) => string
+  groupByColumns?: GroupByColumn<Field>[]
+
   search: string
   setSearch: (value: string) => void
+
+  filters: Filters | undefined
+  setFilters: (filters: Filters) => void
 
   sort: SortState<Field> | null
   toggleSort: (field: Field) => void
@@ -31,7 +37,6 @@ export interface DataTableApi<Row, Field extends string = string> {
   loading: boolean
   error: unknown
 
-  groupByColumns: DataTableConfig<Row, Field>['groupByColumns']
   groupBy: Field | null
   setGroupBy: (field: Field | null) => void
   groups: ResourceGroup<Field>[]
@@ -46,17 +51,21 @@ export interface DataTableApi<Row, Field extends string = string> {
   groupPagination: (key: string) => PaginationState
   setGroupPage: (key: string, page: number) => void
 
+  /** Flat + grouped rows in one display-ordered list — see the `VisibleItem` type. What every built-in renderer actually iterates. */
+  visibleItems: VisibleItem<Row, Field>[]
+
   refetch: () => void
 }
 
 const DEFAULT_PAGE_SIZE = 25
 
-export function useDataTable<Row, Field extends string = string>(
-  config: DataTableConfig<Row, Field>,
-): DataTableApi<Row, Field> {
-  const { fetchRecords, fetchGroups, groupByColumns, initialPageSize, initialSort } = config
+export function useDataTable<Row, Field extends string = string, Filters = undefined>(
+  config: DataTableConfig<Row, Field, Filters>,
+): DataTableApi<Row, Field, Filters> {
+  const { columns, getRowId, groupByColumns, initialPageSize, initialSort, initialFilters } = config
 
   const [search, setSearch] = useState('')
+  const [filters, setFiltersInternal] = useState<Filters | undefined>(initialFilters)
   const [sort, setSortInternal] = useState<SortState<Field> | null>(initialSort ?? null)
   const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
@@ -76,6 +85,26 @@ export function useDataTable<Row, Field extends string = string>(
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [groupState, setGroupState] = useState<Record<string, GroupRuntime<Row>>>({})
+
+  const clientEngine = useMemo(() => {
+    if (!config.data) return null
+    return createClientEngine<Row, Field, Filters>({
+      data: config.data,
+      columns,
+      searchFields: config.searchFields,
+      applyFilters: config.applyFilters,
+      groupField: groupBy ? (row: Row) => (row as Record<string, unknown>)[groupBy] : undefined,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config, columns, groupBy])
+
+  const fetchRecords = config.fetchRecords ?? clientEngine!.fetchRecords
+  const fetchGroups = config.fetchGroups ?? (clientEngine ? clientEngine.fetchGroups : undefined)
+
+  const setFilters = useCallback((next: Filters) => {
+    setFiltersInternal(next)
+    setPagination((p) => ({ ...p, page: 1 }))
+  }, [])
 
   const setGroupBy = useCallback((field: Field | null) => {
     setGroupByField(field)
@@ -115,7 +144,7 @@ export function useDataTable<Row, Field extends string = string>(
     setLoading(true)
     setError(null)
 
-    const params: FetchParams<Field> = { page: pagination.page, pageSize: pagination.pageSize, search, sort }
+    const params: FetchParams<Field, Filters> = { page: pagination.page, pageSize: pagination.pageSize, search, sort, filters: filters as Filters }
     fetchRecords(params)
       .then((result) => {
         if (cancelled) return
@@ -130,7 +159,7 @@ export function useDataTable<Row, Field extends string = string>(
       })
 
     return () => { cancelled = true }
-  }, [groupBy, pagination.page, pagination.pageSize, search, sort, fetchRecords, fetchTick])
+  }, [groupBy, pagination.page, pagination.pageSize, search, sort, filters, fetchRecords, fetchTick])
 
   // ─── grouped mode: fetch the group list ────────────────────────────────────
   useEffect(() => {
@@ -138,8 +167,8 @@ export function useDataTable<Row, Field extends string = string>(
     let cancelled = false
     setGroupsLoading(true)
 
-    const params: FetchParams<Field> = {
-      page: pagination.page, pageSize: pagination.pageSize, search, sort, groupBy,
+    const params: FetchParams<Field, Filters> = {
+      page: pagination.page, pageSize: pagination.pageSize, search, sort, filters: filters as Filters, groupBy,
     }
     fetchGroups(params)
       .then((result) => {
@@ -155,7 +184,7 @@ export function useDataTable<Row, Field extends string = string>(
       })
 
     return () => { cancelled = true }
-  }, [groupBy, pagination.page, pagination.pageSize, search, sort, fetchGroups, fetchTick])
+  }, [groupBy, pagination.page, pagination.pageSize, search, sort, filters, fetchGroups, fetchTick])
 
   const fetchGroupRows = useCallback((key: string, page: number) => {
     if (!groupBy) return
@@ -164,8 +193,8 @@ export function useDataTable<Row, Field extends string = string>(
       [key]: { rows: prev[key]?.rows ?? [], total: prev[key]?.total ?? 0, pagination: { page, pageSize: pagination.pageSize }, loading: true },
     }))
 
-    const params: FetchParams<Field> = {
-      page, pageSize: pagination.pageSize, search, sort, groupBy, groupKey: key,
+    const params: FetchParams<Field, Filters> = {
+      page, pageSize: pagination.pageSize, search, sort, filters: filters as Filters, groupBy, groupKey: key,
     }
     fetchRecords(params)
       .then((result) => {
@@ -181,7 +210,7 @@ export function useDataTable<Row, Field extends string = string>(
           [key]: { rows: prev[key]?.rows ?? [], total: prev[key]?.total ?? 0, pagination: { page, pageSize: pagination.pageSize }, loading: false },
         }))
       })
-  }, [groupBy, pagination.pageSize, search, sort, fetchRecords])
+  }, [groupBy, pagination.pageSize, search, sort, filters, fetchRecords])
 
   const toggleGroup = useCallback((key: string) => {
     setExpanded((prev) => {
@@ -204,9 +233,30 @@ export function useDataTable<Row, Field extends string = string>(
     [groupState, pagination.pageSize],
   )
 
+  const visibleItems = useMemo<VisibleItem<Row, Field>[]>(() => {
+    if (!groupBy) return rows.map((row) => ({ type: 'row' as const, row }))
+    const items: VisibleItem<Row, Field>[] = []
+    for (const group of groups) {
+      items.push({ type: 'group', group, expanded: isGroupExpanded(group.key) })
+      if (isGroupExpanded(group.key)) {
+        for (const row of groupRowsFor(group.key)) {
+          items.push({ type: 'group-row', row, groupKey: group.key })
+        }
+      }
+    }
+    return items
+  }, [groupBy, rows, groups, expanded, groupState, isGroupExpanded, groupRowsFor]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return useMemo(() => ({
+    columns,
+    getRowId,
+    groupByColumns,
+
     search,
     setSearch: (value: string) => { setSearch(value); setPagination((p) => ({ ...p, page: 1 })) },
+
+    filters,
+    setFilters,
 
     sort,
     toggleSort,
@@ -221,7 +271,6 @@ export function useDataTable<Row, Field extends string = string>(
     loading,
     error,
 
-    groupByColumns,
     groupBy,
     setGroupBy,
     groups,
@@ -236,13 +285,16 @@ export function useDataTable<Row, Field extends string = string>(
     groupPagination: groupPaginationFor,
     setGroupPage,
 
+    visibleItems,
+
     refetch,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [
-    search, sort, pagination, rows, total, loading, error,
-    groupByColumns, groupBy, groups, groupsTotal, groupsLoading,
-    toggleSort, setSort, setPage, setPageSize, setGroupBy,
+    columns, getRowId, groupByColumns,
+    search, filters, sort, pagination, rows, total, loading, error,
+    groupBy, groups, groupsTotal, groupsLoading,
+    setFilters, toggleSort, setSort, setPage, setPageSize, setGroupBy,
     isGroupExpanded, toggleGroup, groupRowsFor, groupTotalFor, groupLoadingFor, groupPaginationFor, setGroupPage,
-    refetch,
+    visibleItems, refetch,
   ])
 }

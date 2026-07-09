@@ -1,65 +1,71 @@
 # MUI renderer
 
-`@kyrobit/kyro-datatable/mui` is the renderer used throughout the [quick start](/guide/quick-start), [grouping](/guide/grouping), and [favorites](/guide/favorites) guides. It reads a `DataTableApi` and draws it with `Table`, `TableSortLabel`, `TablePagination`, and `Collapse` — nothing beyond `@mui/material` and `@mui/icons-material`, both optional peer dependencies (see [Installation](/guide/installation)).
+`@kyrobit/kyro-datatable/mui` is the renderer used throughout the [quick start](/guide/quick-start), [grouping](/guide/grouping), and [favorites](/guide/favorites) guides. It's built from small pieces — search field, group-by select, the table body, pagination — each reading `table` through context, with `<DataTable/>` as their default assembly. Use the assembly for the common case; compose the pieces yourself the moment you need a layout it doesn't offer.
 
-## `<DataTable />`
-
-The full component, wired to the Blog Categories example:
+## `<DataTable/>` — the default assembly
 
 ```tsx
 import { useDataTable } from '@kyrobit/kyro-datatable'
 import { DataTable } from '@kyrobit/kyro-datatable/mui'
-import { fetchCategories, type Category } from './categories'
+import { CATEGORIES, type Category } from './categories'
 
 type Field = 'name' | 'created_at'
 
-const columns = [
-  { field: 'name' as const, headerName: 'Name' },
-  { field: 'created_at' as const, headerName: 'Created', render: (row: Category) => new Date(row.created_at).toLocaleDateString() },
-]
-
 function CategoriesPage() {
-  const table = useDataTable<Category, Field>({ columns, fetchRecords: fetchCategories, getRowId: (r) => r.id })
+  const table = useDataTable<Category, Field>({
+    data: CATEGORIES,
+    columns: [
+      { field: 'name', headerName: 'Name' },
+      { field: 'created_at', headerName: 'Created', render: (row) => new Date(row.created_at).toLocaleDateString() },
+    ],
+    getRowId: (row) => row.id,
+  })
 
-  return (
-    <DataTable
-      api={table}
-      columns={columns}
-      getRowId={(row) => row.id}
-      onRowClick={(row) => navigate(`/blog-categories/${row.id}/edit`)}
-      searchPlaceholder="Search categories"
-      emptyMessage="No categories yet."
-    />
-  )
+  return <DataTable api={table} onRowClick={(row) => navigate(`/blog-categories/${row.id}/edit`)} searchPlaceholder="Search categories" />
 }
 ```
 
-What it renders, top to bottom: a search box; a "Group by" select, only if `groupByColumns` was set on the hook config; a `Table` with `TableSortLabel` headers (click to cycle asc → desc → unsorted, per column, matching `table.toggleSort`); the rows, or — when grouped — collapsed group headers that expand into their own nested rows via `Collapse`; and `TablePagination` at the bottom, hidden automatically while grouped, since pagination in grouped mode happens per-group instead (see [Server-side grouping](/guide/grouping)).
+This renders: a search box; a "Group by" select, automatically, only if `groupByColumns` was set on the hook config; the table, with `TableSortLabel` headers wired to `table.toggleSort`; and `TablePagination`, hidden automatically while grouped (pagination happens per-group instead — see [Grouping](/guide/grouping)).
 
-## `<FavoritesMenu />`
+## The pieces `<DataTable/>` is built from
 
-Covered in full in [Favorites](/guide/favorites) — the short version:
+Every one of these is also a static property on `DataTable` itself — `DataTable.Root`, `DataTable.SearchField`, and so on — so you never need a second import to reach for them.
+
+| Piece | Renders |
+|---|---|
+| `DataTable.Root` | Nothing visible — a context provider. Everything below needs to be inside one. |
+| `DataTable.SearchField` | The search `TextField`. |
+| `DataTable.GroupBySelect` | The "Group by" select. Renders nothing if `groupByColumns` wasn't set. |
+| `DataTable.Body` | The actual `Table`/`TableHead`/`TableBody` — sortable headers, rows, and (when grouped) expandable group headers. |
+| `DataTable.Pagination` | `TablePagination`. Renders nothing while grouped. |
+
+## Composing your own layout
+
+This is the reason the pieces exist separately at all — a real admin screen often wants more than the default assembly offers: preset tabs above the table, an explicit Sort-by menu instead of click-to-cycle headers, Import/Export buttons. Reach for the pieces directly instead of `<DataTable/>`:
 
 ```tsx
-import { FavoritesMenu } from '@kyrobit/kyro-datatable/mui'
+import { DataTable } from '@kyrobit/kyro-datatable/mui'
 
-<FavoritesMenu
-  presets={presets}
-  activeId={activePresetId}
-  currentFilters={filters}
-  filterEditor={(value, onChange) => <StatusFilterForm value={value} onChange={onChange} />}
-  summarize={(f) => (f.statuses.length ? `Status: ${f.statuses.join(', ')}` : 'No filters')}
-  onApply={setFilters}
-/>
+<DataTable.Root api={table}>
+  <Stack direction="row" spacing={1.5}>
+    <PresetTabs presets={presets} />
+    <Box sx={{ flex: 1 }} />
+    <DataTable.SearchField placeholder="Search categories" />
+  </Stack>
+  <Stack direction="row" spacing={1}>
+    <FavoritesMenu presets={presets} /* ...see Favorites */ />
+    <MySortByMenu table={table} />
+    <DataTable.GroupBySelect />
+    <ExportButton rows={table.rows} />
+  </Stack>
+  <DataTable.Body onRowClick={(row) => navigate(`/blog-categories/${row.id}/edit`)} />
+  <DataTable.Pagination />
+</DataTable.Root>
 ```
 
-Renders as a small `Button` + MUI `Popover`. Reordering saved presets uses up/down icon buttons on hover, not drag-and-drop — deliberately, to avoid pulling `@dnd-kit` into this library's dependency tree just for that.
+`DataTable.Root` is what makes this work — every piece inside it reads the same `table` via context, so you're never threading `api` through each one manually. Anything you write yourself (`PresetTabs`, `MySortByMenu`, `ExportButton` above) that needs `table` just takes it as a normal prop, same as `useDataTable`'s return value always has.
 
-## When `<DataTable />`'s built-in toolbar isn't enough
-
-`<DataTable />`'s search bar and group-by select cover the common case, but a real admin screen often wants more at once: preset tabs above the table, a "Sort by" menu with explicit field-and-direction choices instead of click-to-cycle, Import/Export buttons. That's not a prop `<DataTable />` exposes — at that point, don't use `<DataTable />` at all. Build the table with plain MUI `Table`/`TableRow`/`TableCell` yourself, reading `table.rows`, `table.sort`, `table.groupBy`, etc. directly, the same way `src/renderers/mui/DataTable.tsx` does internally. That file is meant to be read, not just imported — it's the reference implementation for exactly this pattern, and copying its group-row `Collapse` structure into your own hand-built table is the intended way to get grouping in a fully custom toolbar.
-
-For an explicit sort menu (pick a field *and* a direction from a list, rather than relying on `toggleSort`'s asc → desc → unsorted cycle), reach for `table.setSort({ field, direction })` instead:
+For an explicit sort menu — pick a field *and* a direction from a list, rather than relying on `toggleSort`'s asc → desc → unsorted cycle — reach for `table.setSort({ field, direction })`:
 
 ```tsx
 {SORT_FIELDS.flatMap((f) => (['asc', 'desc'] as const).map((dir) => (
@@ -73,4 +79,23 @@ For an explicit sort menu (pick a field *and* a direction from a list, rather th
 )))}
 ```
 
-See [Core API](/reference/core-api) for the difference between `toggleSort` and `setSort`.
+See [Core API](/reference/core-api) for the full `toggleSort` vs `setSort` distinction.
+
+## `<FavoritesMenu/>`
+
+Covered in full in [Favorites](/guide/favorites) — the short version:
+
+```tsx
+import { FavoritesMenu } from '@kyrobit/kyro-datatable/mui'
+
+<FavoritesMenu
+  presets={presets}
+  activeId={activePresetId}
+  currentFilters={table.filters ?? EMPTY}
+  filterEditor={(value, onChange) => <StatusFilterForm value={value} onChange={onChange} />}
+  summarize={(f) => (f.statuses.length ? `Status: ${f.statuses.join(', ')}` : 'No filters')}
+  onApply={table.setFilters}
+/>
+```
+
+Not part of `DataTable.Root`'s context tree — it takes `presets` directly as a prop, since `usePresets` is its own hook, independent of `useDataTable` (see [Favorites](/guide/favorites) for why). Reordering saved presets uses up/down icon buttons on hover, not drag-and-drop — deliberately, to avoid pulling `@dnd-kit` into this library's dependency tree just for that.

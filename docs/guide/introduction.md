@@ -19,8 +19,8 @@ interface Category {
 }
 
 function CategoriesPage() {
-  // The hook owns every piece of state: page, sort, search, groups.
-  // It calls fetchRecords whenever any of that changes, and nothing else.
+  // The hook owns every piece of state: page, sort, search, groups —
+  // and columns/getRowId, so the renderer below never asks for them again.
   const table = useDataTable<Category, 'name' | 'created_at'>({
     columns: [
       { field: 'name', headerName: 'Name' },
@@ -30,9 +30,9 @@ function CategoriesPage() {
     getRowId: (row) => row.id,
   })
 
-  // The renderer just reads that state and draws it. Nothing here
+  // The renderer just reads `table` and draws it. Nothing here
   // knows or cares that MUI is the thing rendering it.
-  return <DataTable api={table} columns={columns} getRowId={(row) => row.id} />
+  return <DataTable api={table} />
 }
 ```
 
@@ -44,12 +44,13 @@ Because DataGrid's server-side row grouping is a **Premium**-tier feature — no
 
 ## The pieces
 
-Four words cover everything this library does.
+Five words cover everything this library does.
 
-- **State** — everything `useDataTable` tracks: which page, what's sorted and which way, what's searched, which group is expanded. Lives in the root import, `@kyrobit/kyro-datatable` — nothing in that import has ever imported a UI library. See [Quick start](/guide/quick-start).
-- **Renderer** — a component that reads that state and draws rows. `./mui` and `./bootstrap` ship built in; nothing stops you writing a third for whatever else you use. See [MUI renderer](/guide/mui), [Bootstrap renderer](/guide/bootstrap), and [Writing your own renderer](/guide/custom-renderer).
-- **Grouping** — collapsing rows under a shared value (like `is_active`), fetched from your server, with each group loading its own page independently once it's actually expanded — never before. See [Server-side grouping](/guide/grouping).
-- **Favorites** — named, saved filter sets a user creates, applies, and reorders — "Active categories," "Created this month," whatever your filters actually are, since the library never assumes a filter's shape. See [Favorites](/guide/favorites).
+- **State** — everything `useDataTable` tracks: which page, what's sorted and which way, what's searched and filtered, which group is expanded. Lives in the root import, `@kyrobit/kyro-datatable` — nothing in that import has ever imported a UI library. See [Quick start](/guide/quick-start).
+- **Client or server** — pass `data: Row[]` and everything runs in memory, or pass `fetchRecords`/`fetchGroups` and everything runs against your API. Same `table` object either way — a renderer, or your own code reading `table`, can't tell which mode is behind it. See [Quick start](/guide/quick-start).
+- **Renderer** — a component that reads that state and draws rows. `./mui` and `./bootstrap` ship built in as composable pieces (`DataTable.Root`, `.SearchField`, `.Body`, `.Pagination`, ...) with `<DataTable/>` as their default assembly — use the assembly, or compose the pieces into your own layout. Nothing stops you writing a whole new renderer for a different design system either. See [MUI renderer](/guide/mui), [Bootstrap renderer](/guide/bootstrap), and [Writing your own renderer](/guide/custom-renderer).
+- **Grouping** — collapsing rows under a shared value (like `is_active`), with each group loading its own page independently once it's actually expanded — never before. Works in both client and server mode; client mode groups automatically from `data`, no extra config. See [Server-side grouping](/guide/grouping).
+- **Favorites** — named, saved filter sets a user creates, applies, and reorders — "Active categories," "Created this month," whatever your filters actually are, since the library never assumes a filter's shape beyond the generic `filters`/`setFilters` slot on `table`. See [Favorites](/guide/favorites).
 
 ## Next
 

@@ -10,19 +10,14 @@ The example, reused through every page in these docs: a **Blog Categories** admi
 npm create vite@latest kyro-datatable-demo -- --template react-ts
 cd kyro-datatable-demo
 npm install
-```
-
-## 2. Install the library and the MUI renderer
-
-```sh
 npm install @mui/material @mui/icons-material @emotion/react @emotion/styled
 ```
 
-(`@kyrobit/kyro-datatable` itself isn't on a public registry yet — see [Installation](/guide/installation) for linking it locally. Everything below assumes it's already linked.)
+(`@kyrobit/kyro-datatable` itself isn't on a public registry yet — see [Installation](/guide/installation) for linking it locally.)
 
-## 3. The data
+## 2. The data
 
-Paste this into `src/categories.ts`. This is the part a real app replaces with an actual API call — for now it's just an array and a function that filters/sorts/pages it, so the whole demo runs with nothing behind it.
+Paste this into `src/categories.ts`:
 
 ```ts
 // src/categories.ts
@@ -34,7 +29,7 @@ export interface Category {
   created_at: string
 }
 
-const ALL_CATEGORIES: Category[] = [
+export const CATEGORIES: Category[] = [
   { id: '1',  name: 'Web Development',       slug: 'web-development',       is_active: true,  created_at: '2026-01-14' },
   { id: '2',  name: 'AI & Machine Learning', slug: 'ai-machine-learning',   is_active: true,  created_at: '2026-02-03' },
   { id: '3',  name: 'DevOps',                slug: 'devops',                is_active: true,  created_at: '2026-02-11' },
@@ -50,60 +45,29 @@ const ALL_CATEGORIES: Category[] = [
   { id: '13', name: 'Performance',           slug: 'performance',           is_active: true,  created_at: '2026-05-12' },
   { id: '14', name: 'Accessibility',         slug: 'accessibility',         is_active: false, created_at: '2026-05-20' },
 ]
-
-export interface FetchCategoriesParams {
-  page: number
-  pageSize: number
-  search: string
-  sort: { field: 'name' | 'created_at'; direction: 'asc' | 'desc' } | null
-}
-
-export async function fetchCategories({ page, pageSize, search, sort }: FetchCategoriesParams) {
-  let rows = ALL_CATEGORIES.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase()),
-  )
-
-  if (sort) {
-    rows = [...rows].sort((a, b) => {
-      const dir = sort.direction === 'asc' ? 1 : -1
-      return a[sort.field] > b[sort.field] ? dir : -dir
-    })
-  }
-
-  const total = rows.length
-  const start = (page - 1) * pageSize
-  const paged = rows.slice(start, start + pageSize)
-
-  // simulate real network latency, so loading states are visible
-  await new Promise((r) => setTimeout(r, 200))
-
-  return { rows: paged, total }
-}
 ```
 
-Nothing here is `useDataTable`-specific yet — it's just a plain async function shaped `(params) => Promise<{ rows, total }>`. That shape is the entire contract the hook needs from you.
+## 3. The page
 
-## 4. The page
-
-Replace `src/App.tsx`:
+Replace `src/App.tsx`. This is the whole thing — one `columns` array, used once:
 
 ```tsx
 // src/App.tsx
 import { useDataTable } from '@kyrobit/kyro-datatable'
 import { DataTable } from '@kyrobit/kyro-datatable/mui'
-import { fetchCategories, type Category } from './categories'
+import { CATEGORIES, type Category } from './categories'
 
 type Field = 'name' | 'slug' | 'is_active' | 'created_at'
 
 export default function App() {
   const table = useDataTable<Category, Field>({
+    data: CATEGORIES, // in-memory — no backend, no fetch functions
     columns: [
       { field: 'name', headerName: 'Name' },
       { field: 'slug', headerName: 'Slug', sortable: false },
       { field: 'is_active', headerName: 'Status', render: (row) => (row.is_active ? 'Active' : 'Inactive') },
       { field: 'created_at', headerName: 'Created', render: (row) => new Date(row.created_at).toLocaleDateString() },
     ],
-    fetchRecords: fetchCategories,
     getRowId: (row) => row.id,
     initialSort: { field: 'created_at', direction: 'desc' },
     initialPageSize: 5,
@@ -112,25 +76,15 @@ export default function App() {
   return (
     <div style={{ maxWidth: 800, margin: '40px auto' }}>
       <h1>Blog Categories</h1>
-      <DataTable
-        api={table}
-        columns={[
-          { field: 'name', headerName: 'Name' },
-          { field: 'slug', headerName: 'Slug', sortable: false },
-          { field: 'is_active', headerName: 'Status', render: (row) => (row.is_active ? 'Active' : 'Inactive') },
-          { field: 'created_at', headerName: 'Created', render: (row) => new Date(row.created_at).toLocaleDateString() },
-        ]}
-        getRowId={(row) => row.id}
-        searchPlaceholder="Search categories"
-      />
+      <DataTable api={table} searchPlaceholder="Search categories" />
     </div>
   )
 }
 ```
 
-(`table.columns` and `<DataTable columns>` are the same array on purpose — the hook needs it for sorting, the renderer needs it for drawing. In a real app, define it once above both and pass the same reference to each, as the [reference](/reference/core-api) example does.)
+That's the entire app. `columns` and `getRowId` go into `useDataTable` once — `table` carries them back out, so `<DataTable api={table} />` doesn't ask for them a second time. Nothing about `<DataTable/>` needs to know what a `Category` even is; it only ever touches what `table` gives it.
 
-## 5. Run it
+## 4. Run it
 
 ```sh
 npm run dev
@@ -138,14 +92,36 @@ npm run dev
 
 Open the printed `localhost` URL. You should see 5 rows — the initial page size — sorted newest-first by "Created," starting with Accessibility (2026-05-20).
 
-## 6. What to actually try
+## 5. What to actually try
 
-- **Type "dev" into the search box.** The list narrows to Web Development and DevOps as you type — each keystroke triggers a new `fetchCategories` call with `search` set, which reruns the filter.
-- **Click the "Name" column header.** Rows re-sort A→Z. Click it again: Z→A. Click "Created" instead: jumps back to sorting by date, ascending.
-- **Open the pagination control at the bottom and change the page size, or go to page 2.** With page size 5 and 14 total categories (or fewer once filtered), there are 3 pages — page 2 shows the next 5, this all really refetches, it isn't slicing something already in memory on the client.
-- **Watch the brief loading state** between typing and results updating — that's the artificial 200ms delay in `fetchCategories`, standing in for real network latency.
+- **Type "dev" into the search box.** Narrows to Web Development and DevOps as you type.
+- **Click the "Name" column header.** Rows re-sort A→Z, click again for Z→A. Click "Created" instead: back to sorting by date. Note "Slug" doesn't respond — it was declared `sortable: false`.
+- **Open the pagination control and change the page size, or go to page 2.** 14 categories at page size 5 is 3 pages.
 
-That loop — type, click a header, change page, watch it refetch — is the entire hook. Nothing you did there is renderer-specific: swap `@kyrobit/kyro-datatable/mui` for `/bootstrap` and every one of those interactions behaves identically, because they're all driven by `table`, not by which component drew the table.
+Every one of those interactions is running entirely client-side right now, because `data: CATEGORIES` was passed instead of `fetchRecords` — `useDataTable` filters, sorts, and slices the array in memory. Nothing about `<DataTable/>` or how you interact with it changes based on that; it's an implementation detail of `useDataTable`'s config, not something the renderer or your clicks need to care about.
+
+## 6. Talking to a real backend instead
+
+Swap `data` for `fetchRecords` — a function shaped `(params) => Promise<{ rows, total }>` — and everything else in `App.tsx` is unchanged:
+
+```tsx
+import { api } from './api'
+
+async function fetchCategories(params: FetchParams<Field>) {
+  const { data } = await api.get('/admin/blog-categories', {
+    params: { q: params.search, sort: params.sort?.field, dir: params.sort?.direction, page: params.page, per_page: params.pageSize },
+  })
+  return { rows: data.data, total: data.total }
+}
+
+const table = useDataTable<Category, Field>({
+  fetchRecords: fetchCategories, // instead of data: CATEGORIES
+  columns,
+  getRowId: (row) => row.id,
+})
+```
+
+Both modes exist permanently, side by side — client mode isn't a toy for demos and prototypes that you graduate out of. Small, fully-loaded lists (a settings page, a handful of team members) are often genuinely better served by `data` even in production, since there's no network round-trip on every keystroke or page change.
 
 ## Next
 
