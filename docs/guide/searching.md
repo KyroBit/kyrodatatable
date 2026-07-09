@@ -9,19 +9,18 @@ table.search              // string, starts as ''
 table.setSearch(value)
 ```
 
-That's it — one string. There's no separate "committed vs. draft" search state built in (typing "d", "de", "dev" triggers three refetches, one per keystroke, in the naive wiring). If you want debouncing — waiting until someone pauses typing before it actually searches — that's a decision about *when* to call `setSearch`, not something `useDataTable` does for you:
+That's it — one string. By default, typing "d", "de", "dev" triggers three refetches, one per keystroke. Set `searchDebounceMs` to delay the actual query until typing pauses:
 
-```tsx
-const [draft, setDraft] = useState('')
-useEffect(() => {
-  const id = setTimeout(() => table.setSearch(draft), 300)
-  return () => clearTimeout(id)
-}, [draft])
-
-<input value={draft} onChange={(e) => setDraft(e.target.value)} />
+```ts
+useDataTable({
+  data: CATEGORIES, // or fetchRecords
+  columns,
+  getRowId: (row) => row.id,
+  searchDebounceMs: 300,
+})
 ```
 
-`<DataTable.SearchField/>` (both renderers) doesn't debounce either — it calls `setSearch` on every keystroke, matching `table.search` directly. For a table backed by `data` (client mode), that's free — filtering an in-memory array on every keystroke is imperceptibly fast. For `fetchRecords` (server mode), a request per keystroke is usually worth debouncing; wrap `<DataTable.SearchField/>`'s value/onChange yourself, or build the debounced input above and skip the built-in one.
+`table.search` still updates on every keystroke — `<DataTable.SearchField/>` and any input you bind to it stay responsive — but the query (client-mode filtering or `fetchRecords`) waits for `searchDebounceMs` of silence before running. For a table backed by `data` (client mode), that delay usually isn't necessary — filtering an in-memory array on every keystroke is imperceptibly fast. For `fetchRecords` (server mode), a request per keystroke is usually worth avoiding, so set `searchDebounceMs` there.
 
 ## Client mode: what actually gets matched
 
@@ -36,15 +35,14 @@ fields.some((field) => {
 
 Searching "true" won't match `is_active: true` — it's a boolean, not a string, so it's silently skipped, not coerced. Searching "2026-03" *will* match `created_at: '2026-03-15'`, since that field is a string and substring-matching doesn't care that it happens to be a date.
 
-Restrict which fields get checked with `searchFields`:
+Restrict which fields get checked with `searchable: false` on a column:
 
 ```ts
-useDataTable({
-  data: CATEGORIES,
-  columns,
-  searchFields: ['name'], // slug won't match search anymore, even though it's a string column
-  getRowId: (row) => row.id,
-})
+columns: [
+  { field: 'name', headerName: 'Name' },
+  { field: 'slug', headerName: 'Slug', searchable: false }, // won't match search anymore, even though it's a string column
+  ...
+]
 ```
 
 Worth doing when a column's raw value would produce confusing matches — searching "web-development" (someone pasted a slug) shouldn't necessarily also match on `slug` if you only want name-search from the UI's search box.

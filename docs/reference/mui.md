@@ -63,7 +63,7 @@ Not part of `Root`'s context tree — takes `presets` directly, since `usePreset
 | `presets` | `PresetsApi<Filters>` | required | From `usePresets`. |
 | `activeId` | `string \| null` | required | Which preset (if any) currently matches the applied filters — compute this yourself. |
 | `currentFilters` | `Filters` | required | Seeds the "Add" form with whatever's currently applied. |
-| `filterEditor` | `(value: Filters, onChange: (next: Filters) => void) => ReactNode` | required | The form rendered inside Add/Edit — the one piece that's genuinely yours. |
+| `filterEditor` | `(value: Filters, onChange: (next: Filters) => void) => ReactNode` | required | The form rendered inside Add/Edit — the one piece that's yours. |
 | `summarize` | `(filters: Filters) => string` | required | One-line description shown under each saved preset's name. |
 | `onApply` | `(filters: Filters) => void` | required | Called when a preset row is clicked — typically `table.setFilters`. |
 | `label` | `string` | optional | Button text. Default `"Favorites"`. |

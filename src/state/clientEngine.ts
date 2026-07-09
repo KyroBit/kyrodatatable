@@ -2,10 +2,10 @@ import type {
   ColumnDef, FetchGroupsResult, FetchParams, FetchResult, ResourceGroup,
 } from '../types/index.js'
 
-function defaultSearchableFields<Row, Field extends string>(
+function searchableFields<Row, Field extends string>(
   columns: ColumnDef<Row, Field>[],
 ): Field[] {
-  return columns.map((c) => c.field)
+  return columns.filter((c) => c.searchable !== false).map((c) => c.field)
 }
 
 function matchesSearch<Row, Field extends string>(
@@ -42,16 +42,15 @@ function paginate<Row>(rows: Row[], page: number, pageSize: number): { rows: Row
 export interface ClientEngineOptions<Row, Field extends string, Filters> {
   data: Row[]
   columns: ColumnDef<Row, Field>[]
-  searchFields?: Field[]
   applyFilters?: (row: Row, filters: Filters) => boolean
   groupField?: (row: Row) => unknown
 }
 
 /** Builds fetchRecords/fetchGroups equivalents that run entirely in memory against `data` — the client-mode counterpart to the server-side functions you'd otherwise write by hand. */
 export function createClientEngine<Row, Field extends string, Filters>({
-  data, columns, searchFields, applyFilters, groupField,
+  data, columns, applyFilters, groupField,
 }: ClientEngineOptions<Row, Field, Filters>) {
-  const fields = searchFields ?? defaultSearchableFields(columns)
+  const fields = searchableFields(columns)
 
   function filtered(params: FetchParams<Field, Filters>): Row[] {
     let rows = data

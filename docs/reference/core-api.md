@@ -54,6 +54,7 @@ const presets = usePresets<Filters>('blog-categories', BUILT_IN)
 | `initialPageSize` | `number` | optional | Default `25`. |
 | `initialSort` | `SortState<Field> \| null` | optional | Default unsorted. |
 | `initialFilters` | `Filters` | optional | Seeds `table.filters`. |
+| `searchDebounceMs` | `number` | optional | Default `0`. Delay between a `setSearch` call and the query it triggers. `table.search` updates immediately either way. |
 
 ### Server mode — `fetchRecords`/`fetchGroups`
 
@@ -67,7 +68,6 @@ const presets = usePresets<Filters>('blog-categories', BUILT_IN)
 | Field | Type | | Description |
 |---|---|---|---|
 | `data` | `Row[]` | required | The whole dataset, already loaded. Search, sort, pagination, and grouping all run in memory. |
-| `searchFields` | `Field[]` | optional | Which fields to substring-match against `search`. Defaults to every column's `field`. |
 | `applyFilters` | `(row: Row, filters: Filters) => boolean` | optional | Only needed if you also use `filters` in client mode — there's no generic default, since a filter's shape is yours. |
 
 ### `FetchParams<Field, Filters>`
@@ -123,6 +123,7 @@ type VisibleItem<Row, Field> =
 | `headerName` | `string` | required | Column header text. |
 | `render` | `(row: Row) => unknown` | optional | Omit to read `row[field]` directly. |
 | `sortable` | `boolean` | optional | Default `true`. Set `false` for computed/action columns. |
+| `searchable` | `boolean` | optional | Default `true`. Set `false` to exclude this column from client-mode search matching — see [Searching](/guide/searching). |
 | `align` | `'left' \| 'right' \| 'center'` | optional | Cell and header alignment. |
 
 ## `usePresets(storageKey, builtIn?)`

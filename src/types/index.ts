@@ -14,6 +14,8 @@ export interface ColumnDef<Row, Field extends string = string> {
   field: Field
   headerName: string
   sortable?: boolean
+  /** Included in client-mode search matching. Default `true`. */
+  searchable?: boolean
   align?: 'left' | 'right' | 'center'
   render?: (row: Row) => unknown
 }
@@ -63,6 +65,8 @@ interface DataTableConfigBase<Row, Field extends string, Filters> {
   initialPageSize?: number
   initialSort?: SortState<Field> | null
   initialFilters?: Filters
+  /** Delay, in ms, between a `setSearch` call and the query it triggers actually running. Default `0` (no debounce). */
+  searchDebounceMs?: number
 }
 
 export interface ServerDataTableConfig<Row, Field extends string = string, Filters = undefined>
@@ -78,8 +82,6 @@ export interface ClientDataTableConfig<Row, Field extends string = string, Filte
   extends DataTableConfigBase<Row, Field, Filters> {
   /** The whole dataset, already loaded. Search, sort, pagination, and grouping all run in memory — no fetch functions needed. */
   data: Row[]
-  /** Which fields to substring-match against `search`. Defaults to every field currently rendered by a string-valued column. */
-  searchFields?: Field[]
   /** Only needed if you also use `filters` in client mode — filtering has no generic default, since a filter's shape is yours. */
   applyFilters?: (row: Row, filters: Filters) => boolean
   fetchRecords?: undefined

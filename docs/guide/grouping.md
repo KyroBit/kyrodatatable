@@ -23,7 +23,7 @@ const table = useDataTable({
 
 ## Server mode: why grouping needs a second fetch function
 
-Grouped mode has two different questions to answer, and they're genuinely different queries against your data: *what are the groups, and how many rows are in each* (one query, runs once) versus *what are the rows inside group X, page 2* (a different query, runs per group, only when that group is actually expanded). `fetchRecords` — the one you already wrote — answers the second question, once you pass it `groupBy`/`groupKey`. `fetchGroups` is new, and answers the first.
+Grouped mode has two different questions to answer, and they're different queries against your data: *what are the groups, and how many rows are in each* (one query, runs once) versus *what are the rows inside group X, page 2* (a different query, runs per group, only when that group is actually expanded). `fetchRecords` — the one you already wrote — answers the second question, once you pass it `groupBy`/`groupKey`. `fetchGroups` is new, and answers the first.
 
 ## Extend the in-memory data
 

@@ -118,7 +118,7 @@ const table = useDataTable({
 })
 ```
 
-Both modes exist permanently, side by side — client mode isn't a toy for demos and prototypes that you graduate out of. Small, fully-loaded lists (a settings page, a handful of team members) are often genuinely better served by `data` even in production, since there's no network round-trip on every keystroke or page change.
+For small, fully-loaded lists (a settings page, a handful of team members), `data` avoids a network round-trip on every keystroke or page change.
 
 ## Next
 
@@ -130,4 +130,4 @@ Each interaction above gets its own deeper page — what exactly resets what, cl
 - [Filtering](/guide/filtering) — the generic `filters`/`setFilters` slot, `applyFilters` in client mode.
 - [Grouping](/guide/grouping) — collapse these same 14 categories by status instead of paginating through them.
 - [Favorites](/guide/favorites) — save "Active categories" as a one-click filter, on top of Filtering.
-- [Installation](/guide/installation) — link the real package into a real app instead of `npm install`-ing it.
+- [Installation](/guide/installation) — link the package into a real app.

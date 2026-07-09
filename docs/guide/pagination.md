@@ -44,7 +44,7 @@ If you're building a "Page 3 of 12" indicator and it flickers back to "Page 1 of
 const totalPages = Math.max(1, Math.ceil(table.total / table.pagination.pageSize))
 ```
 
-`Math.max(1, ...)` matters — with zero results, `Math.ceil(0 / pageSize)` is `0`, and "page 1 of 0" reads worse than "page 1 of 1" in an empty-state UI.
+`Math.max(1, ...)` matters — with zero results, `Math.ceil(0 / pageSize)` is `0`, which shows as "page 1 of 0" in an empty-state UI instead of "page 1 of 1".
 
 ## Server mode: what you're actually responsible for
 
@@ -59,7 +59,7 @@ async function fetchCategories(params: FetchParams) {
 }
 ```
 
-A common mistake worth naming explicitly: returning every matching row in `rows` and letting the client slice them defeats the entire point of server-side pagination (you've paid the cost of transferring and holding the full result set, gained nothing). If your backend endpoint doesn't actually support `LIMIT`/`OFFSET` yet, `useDataTable`'s pagination controls will still render and respond to clicks — they just won't visibly change anything, since every "page" is the same unsliced response. That's a backend gap, not something client-side pagination logic can paper over; if you notice this happening, the fix is adding real `LIMIT`/`OFFSET` to the endpoint, not working around it in the frontend.
+If `rows` returns every matching row instead of just the current page, and the client slices it, the backend is transferring and holding the full result set on every request — no smaller than an unpaginated query. If your backend endpoint doesn't actually support `LIMIT`/`OFFSET` yet, `useDataTable`'s pagination controls will still render and respond to clicks, but every "page" will be the same unsliced response. Fix it by adding real `LIMIT`/`OFFSET` to the endpoint — client-side pagination logic can't compensate for a backend that returns everything.
 
 ## Client mode: this part is automatic
 

@@ -62,9 +62,10 @@ const DEFAULT_PAGE_SIZE = 25
 export function useDataTable<Row, Field extends string = string, Filters = undefined>(
   config: DataTableConfig<Row, Field, Filters>,
 ): DataTableApi<Row, Field, Filters> {
-  const { columns, getRowId, groupByColumns, initialPageSize, initialSort, initialFilters } = config
+  const { columns, getRowId, groupByColumns, initialPageSize, initialSort, initialFilters, searchDebounceMs } = config
 
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [filters, setFiltersInternal] = useState<Filters | undefined>(initialFilters)
   const [sort, setSortInternal] = useState<SortState<Field> | null>(initialSort ?? null)
   const [pagination, setPagination] = useState<PaginationState>({
@@ -86,12 +87,17 @@ export function useDataTable<Row, Field extends string = string, Filters = undef
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [groupState, setGroupState] = useState<Record<string, GroupRuntime<Row>>>({})
 
+  useEffect(() => {
+    if (!searchDebounceMs) { setDebouncedSearch(search); return }
+    const id = setTimeout(() => setDebouncedSearch(search), searchDebounceMs)
+    return () => clearTimeout(id)
+  }, [search, searchDebounceMs])
+
   const clientEngine = useMemo(() => {
     if (!config.data) return null
     return createClientEngine<Row, Field, Filters>({
       data: config.data,
       columns,
-      searchFields: config.searchFields,
       applyFilters: config.applyFilters,
       groupField: groupBy ? (row: Row) => (row as Record<string, unknown>)[groupBy] : undefined,
     })
@@ -144,7 +150,7 @@ export function useDataTable<Row, Field extends string = string, Filters = undef
     setLoading(true)
     setError(null)
 
-    const params: FetchParams<Field, Filters> = { page: pagination.page, pageSize: pagination.pageSize, search, sort, filters: filters as Filters }
+    const params: FetchParams<Field, Filters> = { page: pagination.page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters }
     fetchRecords(params)
       .then((result) => {
         if (cancelled) return
@@ -159,7 +165,7 @@ export function useDataTable<Row, Field extends string = string, Filters = undef
       })
 
     return () => { cancelled = true }
-  }, [groupBy, pagination.page, pagination.pageSize, search, sort, filters, fetchRecords, fetchTick])
+  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, fetchRecords, fetchTick])
 
   // ─── grouped mode: fetch the group list ────────────────────────────────────
   useEffect(() => {
@@ -168,7 +174,7 @@ export function useDataTable<Row, Field extends string = string, Filters = undef
     setGroupsLoading(true)
 
     const params: FetchParams<Field, Filters> = {
-      page: pagination.page, pageSize: pagination.pageSize, search, sort, filters: filters as Filters, groupBy,
+      page: pagination.page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters, groupBy,
     }
     fetchGroups(params)
       .then((result) => {
@@ -184,7 +190,7 @@ export function useDataTable<Row, Field extends string = string, Filters = undef
       })
 
     return () => { cancelled = true }
-  }, [groupBy, pagination.page, pagination.pageSize, search, sort, filters, fetchGroups, fetchTick])
+  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, fetchGroups, fetchTick])
 
   const fetchGroupRows = useCallback((key: string, page: number) => {
     if (!groupBy) return
@@ -194,7 +200,7 @@ export function useDataTable<Row, Field extends string = string, Filters = undef
     }))
 
     const params: FetchParams<Field, Filters> = {
-      page, pageSize: pagination.pageSize, search, sort, filters: filters as Filters, groupBy, groupKey: key,
+      page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters, groupBy, groupKey: key,
     }
     fetchRecords(params)
       .then((result) => {
@@ -210,7 +216,7 @@ export function useDataTable<Row, Field extends string = string, Filters = undef
           [key]: { rows: prev[key]?.rows ?? [], total: prev[key]?.total ?? 0, pagination: { page, pageSize: pagination.pageSize }, loading: false },
         }))
       })
-  }, [groupBy, pagination.pageSize, search, sort, filters, fetchRecords])
+  }, [groupBy, pagination.pageSize, debouncedSearch, sort, filters, fetchRecords])
 
   const toggleGroup = useCallback((key: string) => {
     setExpanded((prev) => {

@@ -54,7 +54,7 @@ const activePresetId = useMemo(
 />
 ```
 
-`filterEditor` is the one genuinely custom piece — the checkboxes, date pickers, or dropdowns someone fills in while saving or editing a favorite. Everything around it (the popover, the list, Add/Edit/Delete, reordering) is built in and identical regardless of what `Filters` actually contains.
+`filterEditor` is the one custom piece — the checkboxes, date pickers, or dropdowns someone fills in while saving or editing a favorite. Everything around it (the popover, the list, Add/Edit/Delete, reordering) is built in and identical regardless of what `Filters` actually contains.
 
 `activeId` isn't tracked by `usePresets` or by `table` either, for the same reason `filters` isn't fixed-shape: "which preset currently matches" is a derived value, computed by comparing `table.filters` against every preset's stored filters with your own equality check (`filtersEqual` above — for `{ statuses: string[] }`, order-independent array equality; for a different `Filters` shape, a different comparison).
 
