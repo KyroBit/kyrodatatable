@@ -1,6 +1,6 @@
 # Installation
 
-KyroDataTable isn't published to a public registry — it's linked locally, the same way `@kyrobit/kyroguard` is.
+KyroDataTable isn't published to a public registry — it's linked locally.
 
 ## From the library repo
 

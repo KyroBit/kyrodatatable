@@ -1,6 +1,6 @@
 # Quick start
 
-A working, sortable, searchable, paginated table in about ten minutes. No backend needed — a small in-memory array stands in for your API, the same way kyroguard's quick start uses its `memoryAdapter` instead of a real database.
+A working, sortable, searchable, paginated table in about ten minutes. No backend needed — a small in-memory array stands in for your API.
 
 The example, reused through every page in these docs: a **Blog Categories** admin screen. Fourteen categories, a mix of active and inactive, created across the last few months — realistic enough that search, sort, and pagination all have something real to do.
 
@@ -79,8 +79,6 @@ export default function App() {
   )
 }
 ```
-
-No type parameters on `useDataTable` here, and no `import type { Category }` either — `Row` is inferred from `data: Category[]`, and `Field` from the string literals actually written in `columns` (`'name'`, `'slug'`, `'is_active'`, `'created_at'`). `table.toggleSort('bogus')` is a compile error without you declaring anything by hand. See [Core API](/reference/core-api#why-you-dont-write-out-the-field-type) for why this works and when you do need to write a type out.
 
 ## 4. Run it
 

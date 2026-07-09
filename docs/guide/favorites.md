@@ -2,11 +2,7 @@
 
 Same 14 categories from the [quick start](/guide/quick-start). Someone using this screen filters to "Active" every single day. Favorites is the one-click shortcut for that — click "Add," name it, and it's there next time, saved in the browser, no server round-trip needed to define one.
 
-## Why this is a separate hook, not part of `useDataTable`
-
-[Filtering](/guide/filtering) covers *holding and applying* a `Filters` value — `table.filters`/`table.setFilters`. Favorites is a different concern layered on top: *naming, saving, and reapplying* particular `Filters` values. It's a separate hook, `usePresets`, for the same reason `table.filters` is generic rather than fixed-shape: what counts as "a favorite" varies per screen, so `usePresets<Filters>` only ever stores, names, and reorders values of whatever type you give it — it never inspects them, and it has no idea `useDataTable` exists.
-
-If you haven't read [Filtering](/guide/filtering) yet, read that first — this page assumes `table.filters`/`table.setFilters`/`applyFilters` are already wired up, and only adds the saving/naming layer on top.
+Favorites is a separate hook, `usePresets`, used alongside `table.filters`/`table.setFilters` from [Filtering](/guide/filtering) — read that page first if you haven't, since this one assumes filtering is already wired up.
 
 ## Define built-in presets
 

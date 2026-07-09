@@ -39,19 +39,9 @@ const table = useDataTable({
 const presets = usePresets<Filters>('blog-categories', BUILT_IN)
 ```
 
-## Why you don't write out the `Field` type
-
-`useDataTable<Row, Field, Filters>` has three type parameters, but every example in these docs calls it with zero explicit type arguments. TypeScript infers all three from what's already in `config`:
-
-- **`Row`** — from `data: Row[]` in client mode, or from `fetchRecords`'s already-declared return type (`Promise<FetchResult<Row>>`) in server mode.
-- **`Field`** — from the string literals actually written in `columns` (`{ field: 'name' }`, `{ field: 'created_at' }`, ...) in client mode; from `fetchRecords`'s parameter type (`FetchParams<Field>`) in server mode.
-- **`Filters`** — from `initialFilters`'s or `applyFilters`'s already-typed value, if you use filters at all.
-
-This isn't automatic in the sense of "TypeScript figures out anything" — it relies on a real, checkable rule: **TypeScript either infers every type parameter on a call, or none of them.** Provide one type argument explicitly (`useDataTable<Category>(...)`) and the rest silently fall back to their defaults (`Field = string`, `Filters = undefined`) instead of being inferred — which is exactly what makes `table.toggleSort('anything')` type-check with no error, defeating the entire point of `Field` being a union of your actual column names. Provide *zero* type arguments, and TypeScript infers all three from `config` at once. This is exactly the pattern behind `pick([{ field: 'name' }, { field: 'slug' }])` inferring `'name' | 'slug'` without help — nothing library-specific, just how TypeScript's generic inference already works, used correctly here.
-
-The practical rule: **never write `useDataTable<...>` with any type arguments.** If `Field` or `Filters` needs to exist as a named type anywhere — because you're declaring a `fetchRecords` function separately, or typing an `applyFilters` callback — write that type once, on the thing that actually needs annotating (the function's own parameter type, a `const EMPTY: Filters = ...`), and `useDataTable` reads it back from there. See [Sorting](/guide/sorting), [Filtering](/guide/filtering), and [Grouping](/guide/grouping) for this in practice against server-mode functions.
-
 ## `useDataTable(config)`
+
+`useDataTable({ ... })` — no type arguments. `Row`, `Field`, and `Filters` are read from `config` itself: from `data`/`fetchRecords`, from the string literals in `columns`, and from `initialFilters`/`applyFilters`.
 
 `config` is one of two shapes — pass `fetchRecords` (server mode) or `data` (client mode), never both, never neither. TypeScript enforces the split: `data` and `fetchRecords`/`fetchGroups` are mutually exclusive on the type.
 

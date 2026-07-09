@@ -1,10 +1,6 @@
 # Filtering
 
-Search is one free-text box, checked against everything. Filters are structured — "only active categories," "only ones created this month" — and, unlike search, `useDataTable` doesn't assume anything about their shape. This page covers holding and applying a filter value. Naming and saving one as a reusable preset is a separate concern — see [Favorites](/guide/favorites).
-
-## Why filters are generic, and search isn't
-
-Search is always the same shape: a string. Every table has exactly one kind of search box. Filters aren't — the Blog Categories table filters by `{ statuses: string[] }`, a different screen might filter by a date range, or three unrelated dropdowns at once. Baking one shape into `useDataTable` means it's wrong for most screens; leaving it out entirely means every screen reinvents "narrow the result set by something structured" from scratch. The middle ground: `Filters` is a third type parameter on `useDataTable`, and `table.filters`/`table.setFilters` are typed to match whatever you pass — but you never write `useDataTable<Row, Field, Filters>` out by hand any more than you write `Row`/`Field` out by hand (see [Core API](/reference/core-api#why-you-dont-write-out-the-field-type)). Declare `Filters` once, as a type used somewhere concrete in your config, and it's inferred from there.
+Search is one free-text box, checked against everything. Filters are structured — "only active categories," "only ones created this month" — and their shape is entirely up to you. This page covers holding and applying a filter value. Naming and saving one as a reusable preset is a separate concern — see [Favorites](/guide/favorites).
 
 ## Declaring the shape
 
@@ -20,9 +16,9 @@ const table = useDataTable({
 })
 ```
 
-`Filters` gets declared once, to type `EMPTY` — `useDataTable` reads it back off `initialFilters: EMPTY`, the same way it reads `Field` off `columns`. Skip the `const EMPTY: Filters = ...` step and just inline `initialFilters: { statuses: [] }` instead, and inference gets it wrong: an empty array literal with nothing else to go on infers as `never[]`, not `('active' | 'inactive')[]`, so every real value you later pass to `setFilters` would be rejected. Anchor `Filters` to a properly-typed constant, or to `applyFilters`'s parameter type below, and it works; leave it fully implicit, and it doesn't.
+Declare `Filters` as its own type, and pass a properly-typed constant like `EMPTY` (not an inline `{ statuses: [] }`) as `initialFilters` — no type arguments on `useDataTable` itself.
 
-Without `initialFilters` at all, `table.filters` starts as `undefined` — not an empty object matching your `Filters` shape, genuinely `undefined`, since `useDataTable` has no way to construct a valid empty value of a type it doesn't understand. If your `Filters` type doesn't tolerate `undefined` gracefully in the places you read it, always pass `initialFilters`.
+Without `initialFilters`, `table.filters` starts as `undefined`. If your `Filters` type doesn't handle `undefined` gracefully wherever you read it, always pass `initialFilters`.
 
 ## Setting it
 

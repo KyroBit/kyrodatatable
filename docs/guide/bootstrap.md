@@ -61,6 +61,4 @@ import { FavoritesMenu } from '@kyrobit/kyro-datatable/bootstrap'
 
 The popover here is a plain `<div className="card position-absolute">` anchored under the button with inline positioning — not Bootstrap's JS `Dropdown`/`Popover` component (which needs Popper internally). That's why this renderer needs zero Bootstrap JavaScript, only its CSS.
 
-## Why bother with a second renderer at all
-
-Because the whole point of the state/UI split (see [Introduction](/guide/introduction)) is that this choice shouldn't be expensive. If one internal tool is built on MUI and another on Bootstrap, both get real grouping and Favorites without either one importing a design system it doesn't already use — and if a third tool needs something neither offers, [writing one](/guide/custom-renderer) is a components-only exercise, not a rewrite of state, sorting, or grouping logic.
+Need a different design system entirely? See [Writing your own renderer](/guide/custom-renderer).

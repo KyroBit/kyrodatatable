@@ -38,9 +38,7 @@ function CategoriesPage() {
 
 This file is a sketch, not a runnable app — the [quick start](/guide/quick-start) is the runnable version, with a real in-memory dataset standing in for `api.get`, so there's nothing to set up before seeing it actually search, sort, and paginate.
 
-## Why this exists instead of just using MUI X DataGrid
-
-Because DataGrid's server-side row grouping is a **Premium**-tier feature — not included in the free Community edition, not included in the paid Pro tier either, only in Premium. This library exists to port a grouping pattern already proven out in an earlier hand-built table (`epg`'s `DataTable`), while fixing the one real design flaw that version had: its state — what page, what sort, which group was open — was tangled directly into the component that rendered `<table>` tags, so changing how it looked meant re-deriving pagination and grouping logic from scratch. Pulling that state out into `useDataTable`, with rendering as a strictly optional, swappable layer on top, is the entire idea.
+Row grouping is free here — MUI X DataGrid gates it behind a paid Premium license.
 
 ## The pieces
 

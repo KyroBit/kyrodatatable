@@ -92,7 +92,7 @@ Two new fields from the quick start's server-mode call — `fetchGroups`, and `g
 3. Those 10 rows (page 1, whatever the page size is) land in `table.groupRows('active')`, entirely separate from `table.rows` (which is empty now — you're in grouped mode) and from whatever `table.groupRows('inactive')` holds.
 4. Collapse it, expand it again: no refetch. The rows are still there. Expand "Inactive" for the first time: *that* triggers its own fetch, with `groupKey: 'inactive'`, and its own independent page counter.
 
-This is the part the state/UI split actually buys you here: `epg`'s original DataTable had this exact lazy-per-group-pagination behavior, but it was entangled with the render component, so getting it working with a different UI meant re-deriving all of this bookkeeping by hand. Here it's just `table.groupRows`/`table.groupPagination`/`table.setGroupPage`, callable from any renderer — or from no renderer at all, if you're driving your own markup.
+Read this state without any renderer at all via `table.groupRows`/`table.groupPagination`/`table.setGroupPage`, callable from any renderer — or your own markup.
 
 ## Reading group state without the built-in renderer
 
