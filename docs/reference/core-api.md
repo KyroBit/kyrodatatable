@@ -10,8 +10,7 @@ import { useDataTable, usePresets } from '@kyrobit/kyro-datatable'
 type Filters = { statuses: ('active' | 'inactive')[] }
 const EMPTY: Filters = { statuses: [] }
 
-// server mode — fetchCategories/fetchCategoryGroups declared with FetchParams<Field, Filters>
-// in their own signatures, same as the Grouping and Filtering guides
+// server mode
 const table = useDataTable({
   columns: [
     { field: 'name', headerName: 'Name' },

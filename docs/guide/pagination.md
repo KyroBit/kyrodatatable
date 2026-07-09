@@ -51,7 +51,7 @@ const totalPages = Math.max(1, Math.ceil(table.total / table.pagination.pageSize
 Your `fetchRecords` receives `params.page`/`params.pageSize` and must return the *right slice*, not the whole dataset with a `total`:
 
 ```ts
-async function fetchCategories(params: FetchParams<Field>) {
+async function fetchCategories(params: FetchParams) {
   const { data } = await api.get('/admin/blog-categories', {
     params: { page: params.page, per_page: params.pageSize, q: params.search },
   })

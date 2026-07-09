@@ -56,7 +56,7 @@ useDataTable({
 No `applyFilters` needed — `table.filters` is included in `FetchParams` exactly like `search` and `sort` already are, and what it means is entirely up to your `fetchRecords`:
 
 ```ts
-async function fetchCategories(params: FetchParams<Field, Filters>) {
+async function fetchCategories(params: FetchParams<string, Filters>) {
   const { data } = await api.get('/admin/blog-categories', {
     params: { q: params.search, statuses: params.filters?.statuses, sort: params.sort?.field },
   })

@@ -86,7 +86,7 @@ The column still *displays* `row.name` via `render`; it just sorts on `nameLower
 `params.sort` in your `fetchRecords`/`fetchGroups` function is exactly `table.sort` — `null`, or `{ field, direction }`. Nothing translates it for you; map `field` to whatever your backend's sort parameter expects:
 
 ```ts
-async function fetchCategories(params: FetchParams<Field>) {
+async function fetchCategories(params: FetchParams) {
   const { data } = await api.get('/admin/blog-categories', {
     params: { sort: params.sort?.field, dir: params.sort?.direction },
   })

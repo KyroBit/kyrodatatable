@@ -54,7 +54,7 @@ Worth doing when a column's raw value would produce confusing matches — search
 `params.search` is a plain string, passed straight from `table.search`. What it matches is entirely your backend's decision — a `LIKE '%term%'` on one column, a full-text search index across several, fuzzy matching, whatever:
 
 ```ts
-async function fetchCategories(params: FetchParams<Field>) {
+async function fetchCategories(params: FetchParams) {
   const { data } = await api.get('/admin/blog-categories', { params: { q: params.search } })
   return { rows: data.data, total: data.total }
 }

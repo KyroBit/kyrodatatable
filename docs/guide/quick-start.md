@@ -104,9 +104,7 @@ Swap `data` for `fetchRecords` — a function shaped `(params) => Promise<{ rows
 import { api } from './api'
 import type { FetchParams } from '@kyrobit/kyro-datatable'
 
-type Field = 'name' | 'slug' | 'is_active' | 'created_at'
-
-async function fetchCategories(params: FetchParams<Field>) {
+async function fetchCategories(params: FetchParams) {
   const { data } = await api.get('/admin/blog-categories', {
     params: { q: params.search, sort: params.sort?.field, dir: params.sort?.direction, page: params.page, per_page: params.pageSize },
   })
@@ -119,8 +117,6 @@ const table = useDataTable({
   getRowId: (row) => row.id,
 })
 ```
-
-`Field` gets written out here, once — not because `useDataTable` asks for it, but because `fetchCategories` is its own standalone function with its own signature, and that signature has to name the fields it can sort by *somewhere*. `useDataTable` still takes zero type arguments — it reads `Field` (and `Row`) straight off `fetchCategories`'s already-declared type, the same way it read them off `columns`' literals a moment ago.
 
 Both modes exist permanently, side by side — client mode isn't a toy for demos and prototypes that you graduate out of. Small, fully-loaded lists (a settings page, a handful of team members) are often genuinely better served by `data` even in production, since there's no network round-trip on every keystroke or page change.
 

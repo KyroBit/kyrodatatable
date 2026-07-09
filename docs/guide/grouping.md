@@ -33,9 +33,7 @@ Add this to `src/categories.ts`, alongside `fetchCategories` (the [quick start's
 // src/categories.ts (additions)
 import type { FetchParams, FetchGroupsResult } from '@kyrobit/kyro-datatable'
 
-type Field = 'name' | 'slug' | 'is_active' | 'created_at'
-
-export async function fetchCategoryGroups(params: FetchParams<Field>): Promise<FetchGroupsResult<Field>> {
+export async function fetchCategoryGroups(params: FetchParams): Promise<FetchGroupsResult> {
   const rows = ALL_CATEGORIES.filter((c) =>
     c.name.toLowerCase().includes(params.search.toLowerCase()),
   )
@@ -58,7 +56,7 @@ export async function fetchCategoryGroups(params: FetchParams<Field>): Promise<F
 And update `fetchCategories` to filter by group when it's asked to — this is the only change to the function you already had:
 
 ```ts
-export async function fetchCategories(params: FetchParams<Field>) {
+export async function fetchCategories(params: FetchParams) {
   let rows = ALL_CATEGORIES.filter((c) => {
     const matchesSearch = c.name.toLowerCase().includes(params.search.toLowerCase())
     const matchesGroup = !params.groupKey || (params.groupKey === 'active' ? c.is_active : !c.is_active)
@@ -68,8 +66,6 @@ export async function fetchCategories(params: FetchParams<Field>) {
   // ...sort, paginate, and the 200ms delay stay exactly as before
 }
 ```
-
-Using the library's own `FetchParams<Field>`/`FetchGroupsResult<Field>` types here, instead of hand-rolling lookalike interfaces, is what lets `useDataTable` read `Field` straight off these two functions in the next step.
 
 ## Wire it into the hook
 
