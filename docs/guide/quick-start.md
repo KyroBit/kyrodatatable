@@ -125,6 +125,12 @@ Both modes exist permanently, side by side — client mode isn't a toy for demos
 
 ## Next
 
-- [Server-side grouping](/guide/grouping) — collapse these same 14 categories by status instead of paginating through them.
-- [Favorites](/guide/favorites) — save "Active categories" as a one-click filter.
+Each interaction above gets its own deeper page — what exactly resets what, client vs. server mode's differences, disabling per column, and so on:
+
+- [Searching](/guide/searching) — debouncing, what gets matched, restricting which fields.
+- [Sorting](/guide/sorting) — `toggleSort` vs. `setSort`, disabling per column, custom comparisons.
+- [Pagination](/guide/pagination) — the 1-indexed page model, what resets it, `total` vs. dataset size.
+- [Filtering](/guide/filtering) — the generic `filters`/`setFilters` slot, `applyFilters` in client mode.
+- [Grouping](/guide/grouping) — collapse these same 14 categories by status instead of paginating through them.
+- [Favorites](/guide/favorites) — save "Active categories" as a one-click filter, on top of Filtering.
 - [Installation](/guide/installation) — link the real package into a real app instead of `npm install`-ing it.

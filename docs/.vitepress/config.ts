@@ -32,8 +32,17 @@ export default defineConfig({
       {
         text: 'Guides',
         items: [
+          { text: 'Searching', link: '/guide/searching' },
+          { text: 'Sorting', link: '/guide/sorting' },
+          { text: 'Pagination', link: '/guide/pagination' },
+          { text: 'Filtering', link: '/guide/filtering' },
           { text: 'Grouping', link: '/guide/grouping' },
           { text: 'Favorites (saved filter sets)', link: '/guide/favorites' },
+        ],
+      },
+      {
+        text: 'Renderers',
+        items: [
           { text: 'MUI renderer', link: '/guide/mui' },
           { text: 'Bootstrap renderer', link: '/guide/bootstrap' },
           { text: 'Writing your own renderer', link: '/guide/custom-renderer' },
