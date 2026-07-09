@@ -7,12 +7,10 @@
 ```tsx
 import { useDataTable } from '@kyrobit/kyro-datatable'
 import { DataTable } from '@kyrobit/kyro-datatable/mui'
-import { CATEGORIES, type Category } from './categories'
-
-type Field = 'name' | 'created_at'
+import { CATEGORIES } from './categories'
 
 function CategoriesPage() {
-  const table = useDataTable<Category, Field>({
+  const table = useDataTable({
     data: CATEGORIES,
     columns: [
       { field: 'name', headerName: 'Name' },

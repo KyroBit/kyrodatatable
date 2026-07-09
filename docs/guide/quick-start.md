@@ -49,18 +49,16 @@ export const CATEGORIES: Category[] = [
 
 ## 3. The page
 
-Replace `src/App.tsx`. This is the whole thing — one `columns` array, used once:
+Replace `src/App.tsx`:
 
 ```tsx
 // src/App.tsx
 import { useDataTable } from '@kyrobit/kyro-datatable'
 import { DataTable } from '@kyrobit/kyro-datatable/mui'
-import { CATEGORIES, type Category } from './categories'
-
-type Field = 'name' | 'slug' | 'is_active' | 'created_at'
+import { CATEGORIES } from './categories'
 
 export default function App() {
-  const table = useDataTable<Category, Field>({
+  const table = useDataTable({
     data: CATEGORIES, // in-memory — no backend, no fetch functions
     columns: [
       { field: 'name', headerName: 'Name' },
@@ -82,7 +80,7 @@ export default function App() {
 }
 ```
 
-That's the entire app. `columns` and `getRowId` go into `useDataTable` once — `table` carries them back out, so `<DataTable api={table} />` doesn't ask for them a second time. Nothing about `<DataTable/>` needs to know what a `Category` even is; it only ever touches what `table` gives it.
+No type parameters on `useDataTable` here, and no `import type { Category }` either — `Row` is inferred from `data: Category[]`, and `Field` from the string literals actually written in `columns` (`'name'`, `'slug'`, `'is_active'`, `'created_at'`). `table.toggleSort('bogus')` is a compile error without you declaring anything by hand. See [Core API](/reference/core-api#why-you-dont-write-out-the-field-type) for why this works and when you do need to write a type out.
 
 ## 4. Run it
 
@@ -106,6 +104,9 @@ Swap `data` for `fetchRecords` — a function shaped `(params) => Promise<{ rows
 
 ```tsx
 import { api } from './api'
+import type { FetchParams } from '@kyrobit/kyro-datatable'
+
+type Field = 'name' | 'slug' | 'is_active' | 'created_at'
 
 async function fetchCategories(params: FetchParams<Field>) {
   const { data } = await api.get('/admin/blog-categories', {
@@ -114,12 +115,14 @@ async function fetchCategories(params: FetchParams<Field>) {
   return { rows: data.data, total: data.total }
 }
 
-const table = useDataTable<Category, Field>({
+const table = useDataTable({
   fetchRecords: fetchCategories, // instead of data: CATEGORIES
   columns,
   getRowId: (row) => row.id,
 })
 ```
+
+`Field` gets written out here, once — not because `useDataTable` asks for it, but because `fetchCategories` is its own standalone function with its own signature, and that signature has to name the fields it can sort by *somewhere*. `useDataTable` still takes zero type arguments — it reads `Field` (and `Row`) straight off `fetchCategories`'s already-declared type, the same way it read them off `columns`' literals a moment ago.
 
 Both modes exist permanently, side by side — client mode isn't a toy for demos and prototypes that you graduate out of. Small, fully-loaded lists (a settings page, a handful of team members) are often genuinely better served by `data` even in production, since there's no network round-trip on every keystroke or page change.
 

@@ -19,14 +19,14 @@ interface Category {
 }
 
 function CategoriesPage() {
-  // The hook owns every piece of state: page, sort, search, groups —
-  // and columns/getRowId, so the renderer below never asks for them again.
-  const table = useDataTable<Category, 'name' | 'created_at'>({
+  // The hook owns every piece of state: page, sort, search, groups.
+  const table = useDataTable({
     columns: [
       { field: 'name', headerName: 'Name' },
       { field: 'created_at', headerName: 'Created', render: (row) => new Date(row.created_at).toLocaleDateString() },
     ],
-    fetchRecords: (params) => api.get('/admin/blog-categories', { params }).then((r) => r.data),
+    fetchRecords: (params) =>
+      api.get<{ data: Category[]; total: number }>('/admin/blog-categories', { params }).then((r) => r.data),
     getRowId: (row) => row.id,
   })
 

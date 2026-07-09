@@ -8,7 +8,7 @@ A renderer reads a `DataTableApi<Row, Field, Filters>` — the object `useDataTa
 
 ## A complete one, including grouping, in about 70 lines
 
-Earlier drafts of this page showed a flat-list-only example and left grouping as an exercise — that undersold how much work grouping actually is to hand-roll, and undersold how much `useDataTable` already does for you. Here's the honest version, in Tailwind, handling both:
+In Tailwind, handling both the flat list and grouping:
 
 ```tsx
 import type { DataTableApi } from '@kyrobit/kyro-datatable'

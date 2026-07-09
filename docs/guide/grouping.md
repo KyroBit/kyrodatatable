@@ -11,7 +11,7 @@ This is the one thing MUI X DataGrid can't do without paying for it, in either m
 If you're on the `data: CATEGORIES` version from the quick start, grouping is one line — `groupByColumns` — and nothing else:
 
 ```tsx
-const table = useDataTable<Category, Field>({
+const table = useDataTable({
   data: CATEGORIES,
   columns,
   groupByColumns: [{ field: 'is_active', label: 'Status' }],
@@ -27,18 +27,17 @@ Grouped mode has two different questions to answer, and they're genuinely differ
 
 ## Extend the in-memory data
 
-Add this to `src/categories.ts`, alongside `fetchCategories`:
+Add this to `src/categories.ts`, alongside `fetchCategories` (the [quick start's server-mode version](/guide/quick-start)):
 
 ```ts
 // src/categories.ts (additions)
-export interface FetchGroupsParams {
-  search: string
-  groupBy: 'is_active'
-}
+import type { FetchParams, FetchGroupsResult } from '@kyrobit/kyro-datatable'
 
-export async function fetchCategoryGroups({ search, groupBy }: FetchGroupsParams) {
+type Field = 'name' | 'slug' | 'is_active' | 'created_at'
+
+export async function fetchCategoryGroups(params: FetchParams<Field>): Promise<FetchGroupsResult<Field>> {
   const rows = ALL_CATEGORIES.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase()),
+    c.name.toLowerCase().includes(params.search.toLowerCase()),
   )
 
   const active = rows.filter((c) => c.is_active)
@@ -49,8 +48,8 @@ export async function fetchCategoryGroups({ search, groupBy }: FetchGroupsParams
   return {
     total: rows.length,
     groups: [
-      { key: 'active', field: groupBy, label: 'Active', count: active.length },
-      { key: 'inactive', field: groupBy, label: 'Inactive', count: inactive.length },
+      { key: 'active', field: 'is_active', label: 'Active', count: active.length },
+      { key: 'inactive', field: 'is_active', label: 'Inactive', count: inactive.length },
     ],
   }
 }
@@ -59,10 +58,10 @@ export async function fetchCategoryGroups({ search, groupBy }: FetchGroupsParams
 And update `fetchCategories` to filter by group when it's asked to — this is the only change to the function you already had:
 
 ```ts
-export async function fetchCategories({ page, pageSize, search, sort, groupKey }: FetchCategoriesParams & { groupKey?: string }) {
+export async function fetchCategories(params: FetchParams<Field>) {
   let rows = ALL_CATEGORIES.filter((c) => {
-    const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase())
-    const matchesGroup = !groupKey || (groupKey === 'active' ? c.is_active : !c.is_active)
+    const matchesSearch = c.name.toLowerCase().includes(params.search.toLowerCase())
+    const matchesGroup = !params.groupKey || (params.groupKey === 'active' ? c.is_active : !c.is_active)
     return matchesSearch && matchesGroup
   })
 
@@ -70,10 +69,12 @@ export async function fetchCategories({ page, pageSize, search, sort, groupKey }
 }
 ```
 
+Using the library's own `FetchParams<Field>`/`FetchGroupsResult<Field>` types here, instead of hand-rolling lookalike interfaces, is what lets `useDataTable` read `Field` straight off these two functions in the next step.
+
 ## Wire it into the hook
 
 ```ts
-const table = useDataTable<Category, Field>({
+const table = useDataTable({
   columns,
   groupByColumns: [{ field: 'is_active', label: 'Status' }],
   fetchRecords: fetchCategories,
@@ -82,7 +83,7 @@ const table = useDataTable<Category, Field>({
 })
 ```
 
-That's the only change to the `useDataTable` call from the quick start — one new field, `fetchGroups`, and `groupByColumns` to tell the renderer what grouping options exist. `<DataTable />` grows a "Group by" select automatically; pick "Status" in it (or call `table.setGroupBy('is_active')` yourself) and the flat, paginated view is replaced by the two collapsed groups.
+Two new fields from the quick start's server-mode call — `fetchGroups`, and `groupByColumns` to tell the renderer what grouping options exist. `<DataTable />` grows a "Group by" select automatically; pick "Status" in it (or call `table.setGroupBy('is_active')` yourself) and the flat, paginated view is replaced by the two collapsed groups.
 
 ## What happens, in order, when someone expands "Active"
 

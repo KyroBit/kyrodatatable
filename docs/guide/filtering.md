@@ -4,22 +4,25 @@ Search is one free-text box, checked against everything. Filters are structured 
 
 ## Why filters are generic, and search isn't
 
-Search is always the same shape: a string. Every table has exactly one kind of search box. Filters aren't — the Blog Categories table filters by `{ statuses: string[] }`, a different screen might filter by a date range, or three unrelated dropdowns at once. Baking one shape into `useDataTable` means it's wrong for most screens; leaving it out entirely means every screen reinvents "narrow the result set by something structured" from scratch. The middle ground: `useDataTable<Row, Field, Filters>` takes `Filters` as a third type parameter, and `table.filters`/`table.setFilters` are typed to match whatever you pass.
+Search is always the same shape: a string. Every table has exactly one kind of search box. Filters aren't — the Blog Categories table filters by `{ statuses: string[] }`, a different screen might filter by a date range, or three unrelated dropdowns at once. Baking one shape into `useDataTable` means it's wrong for most screens; leaving it out entirely means every screen reinvents "narrow the result set by something structured" from scratch. The middle ground: `Filters` is a third type parameter on `useDataTable`, and `table.filters`/`table.setFilters` are typed to match whatever you pass — but you never write `useDataTable<Row, Field, Filters>` out by hand any more than you write `Row`/`Field` out by hand (see [Core API](/reference/core-api#why-you-dont-write-out-the-field-type)). Declare `Filters` once, as a type used somewhere concrete in your config, and it's inferred from there.
 
 ## Declaring the shape
 
 ```ts
 type Filters = { statuses: ('active' | 'inactive')[] }
+const EMPTY: Filters = { statuses: [] }
 
-const table = useDataTable<Category, Field, Filters>({
+const table = useDataTable({
   data: CATEGORIES,
   columns,
   getRowId: (row) => row.id,
-  initialFilters: { statuses: [] },
+  initialFilters: EMPTY,
 })
 ```
 
-Without `initialFilters`, `table.filters` starts as `undefined` — not an empty object matching your `Filters` shape, genuinely `undefined`, since `useDataTable` has no way to construct a valid empty value of a type it doesn't understand. If your `Filters` type doesn't tolerate `undefined` gracefully in the places you read it, always pass `initialFilters`.
+`Filters` gets declared once, to type `EMPTY` — `useDataTable` reads it back off `initialFilters: EMPTY`, the same way it reads `Field` off `columns`. Skip the `const EMPTY: Filters = ...` step and just inline `initialFilters: { statuses: [] }` instead, and inference gets it wrong: an empty array literal with nothing else to go on infers as `never[]`, not `('active' | 'inactive')[]`, so every real value you later pass to `setFilters` would be rejected. Anchor `Filters` to a properly-typed constant, or to `applyFilters`'s parameter type below, and it works; leave it fully implicit, and it doesn't.
+
+Without `initialFilters` at all, `table.filters` starts as `undefined` — not an empty object matching your `Filters` shape, genuinely `undefined`, since `useDataTable` has no way to construct a valid empty value of a type it doesn't understand. If your `Filters` type doesn't tolerate `undefined` gracefully in the places you read it, always pass `initialFilters`.
 
 ## Setting it
 
@@ -40,12 +43,12 @@ Like `setSearch` and `toggleSort`/`setSort`, `setFilters` resets `pagination.pag
 Setting `table.filters` in client mode changes nothing on its own — `useDataTable` doesn't know what a `Filters` value means, so without `applyFilters`, the filter is tracked but silently has zero effect on `table.rows`. Give it a predicate:
 
 ```ts
-useDataTable<Category, Field, Filters>({
+useDataTable({
   data: CATEGORIES,
   columns,
   getRowId: (row) => row.id,
-  initialFilters: { statuses: [] },
-  applyFilters: (row, filters) =>
+  initialFilters: EMPTY,
+  applyFilters: (row: Category, filters: Filters) =>
     filters.statuses.length === 0 || filters.statuses.includes(row.is_active ? 'active' : 'inactive'),
 })
 ```

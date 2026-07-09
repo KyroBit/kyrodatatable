@@ -9,9 +9,9 @@ Swap one import from the quick start's `App.tsx` and everything else is unchange
 ```tsx
 import { useDataTable } from '@kyrobit/kyro-datatable'
 import { DataTable } from '@kyrobit/kyro-datatable/bootstrap' // was '/mui'
-import { CATEGORIES, type Category } from './categories'
+import { CATEGORIES } from './categories'
 
-const table = useDataTable<Category, 'name' | 'created_at'>({ data: CATEGORIES, columns, getRowId: (r) => r.id })
+const table = useDataTable({ data: CATEGORIES, columns, getRowId: (r) => r.id })
 
 <DataTable api={table} />
 ```

@@ -6,36 +6,50 @@ The full Blog Categories setup from those guides, all in one place:
 
 ```ts
 import { useDataTable, usePresets } from '@kyrobit/kyro-datatable'
-import type { FetchParams, FetchResult, FetchGroupsResult } from '@kyrobit/kyro-datatable'
 
-type Field = 'name' | 'created_at' | 'is_active'
 type Filters = { statuses: ('active' | 'inactive')[] }
+const EMPTY: Filters = { statuses: [] }
 
-// server mode
-const table = useDataTable<Category, Field, Filters>({
+// server mode — fetchCategories/fetchCategoryGroups declared with FetchParams<Field, Filters>
+// in their own signatures, same as the Grouping and Filtering guides
+const table = useDataTable({
   columns: [
     { field: 'name', headerName: 'Name' },
     { field: 'created_at', headerName: 'Created', render: (row) => new Date(row.created_at).toLocaleDateString() },
   ],
   groupByColumns: [{ field: 'is_active', label: 'Status' }],
-  fetchRecords: (params: FetchParams<Field, Filters>): Promise<FetchResult<Category>> => fetchCategories(params),
-  fetchGroups: (params: FetchParams<Field, Filters>): Promise<FetchGroupsResult<Field>> => fetchCategoryGroups(params),
+  fetchRecords: fetchCategories,
+  fetchGroups: fetchCategoryGroups,
   getRowId: (row) => row.id,
   initialSort: { field: 'created_at', direction: 'desc' },
-  initialFilters: { statuses: [] },
+  initialFilters: EMPTY,
 })
 
-// client mode — same table shape, no fetch functions
-const table = useDataTable<Category, Field, Filters>({
+// client mode — same table shape, no fetch functions, no type arguments here either
+const table = useDataTable({
   data: CATEGORIES,
   columns,
   groupByColumns: [{ field: 'is_active', label: 'Status' }],
   getRowId: (row) => row.id,
-  applyFilters: (row, filters) => filters.statuses.length === 0 || filters.statuses.includes(row.is_active ? 'active' : 'inactive'),
+  initialFilters: EMPTY,
+  applyFilters: (row: Category, filters: Filters) =>
+    filters.statuses.length === 0 || filters.statuses.includes(row.is_active ? 'active' : 'inactive'),
 })
 
 const presets = usePresets<Filters>('blog-categories', BUILT_IN)
 ```
+
+## Why you don't write out the `Field` type
+
+`useDataTable<Row, Field, Filters>` has three type parameters, but every example in these docs calls it with zero explicit type arguments. TypeScript infers all three from what's already in `config`:
+
+- **`Row`** — from `data: Row[]` in client mode, or from `fetchRecords`'s already-declared return type (`Promise<FetchResult<Row>>`) in server mode.
+- **`Field`** — from the string literals actually written in `columns` (`{ field: 'name' }`, `{ field: 'created_at' }`, ...) in client mode; from `fetchRecords`'s parameter type (`FetchParams<Field>`) in server mode.
+- **`Filters`** — from `initialFilters`'s or `applyFilters`'s already-typed value, if you use filters at all.
+
+This isn't automatic in the sense of "TypeScript figures out anything" — it relies on a real, checkable rule: **TypeScript either infers every type parameter on a call, or none of them.** Provide one type argument explicitly (`useDataTable<Category>(...)`) and the rest silently fall back to their defaults (`Field = string`, `Filters = undefined`) instead of being inferred — which is exactly what makes `table.toggleSort('anything')` type-check with no error, defeating the entire point of `Field` being a union of your actual column names. Provide *zero* type arguments, and TypeScript infers all three from `config` at once. This is exactly the pattern behind `pick([{ field: 'name' }, { field: 'slug' }])` inferring `'name' | 'slug'` without help — nothing library-specific, just how TypeScript's generic inference already works, used correctly here.
+
+The practical rule: **never write `useDataTable<...>` with any type arguments.** If `Field` or `Filters` needs to exist as a named type anywhere — because you're declaring a `fetchRecords` function separately, or typing an `applyFilters` callback — write that type once, on the thing that actually needs annotating (the function's own parameter type, a `const EMPTY: Filters = ...`), and `useDataTable` reads it back from there. See [Sorting](/guide/sorting), [Filtering](/guide/filtering), and [Grouping](/guide/grouping) for this in practice against server-mode functions.
 
 ## `useDataTable(config)`
 
@@ -45,7 +59,7 @@ const presets = usePresets<Filters>('blog-categories', BUILT_IN)
 
 | Field | Type | | Description |
 |---|---|---|---|
-| `columns` | `ColumnDef<Row, Field>[]` | required | Echoed back on `table.columns` — renderers read it from there, not from a second copy you pass them. |
+| `columns` | `ColumnDef<Row, Field>[]` | required | Echoed back on `table.columns`, which is what renderers read. |
 | `getRowId` | `(row: Row) => string` | required | Echoed back on `table.getRowId`. Stable row identity, used as the React key by the built-in renderers. |
 | `groupByColumns` | `GroupByColumn<Field>[]` | optional | Echoed back on `table.groupByColumns`. Columns offered in a renderer's "group by" control. |
 | `initialPageSize` | `number` | optional | Default `25`. |
