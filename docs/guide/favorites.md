@@ -7,7 +7,7 @@ Favorites is a separate hook, `usePresets`, used alongside `table.filters`/`tabl
 ## Define built-in presets
 
 ```ts
-import { usePresets } from '@kyrobit/kyro-datatable'
+import { usePresets } from '@kyrobit/datatable'
 
 const EMPTY: Filters = { statuses: [] }
 

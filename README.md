@@ -1,4 +1,4 @@
-# @kyrobit/kyro-datatable
+# @kyrobit/datatable
 
 Headless data-table state — pagination, sorting, search, filtering, grouping (client-side or server-side), and saved filter presets ("Favorites") — fully decoupled from rendering. A UI-agnostic core, with optional renderers for whichever library you're actually using.
 
@@ -14,7 +14,7 @@ Not published to a registry — link it locally:
 
 ```bash
 cd kyro-datatable && bun run build && bun link
-cd your-app && bun link @kyrobit/kyro-datatable
+cd your-app && bun link @kyrobit/datatable
 ```
 
 `react`/`react-dom` are required peers. `@mui/material` is **optional** — only resolved via `./mui`. `./bootstrap` needs no npm package at all, just your app's own Bootstrap CSS.
@@ -22,8 +22,8 @@ cd your-app && bun link @kyrobit/kyro-datatable
 ## At a glance
 
 ```tsx
-import { useDataTable } from '@kyrobit/kyro-datatable'
-import { DataTable } from '@kyrobit/kyro-datatable/mui'
+import { useDataTable } from '@kyrobit/datatable'
+import { DataTable } from '@kyrobit/datatable/mui'
 
 const table = useDataTable({
   columns: [

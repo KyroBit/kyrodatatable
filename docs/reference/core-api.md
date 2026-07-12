@@ -1,11 +1,11 @@
 # Core API
 
-Everything here is exported from the root: `import { ... } from '@kyrobit/kyro-datatable'`. None of it imports a UI library. Full walkthroughs live in the guides — [Quick start](/guide/quick-start), [Grouping](/guide/grouping), [Favorites](/guide/favorites) — this page is the flat reference for what each thing does.
+Everything here is exported from the root: `import { ... } from '@kyrobit/datatable'`. None of it imports a UI library. Full walkthroughs live in the guides — [Quick start](/guide/quick-start), [Grouping](/guide/grouping), [Favorites](/guide/favorites) — this page is the flat reference for what each thing does.
 
 The full Blog Categories setup from those guides, all in one place:
 
 ```ts
-import { useDataTable, usePresets } from '@kyrobit/kyro-datatable'
+import { useDataTable, usePresets } from '@kyrobit/datatable'
 
 type Filters = { statuses: ('active' | 'inactive')[] }
 const EMPTY: Filters = { statuses: [] }

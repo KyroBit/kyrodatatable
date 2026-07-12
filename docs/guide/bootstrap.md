@@ -1,14 +1,14 @@
 # Bootstrap renderer
 
-`@kyrobit/kyro-datatable/bootstrap` mirrors `./mui` piece for piece — same [quick start](/guide/quick-start), same `table`, same `DataTable.Root`/`.SearchField`/`.GroupBySelect`/`.Body`/`.Pagination` composition model — drawn with plain HTML and Bootstrap's own utility classes instead: `table table-hover`, `form-control`, `btn btn-outline-secondary`, `pagination`. No `bootstrap` or `react-bootstrap` npm package anywhere in this renderer — your app just needs Bootstrap's CSS loaded globally, the same way it would for any other page using those class names.
+`@kyrobit/datatable/bootstrap` mirrors `./mui` piece for piece — same [quick start](/guide/quick-start), same `table`, same `DataTable.Root`/`.SearchField`/`.GroupBySelect`/`.Body`/`.Pagination` composition model — drawn with plain HTML and Bootstrap's own utility classes instead: `table table-hover`, `form-control`, `btn btn-outline-secondary`, `pagination`. No `bootstrap` or `react-bootstrap` npm package anywhere in this renderer — your app just needs Bootstrap's CSS loaded globally, the same way it would for any other page using those class names.
 
 ## `<DataTable/>`
 
 Swap one import from the quick start's `App.tsx` and everything else is unchanged:
 
 ```tsx
-import { useDataTable } from '@kyrobit/kyro-datatable'
-import { DataTable } from '@kyrobit/kyro-datatable/bootstrap' // was '/mui'
+import { useDataTable } from '@kyrobit/datatable'
+import { DataTable } from '@kyrobit/datatable/bootstrap' // was '/mui'
 import { CATEGORIES } from './categories'
 
 const table = useDataTable({ data: CATEGORIES, columns, getRowId: (r) => r.id })
@@ -28,7 +28,7 @@ Same props, same behavior — search, header-click sort, page changes, all work 
 Same pattern as [MUI](/guide/mui) — every piece is also a static property on `DataTable`:
 
 ```tsx
-import { DataTable } from '@kyrobit/kyro-datatable/bootstrap'
+import { DataTable } from '@kyrobit/datatable/bootstrap'
 
 <DataTable.Root api={table}>
   <div className="d-flex justify-content-between mb-2">
@@ -47,7 +47,7 @@ import { DataTable } from '@kyrobit/kyro-datatable/bootstrap'
 ## `<FavoritesMenu/>`
 
 ```tsx
-import { FavoritesMenu } from '@kyrobit/kyro-datatable/bootstrap'
+import { FavoritesMenu } from '@kyrobit/datatable/bootstrap'
 
 <FavoritesMenu
   presets={presets}

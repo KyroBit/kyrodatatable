@@ -1,12 +1,12 @@
 # MUI renderer
 
-`@kyrobit/kyro-datatable/mui` is the renderer used throughout the [quick start](/guide/quick-start), [grouping](/guide/grouping), and [favorites](/guide/favorites) guides. It's built from small pieces — search field, group-by select, the table body, pagination — each reading `table` through context, with `<DataTable/>` as their default assembly. Use the assembly for the common case; compose the pieces yourself the moment you need a layout it doesn't offer.
+`@kyrobit/datatable/mui` is the renderer used throughout the [quick start](/guide/quick-start), [grouping](/guide/grouping), and [favorites](/guide/favorites) guides. It's built from small pieces — search field, group-by select, the table body, pagination — each reading `table` through context, with `<DataTable/>` as their default assembly. Use the assembly for the common case; compose the pieces yourself the moment you need a layout it doesn't offer.
 
 ## `<DataTable/>` — the default assembly
 
 ```tsx
-import { useDataTable } from '@kyrobit/kyro-datatable'
-import { DataTable } from '@kyrobit/kyro-datatable/mui'
+import { useDataTable } from '@kyrobit/datatable'
+import { DataTable } from '@kyrobit/datatable/mui'
 import { CATEGORIES } from './categories'
 
 function CategoriesPage() {
@@ -42,7 +42,7 @@ Every one of these is also a static property on `DataTable` itself — `DataTabl
 This is the reason the pieces exist separately at all — a real admin screen often wants more than the default assembly offers: preset tabs above the table, an explicit Sort-by menu instead of click-to-cycle headers, Import/Export buttons. Reach for the pieces directly instead of `<DataTable/>`:
 
 ```tsx
-import { DataTable } from '@kyrobit/kyro-datatable/mui'
+import { DataTable } from '@kyrobit/datatable/mui'
 
 <DataTable.Root api={table}>
   <Stack direction="row" spacing={1.5}>
@@ -84,7 +84,7 @@ See [Core API](/reference/core-api) for the full `toggleSort` vs `setSort` disti
 Covered in full in [Favorites](/guide/favorites) — the short version:
 
 ```tsx
-import { FavoritesMenu } from '@kyrobit/kyro-datatable/mui'
+import { FavoritesMenu } from '@kyrobit/datatable/mui'
 
 <FavoritesMenu
   presets={presets}

@@ -13,7 +13,7 @@ npm install
 npm install @mui/material @mui/icons-material @emotion/react @emotion/styled
 ```
 
-(`@kyrobit/kyro-datatable` itself isn't on a public registry yet — see [Installation](/guide/installation) for linking it locally.)
+(`@kyrobit/datatable` itself isn't on a public registry yet — see [Installation](/guide/installation) for linking it locally.)
 
 ## 2. The data
 
@@ -53,8 +53,8 @@ Replace `src/App.tsx`:
 
 ```tsx
 // src/App.tsx
-import { useDataTable } from '@kyrobit/kyro-datatable'
-import { DataTable } from '@kyrobit/kyro-datatable/mui'
+import { useDataTable } from '@kyrobit/datatable'
+import { DataTable } from '@kyrobit/datatable/mui'
 import { CATEGORIES } from './categories'
 
 export default function App() {
@@ -102,7 +102,7 @@ Swap `data` for `fetchRecords` — a function shaped `(params) => Promise<{ rows
 
 ```tsx
 import { api } from './api'
-import type { FetchParams } from '@kyrobit/kyro-datatable'
+import type { FetchParams } from '@kyrobit/datatable'
 
 async function fetchCategories(params: FetchParams) {
   const { data } = await api.get('/admin/blog-categories', {

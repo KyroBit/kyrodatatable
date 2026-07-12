@@ -1,6 +1,6 @@
 # Reference — MUI
 
-`import { ... } from '@kyrobit/kyro-datatable/mui'`
+`import { ... } from '@kyrobit/datatable/mui'`
 
 ## `<DataTable/>`
 

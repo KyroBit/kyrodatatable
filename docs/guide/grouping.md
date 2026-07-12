@@ -31,7 +31,7 @@ Add this to `src/categories.ts`, alongside `fetchCategories` (the [quick start's
 
 ```ts
 // src/categories.ts (additions)
-import type { FetchParams, FetchGroupsResult } from '@kyrobit/kyro-datatable'
+import type { FetchParams, FetchGroupsResult } from '@kyrobit/datatable'
 
 export async function fetchCategoryGroups(params: FetchParams): Promise<FetchGroupsResult> {
   const rows = ALL_CATEGORIES.filter((c) =>

@@ -11,7 +11,7 @@ A renderer reads a `DataTableApi<Row, Field, Filters>` — the object `useDataTa
 In Tailwind, handling both the flat list and grouping:
 
 ```tsx
-import type { DataTableApi } from '@kyrobit/kyro-datatable'
+import type { DataTableApi } from '@kyrobit/datatable'
 import type { Category } from './categories'
 
 function TailwindDataTable<Row, Field extends string>({

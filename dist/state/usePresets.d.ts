@@ -1,0 +1,23 @@
+export interface Preset<Filters> {
+    id: string;
+    name: string;
+    filters: Filters;
+    builtIn?: boolean;
+}
+export interface PresetsApi<Filters> {
+    custom: Preset<Filters>[];
+    all: Preset<Filters>[];
+    builtIn: Preset<Filters>[];
+    create: (name: string, filters: Filters) => string;
+    update: (id: string, name: string, filters: Filters) => void;
+    remove: (id: string) => void;
+    reorder: (fromIndex: number, toIndex: number) => void;
+}
+/**
+ * Named, saveable filter sets ("Favorites") for a list view — separate from
+ * useDataTable on purpose, since a filter's shape is entirely yours (a list
+ * of statuses, a date range, whatever your fetchRecords call understands).
+ * Wire the active preset's filters into your fetchRecords closure yourself.
+ */
+export declare function usePresets<Filters>(storageKey: string, builtIn?: Preset<Filters>[]): PresetsApi<Filters>;
+//# sourceMappingURL=usePresets.d.ts.map

@@ -1,5 +1,5 @@
 {
-  "name": "@kyrobit/kyro-datatable",
+  "name": "@kyrobit/datatable",
   "version": "0.1.0",
   "description": "Headless data-table state (pagination, sorting, search, server-side grouping) fully decoupled from rendering. Bring your own UI, or use the built-in MUI or Bootstrap renderers.",
   "license": "UNLICENSED",

@@ -14,7 +14,7 @@ bun link
 ## From the app that uses it
 
 ```bash
-bun link @kyrobit/kyro-datatable
+bun link @kyrobit/datatable
 ```
 
 If your app is a Bun workspace (most of ours are), run `bun link` from inside the workspace member that needs it, then `bun install` from the **workspace root** — not from the member's own directory — so the symlink resolves correctly into the shared `node_modules`.
@@ -23,7 +23,7 @@ If your app is a Bun workspace (most of ours are), run `bun link` from inside th
 
 `react` and `react-dom` are required — the state hook is, after all, a hook.
 
-`@mui/material` is an **optional** peer dependency, resolved only if you import `@kyrobit/kyro-datatable/mui`. If you only use `./bootstrap` or write your own renderer, you never install it.
+`@mui/material` is an **optional** peer dependency, resolved only if you import `@kyrobit/datatable/mui`. If you only use `./bootstrap` or write your own renderer, you never install it.
 
 `./bootstrap` needs no npm package at all — it renders plain HTML with Bootstrap's own utility classes (`table`, `btn`, `pagination`, ...). Your app just needs Bootstrap's CSS loaded globally, the same way it would for any other page using those classes.
 

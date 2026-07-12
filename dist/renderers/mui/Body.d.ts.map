@@ -1,0 +1,1 @@
+{"version":3,"file":"Body.d.ts","sourceRoot":"","sources":["../../../src/renderers/mui/Body.tsx"],"names":[],"mappings":"AASA,MAAM,WAAW,kBAAkB,CAAC,GAAG;IACrC,UAAU,CAAC,EAAE,CAAC,GAAG,EAAE,GAAG,KAAK,IAAI,CAAA;IAC/B,YAAY,CAAC,EAAE,MAAM,CAAA;CACtB;AAED,8LAA8L;AAC9L,wBAAgB,aAAa,CAAC,GAAG,EAAE,EAAE,UAAU,EAAE,YAAkC,EAAE,EAAE,kBAAkB,CAAC,GAAG,CAAC,+BAsE7G"}

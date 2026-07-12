@@ -37,10 +37,9 @@ export function FavoritesMenu<Filters>({
     <>
       <Button
         variant="outlined"
-        size="small"
-        startIcon={<StarBorderRoundedIcon fontSize="small" />}
+        color="inherit"
+        startIcon={<StarBorderRoundedIcon />}
         onClick={(e) => setAnchorEl(e.currentTarget)}
-        sx={{ height: 36, borderRadius: '10px', color: 'text.secondary', borderColor: 'divider' }}
       >
         {label}
       </Button>

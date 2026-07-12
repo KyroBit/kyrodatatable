@@ -1,6 +1,6 @@
 # Reference — Bootstrap
 
-`import { ... } from '@kyrobit/kyro-datatable/bootstrap'`
+`import { ... } from '@kyrobit/datatable/bootstrap'`
 
 Same props as [MUI](/reference/mui) for `<DataTable/>`, every primitive (`DataTable.Root`, `.SearchField`, `.GroupBySelect`, `.Body`, `.Pagination`), and `<FavoritesMenu/>` — the two renderers implement an identical contract on purpose, so switching between them (or supporting both) is an import change, not a rewrite. See that page for the full prop tables.
 
