@@ -80,11 +80,13 @@ export interface DataTableBodyProps<Row> {
   selectable?: boolean
   /** Keeps the header row visible while rows scroll inside the container. Default `true`. */
   stickyHeader?: boolean
+  /** Extra class name(s) per data row. */
+  rowClass?: (row: Row) => string
 }
 
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
 export function DataTableBody<Row>({
-  onRowClick, emptyMessage = 'No records found.', selectable = false, stickyHeader = true,
+  onRowClick, emptyMessage = 'No records found.', selectable = false, stickyHeader = true, rowClass,
 }: DataTableBodyProps<Row>) {
   const api = useDataTableContext<Row>()
   const items = api.visibleItems
@@ -211,12 +213,16 @@ export function DataTableBody<Row>({
               }
               const row = item.row
               const rowId = api.getRowId(row)
+              const classes = [
+                item.type === 'group-row' ? 'KyroTable-groupChildRow' : '',
+                rowClass ? rowClass(row) : '',
+              ].filter(Boolean).join(' ')
               return (
                 <TableRow
                   key={rowId}
                   hover
                   selected={selectable && api.isSelected(rowId)}
-                  className={item.type === 'group-row' ? 'KyroTable-groupChildRow' : undefined}
+                  className={classes || undefined}
                   sx={{ cursor: onRowClick ? 'pointer' : undefined }}
                   onClick={() => onRowClick?.(row)}
                 >

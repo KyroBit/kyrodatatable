@@ -1,4 +1,22 @@
 export type SortDirection = 'asc' | 'desc';
+/** Filters shape used by the built-in filter UI: field → selected values. */
+export type ChipFilters = Record<string, string[]>;
+export interface FilterChipOption {
+    label: string;
+    value: string;
+}
+/** One section in the built-in filter popover: a label and its chip options. */
+export interface FilterColumnDef {
+    field: string;
+    label: string;
+    options: FilterChipOption[];
+}
+/** A bulk action offered on the current selection. */
+export interface ResourceAction {
+    label: string;
+    confirmationMessage?: (count: number) => string;
+    handle: (rowIds: string[]) => void | Promise<void>;
+}
 export interface SortState<Field extends string = string> {
     field: Field;
     direction: SortDirection;

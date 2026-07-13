@@ -26,7 +26,7 @@ function GroupPager({ groupKey, api }) {
     return (_jsxs(Box, { className: "KyroTable-groupPager", onClick: (e) => e.stopPropagation(), sx: { display: 'flex', alignItems: 'center', gap: 0.25, flex: 'none' }, children: [_jsxs(Typography, { component: "span", sx: { fontSize: 12, color: 'text.secondary', fontVariantNumeric: 'tabular-nums', mr: 0.5 }, children: [from, "\u2013", to, " of ", total] }), _jsx(IconButton, { size: "small", disabled: pagination.page <= 1, onClick: () => api.setGroupPage(groupKey, pagination.page - 1), "aria-label": "Previous page", children: _jsx(KeyboardArrowLeftIcon, { sx: { fontSize: 18 } }) }), _jsx(IconButton, { size: "small", disabled: to >= total, onClick: () => api.setGroupPage(groupKey, pagination.page + 1), "aria-label": "Next page", children: _jsx(KeyboardArrowRightIcon, { sx: { fontSize: 18 } }) })] }));
 }
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
-export function DataTableBody({ onRowClick, emptyMessage = 'No records found.', selectable = false, stickyHeader = true, }) {
+export function DataTableBody({ onRowClick, emptyMessage = 'No records found.', selectable = false, stickyHeader = true, rowClass, }) {
     const api = useDataTableContext();
     const items = api.visibleItems;
     const colSpan = api.columns.length + (selectable ? 1 : 0);
@@ -64,6 +64,10 @@ export function DataTableBody({ onRowClick, emptyMessage = 'No records found.', 
                         }
                         const row = item.row;
                         const rowId = api.getRowId(row);
-                        return (_jsxs(TableRow, { hover: true, selected: selectable && api.isSelected(rowId), className: item.type === 'group-row' ? 'KyroTable-groupChildRow' : undefined, sx: { cursor: onRowClick ? 'pointer' : undefined }, onClick: () => onRowClick?.(row), children: [selectable && (_jsx(TableCell, { padding: "checkbox", onClick: (e) => e.stopPropagation(), children: _jsx(Checkbox, { size: "small", checked: api.isSelected(rowId), onChange: () => api.toggleSelected(rowId), slotProps: { input: { 'aria-label': 'Select row' } } }) })), api.columns.map((col) => (_jsx(TableCell, { align: col.align, children: (col.render ? col.render(row) : row[col.field]) }, col.field)))] }, rowId));
+                        const classes = [
+                            item.type === 'group-row' ? 'KyroTable-groupChildRow' : '',
+                            rowClass ? rowClass(row) : '',
+                        ].filter(Boolean).join(' ');
+                        return (_jsxs(TableRow, { hover: true, selected: selectable && api.isSelected(rowId), className: classes || undefined, sx: { cursor: onRowClick ? 'pointer' : undefined }, onClick: () => onRowClick?.(row), children: [selectable && (_jsx(TableCell, { padding: "checkbox", onClick: (e) => e.stopPropagation(), children: _jsx(Checkbox, { size: "small", checked: api.isSelected(rowId), onChange: () => api.toggleSelected(rowId), slotProps: { input: { 'aria-label': 'Select row' } } }) })), api.columns.map((col) => (_jsx(TableCell, { align: col.align, children: (col.render ? col.render(row) : row[col.field]) }, col.field)))] }, rowId));
                     })) })] }) }));
 }

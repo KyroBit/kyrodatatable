@@ -1,43 +1,267 @@
-import { Box } from '@mui/material'
+import { useMemo, useState, type ReactElement } from 'react'
+import {
+  Box, Button, Card, IconButton, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography,
+} from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import type { DataTableApi } from '../../state/useDataTable.js'
+import type { PresetsApi } from '../../state/usePresets.js'
+import type { ChipFilters, FilterColumnDef, ResourceAction } from '../../types/index.js'
 import { DataTableRoot } from './context.js'
 import { DataTableSearchField } from './SearchField.js'
-import { DataTableGroupBySelect } from './GroupBySelect.js'
 import { DataTableBody } from './Body.js'
 import { DataTablePagination } from './Pagination.js'
+import { DataTableFilterMenu, ManageViewsDialog, chipFiltersEqual, countChipFilters } from './FilterMenu.js'
+import { ActionsIcon, ExportIcon, GroupIcon, ImportIcon, SettingIcon } from './icons.js'
 
-export interface DataTableProps<Row, Field extends string = string, Filters = undefined> {
-  api: DataTableApi<Row, Field, Filters>
-  onRowClick?: (row: Row) => void
+export interface DataTableProps<Row, Field extends string = string> {
+  api: DataTableApi<Row, Field, ChipFilters>
+  /** Enables the views pill bar, save-as-view, and the manage dialog. */
+  presets?: PresetsApi<ChipFilters>
+  /** Enables the filter popover; each entry renders a chip section. */
+  filterColumns?: FilterColumnDef[]
+  emptyFilters?: ChipFilters
   searchPlaceholder?: string
+  searchWidth?: number | string
+  createLabel?: string
+  onCreate?: () => void
+  onExport?: () => void
+  onImport?: () => void
+  exportTooltip?: string
+  importTooltip?: string
+  /** Bulk actions offered while rows are selected. Enables the checkbox column. */
+  actions?: ResourceAction[]
+  selectable?: boolean
+  onRowClick?: (row: Row) => void
+  rowClass?: (row: Row) => string
   emptyMessage?: string
+  stickyHeader?: boolean
+  rowsPerPageOptions?: number[]
 }
 
 /**
- * The default assembly: search + group-by select, the table, pagination.
- * Covers most screens as-is. For a different layout — preset tabs, a custom
- * sort menu, import/export buttons — compose the same pieces yourself:
- * `DataTable.Root`, `.SearchField`, `.GroupBySelect`, `.Body`, `.Pagination`.
+ * The full list-page assembly: views pills + manage, create, search with the
+ * filter popover, group-by, export/import, contextual bulk actions, the table
+ * card, and top-right pagination. Every section is opt-in through props; for
+ * a custom layout compose the exported pieces yourself.
  */
-export function DataTable<Row, Field extends string = string, Filters = undefined>({
-  api, onRowClick, searchPlaceholder, emptyMessage,
-}: DataTableProps<Row, Field, Filters>) {
+export function DataTable<Row, Field extends string = string>({
+  api,
+  presets,
+  filterColumns,
+  emptyFilters = {},
+  searchPlaceholder,
+  searchWidth,
+  createLabel = 'Create',
+  onCreate,
+  onExport,
+  onImport,
+  exportTooltip = 'Export current results as CSV',
+  importTooltip = 'Import from CSV',
+  actions,
+  selectable,
+  onRowClick,
+  rowClass,
+  emptyMessage,
+  stickyHeader,
+  rowsPerPageOptions,
+}: DataTableProps<Row, Field>) {
+  const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null)
+  const [filterDraft, setFilterDraft] = useState<ChipFilters>(emptyFilters)
+  const [groupAnchor, setGroupAnchor] = useState<HTMLElement | null>(null)
+  const [actionsAnchor, setActionsAnchor] = useState<HTMLElement | null>(null)
+  const [manageOpen, setManageOpen] = useState(false)
+
+  const filters = api.filters ?? emptyFilters
+  const filterCount = countChipFilters(filters)
+  const withSelection = Boolean(selectable || (actions && actions.length > 0))
+
+  const activePresetId = useMemo(() => {
+    if (chipFiltersEqual(filters, emptyFilters)) return 'all'
+    return presets?.all.find((p) => chipFiltersEqual(p.filters, filters))?.id ?? null
+  }, [presets, filters, emptyFilters])
+
+  const activeGroupLabel = api.groupByColumns?.find((g) => g.field === api.groupBy)?.label
+
+  const runAction = async (action: ResourceAction) => {
+    setActionsAnchor(null)
+    const count = api.selectedIds.length
+    if (action.confirmationMessage && !confirm(action.confirmationMessage(count))) return
+    await action.handle(api.selectedIds)
+    api.clearSelection()
+    if (api.groupBy) api.setGroupBy(api.groupBy)
+    api.refetch()
+  }
+
   return (
     <DataTableRoot api={api}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-          <DataTableSearchField placeholder={searchPlaceholder} />
-          <DataTableGroupBySelect />
+      {(presets || onCreate) && (
+        <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
+            {presets && (
+              <>
+                <ToggleButtonGroup
+                  exclusive
+                  value={activePresetId}
+                  onChange={(_, nextId: string | null) => {
+                    if (!nextId) return
+                    if (nextId === 'all') { api.setFilters(emptyFilters); return }
+                    const p = presets.all.find((preset) => preset.id === nextId)
+                    if (p) api.setFilters(p.filters)
+                  }}
+                >
+                  <ToggleButton value="all" data-label="All">All</ToggleButton>
+                  {presets.all.map((p) => (
+                    <ToggleButton key={p.id} value={p.id} data-label={p.name}>{p.name}</ToggleButton>
+                  ))}
+                </ToggleButtonGroup>
+                <Tooltip title="Manage views">
+                  <IconButton
+                    onClick={() => setManageOpen(true)}
+                    aria-label="Manage views"
+                    sx={{
+                      width: 45,
+                      height: 45,
+                      borderRadius: '10px',
+                      bgcolor: 'background.paper',
+                      border: '1px solid #E8E8E8',
+                      color: '#292D32',
+                      '&:hover': { bgcolor: '#F6F7FB' },
+                    }}
+                  >
+                    <SettingIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
+          </Stack>
+          {onCreate && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={onCreate}>
+              {createLabel}
+            </Button>
+          )}
+        </Stack>
+      )}
+
+      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, minHeight: 40 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexShrink: 0 }}>
+          <DataTableSearchField
+            placeholder={searchPlaceholder}
+            width={searchWidth}
+            filterCount={filterColumns ? filterCount : 0}
+            onOpenFilters={filterColumns ? (anchor) => { setFilterDraft(filters); setFilterAnchor(anchor) } : undefined}
+          />
+          {api.groupByColumns && api.groupByColumns.length > 0 && (
+            <ToolbarBtn
+              icon={<GroupIcon />}
+              label={activeGroupLabel ? `Group: ${activeGroupLabel}` : 'Group'}
+              onClick={(e) => setGroupAnchor(e.currentTarget)}
+            />
+          )}
+          {onExport && (
+            <Tooltip title={exportTooltip}>
+              <span>
+                <ToolbarBtn icon={<ExportIcon />} label="Export" menu={false} onClick={onExport} />
+              </span>
+            </Tooltip>
+          )}
+          {onImport && (
+            <Tooltip title={importTooltip}>
+              <span>
+                <ToolbarBtn icon={<ImportIcon />} label="Import" menu={false} onClick={onImport} />
+              </span>
+            </Tooltip>
+          )}
+          {actions && actions.length > 0 && api.selectedIds.length > 0 && (
+            <ToolbarBtn
+              icon={<ActionsIcon />}
+              label={`Actions (${api.selectedIds.length})`}
+              onClick={(e) => setActionsAnchor(e.currentTarget)}
+            />
+          )}
+        </Stack>
+        <Box sx={{ minHeight: 40, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <DataTablePagination rowsPerPageOptions={rowsPerPageOptions} />
+          {api.groupBy && (
+            <Typography sx={{ fontSize: '13px', fontWeight: 500, color: '#595959', fontVariantNumeric: 'tabular-nums' }}>
+              {api.groups.length} groups · {api.groupsTotal} records
+            </Typography>
+          )}
         </Box>
-        <DataTableBody<Row> onRowClick={onRowClick} emptyMessage={emptyMessage} />
-        <DataTablePagination />
-      </Box>
+      </Stack>
+
+      {actions && actions.length > 0 && (
+        <Menu anchorEl={actionsAnchor} open={Boolean(actionsAnchor)} onClose={() => setActionsAnchor(null)}>
+          {actions.map((action) => (
+            <MenuItem key={action.label} onClick={() => { void runAction(action) }}>
+              {action.label}
+            </MenuItem>
+          ))}
+        </Menu>
+      )}
+
+      <Menu anchorEl={groupAnchor} open={Boolean(groupAnchor)} onClose={() => setGroupAnchor(null)}>
+        {[{ field: null as Field | null, label: 'None' }, ...(api.groupByColumns ?? [])].map((g) => (
+          <MenuItem
+            key={g.label}
+            selected={api.groupBy === g.field}
+            onClick={() => { api.setGroupBy(g.field); setGroupAnchor(null) }}
+          >
+            {g.label}
+          </MenuItem>
+        ))}
+      </Menu>
+
+      {filterColumns && (
+        <DataTableFilterMenu
+          anchorEl={filterAnchor}
+          onClose={() => setFilterAnchor(null)}
+          filterColumns={filterColumns}
+          draft={filterDraft}
+          onDraftChange={setFilterDraft}
+          onApply={(next) => api.setFilters(next)}
+          emptyFilters={emptyFilters}
+          presets={presets}
+        />
+      )}
+
+      {presets && filterColumns && (
+        <ManageViewsDialog
+          open={manageOpen}
+          onClose={() => setManageOpen(false)}
+          presets={presets}
+          filterColumns={filterColumns}
+          onApply={(next) => { api.setFilters(next); setManageOpen(false) }}
+        />
+      )}
+
+      <Card sx={{ p: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <DataTableBody<Row>
+          selectable={withSelection}
+          emptyMessage={emptyMessage}
+          stickyHeader={stickyHeader}
+          onRowClick={onRowClick}
+          rowClass={rowClass}
+        />
+      </Card>
     </DataTableRoot>
+  )
+}
+
+function ToolbarBtn({ icon, label, onClick, menu = true }: {
+  icon: ReactElement
+  label: string
+  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void
+  menu?: boolean
+}) {
+  return (
+    <Button variant="outlined" color="inherit" startIcon={icon} endIcon={menu ? <ExpandMoreRoundedIcon /> : undefined} onClick={onClick}>
+      {label}
+    </Button>
   )
 }
 
 DataTable.Root = DataTableRoot
 DataTable.SearchField = DataTableSearchField
-DataTable.GroupBySelect = DataTableGroupBySelect
 DataTable.Body = DataTableBody
 DataTable.Pagination = DataTablePagination

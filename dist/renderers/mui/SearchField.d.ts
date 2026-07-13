@@ -1,6 +1,9 @@
-import { type TextFieldProps } from '@mui/material';
-export interface DataTableSearchFieldProps extends Omit<TextFieldProps, 'value' | 'onChange'> {
+export interface DataTableSearchFieldProps {
     placeholder?: string;
+    width?: number | string;
+    onOpenFilters?: (anchor: HTMLElement) => void;
+    filterCount?: number;
 }
-export declare function DataTableSearchField({ placeholder, ...rest }: DataTableSearchFieldProps): import("react").JSX.Element;
+/** Search input bound to `api.search`, with an optional filter opener and applied-filter badge. */
+export declare function DataTableSearchField({ placeholder, width, onOpenFilters, filterCount }: DataTableSearchFieldProps): import("react").JSX.Element;
 //# sourceMappingURL=SearchField.d.ts.map
