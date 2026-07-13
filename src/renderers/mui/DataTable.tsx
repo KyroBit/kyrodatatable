@@ -72,6 +72,7 @@ export function DataTable<Row, Field extends string = string>({
 }: DataTableProps<Row, Field>) {
   const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null)
   const [filterDraft, setFilterDraft] = useState<ChipFilters>(emptyFilters)
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
   const [groupAnchor, setGroupAnchor] = useState<HTMLElement | null>(null)
   const [actionsAnchor, setActionsAnchor] = useState<HTMLElement | null>(null)
   const [exportAnchor, setExportAnchor] = useState<HTMLElement | null>(null)
@@ -82,9 +83,18 @@ export function DataTable<Row, Field extends string = string>({
   const withSelection = Boolean(selectable || (actions && actions.length > 0))
 
   const activePresetId = useMemo(() => {
+    if (selectedPresetId && presets) {
+      const selected = presets.all.find((p) => p.id === selectedPresetId)
+      if (selected && chipFiltersEqual(selected.filters, filters)) return selected.id
+    }
     if (chipFiltersEqual(filters, emptyFilters)) return 'all'
     return presets?.all.find((p) => chipFiltersEqual(p.filters, filters))?.id ?? null
-  }, [presets, filters, emptyFilters])
+  }, [presets, selectedPresetId, filters, emptyFilters])
+
+  const applyFilters = (next: ChipFilters, presetId?: string) => {
+    setSelectedPresetId(presetId ?? null)
+    api.setFilters(next)
+  }
 
   const activeGroupLabel = api.groupByColumns?.find((g) => g.field === api.groupBy)?.label
 
@@ -122,9 +132,9 @@ export function DataTable<Row, Field extends string = string>({
                   value={activePresetId}
                   onChange={(_, nextId: string | null) => {
                     if (!nextId) return
-                    if (nextId === 'all') { api.setFilters(emptyFilters); return }
+                    if (nextId === 'all') { applyFilters(emptyFilters); return }
                     const p = presets.all.find((preset) => preset.id === nextId)
-                    if (p) api.setFilters(p.filters)
+                    if (p) applyFilters(p.filters, p.id)
                   }}
                 >
                   <ToggleButton value="all" data-label="All">All</ToggleButton>
@@ -254,7 +264,7 @@ export function DataTable<Row, Field extends string = string>({
           filterColumns={filterColumns}
           draft={filterDraft}
           onDraftChange={setFilterDraft}
-          onApply={(next) => api.setFilters(next)}
+          onApply={applyFilters}
           emptyFilters={emptyFilters}
           presets={presets}
         />
@@ -266,7 +276,7 @@ export function DataTable<Row, Field extends string = string>({
           onClose={() => setManageOpen(false)}
           presets={presets}
           filterColumns={filterColumns}
-          onApply={(next) => { api.setFilters(next); setManageOpen(false) }}
+          onApply={(next, presetId) => { applyFilters(next, presetId); setManageOpen(false) }}
         />
       )}
 

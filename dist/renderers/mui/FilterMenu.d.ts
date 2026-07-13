@@ -9,7 +9,8 @@ export interface DataTableFilterMenuProps {
     filterColumns: FilterColumnDef[];
     draft: ChipFilters;
     onDraftChange: (next: ChipFilters) => void;
-    onApply: (filters: ChipFilters) => void;
+    /** `presetId` is set when the apply came from saving a view. */
+    onApply: (filters: ChipFilters, presetId?: string) => void;
     emptyFilters: ChipFilters;
     presets?: PresetsApi<ChipFilters>;
 }
@@ -19,7 +20,7 @@ export interface ManageViewsDialogProps {
     onClose: () => void;
     presets: PresetsApi<ChipFilters>;
     filterColumns: FilterColumnDef[];
-    onApply: (filters: ChipFilters) => void;
+    onApply: (filters: ChipFilters, presetId: string) => void;
 }
 export declare function ManageViewsDialog({ open, onClose, presets, filterColumns, onApply }: ManageViewsDialogProps): import("react").JSX.Element;
 //# sourceMappingURL=FilterMenu.d.ts.map

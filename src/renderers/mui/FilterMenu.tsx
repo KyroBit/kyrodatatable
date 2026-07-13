@@ -91,7 +91,8 @@ export interface DataTableFilterMenuProps {
   filterColumns: FilterColumnDef[]
   draft: ChipFilters
   onDraftChange: (next: ChipFilters) => void
-  onApply: (filters: ChipFilters) => void
+  /** `presetId` is set when the apply came from saving a view. */
+  onApply: (filters: ChipFilters, presetId?: string) => void
   emptyFilters: ChipFilters
   presets?: PresetsApi<ChipFilters>
 }
@@ -113,8 +114,8 @@ export function DataTableFilterMenu({
   const saveFilter = () => {
     const trimmed = name.trim()
     if (!trimmed || !presets) return
-    presets.create(trimmed, draft)
-    onApply(draft)
+    const id = presets.create(trimmed, draft)
+    onApply(draft, id)
     close()
   }
 
@@ -238,7 +239,7 @@ export interface ManageViewsDialogProps {
   onClose: () => void
   presets: PresetsApi<ChipFilters>
   filterColumns: FilterColumnDef[]
-  onApply: (filters: ChipFilters) => void
+  onApply: (filters: ChipFilters, presetId: string) => void
 }
 
 export function ManageViewsDialog({ open, onClose, presets, filterColumns, onApply }: ManageViewsDialogProps) {
@@ -355,7 +356,7 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, onApp
               >
                 <SortableContext items={presets.all.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                   {presets.all.map((p) => (
-                    <SortableViewRow key={p.id} id={p.id} onClick={() => { onApply(p.filters); close() }}>
+                    <SortableViewRow key={p.id} id={p.id} onClick={() => { onApply(p.filters, p.id); close() }}>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography noWrap sx={{ fontSize: '14px', fontWeight: 600, color: '#292D32' }}>{p.name}</Typography>
                         <Typography noWrap sx={{ fontSize: '12.5px', color: 'text.secondary' }}>
