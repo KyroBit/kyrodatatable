@@ -11,6 +11,7 @@ export interface PresetsApi<Filters> {
     create: (name: string, filters: Filters) => string;
     update: (id: string, name: string, filters: Filters) => void;
     remove: (id: string) => void;
+    /** Indices into `all`. */
     reorder: (fromIndex: number, toIndex: number) => void;
 }
 /**
@@ -19,5 +20,5 @@ export interface PresetsApi<Filters> {
  * of statuses, a date range, whatever your fetchRecords call understands).
  * Wire the active preset's filters into your fetchRecords closure yourself.
  */
-export declare function usePresets<Filters>(storageKey: string, builtIn?: Preset<Filters>[]): PresetsApi<Filters>;
+export declare function usePresets<Filters>(storageKey: string, defaults?: Preset<Filters>[]): PresetsApi<Filters>;
 //# sourceMappingURL=usePresets.d.ts.map

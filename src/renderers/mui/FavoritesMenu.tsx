@@ -20,12 +20,16 @@ export interface FavoritesMenuProps<Filters> {
   summarize: (filters: Filters) => string
   onApply: (filters: Filters) => void
   label?: string
+  /** Override the button's leading icon (defaults to a star). */
+  icon?: ReactNode
+  /** Trailing icon for the button (e.g. a chevron). */
+  endIcon?: ReactNode
 }
 
 type Mode = { kind: 'list' } | { kind: 'add' } | { kind: 'edit'; id: string }
 
 export function FavoritesMenu<Filters>({
-  presets, activeId, currentFilters, filterEditor, summarize, onApply, label = 'Favorites',
+  presets, activeId, currentFilters, filterEditor, summarize, onApply, label = 'Favorites', icon, endIcon,
 }: FavoritesMenuProps<Filters>) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const [mode, setMode] = useState<Mode>({ kind: 'list' })
@@ -38,7 +42,8 @@ export function FavoritesMenu<Filters>({
       <Button
         variant="outlined"
         color="inherit"
-        startIcon={<StarBorderRoundedIcon />}
+        startIcon={icon ?? <StarBorderRoundedIcon />}
+        endIcon={endIcon}
         onClick={(e) => setAnchorEl(e.currentTarget)}
       >
         {label}
@@ -76,7 +81,7 @@ export function FavoritesMenu<Filters>({
           )}
 
           {mode.kind === 'edit' && (() => {
-            const editing = presets.custom.find((p) => p.id === mode.id)
+            const editing = presets.all.find((p) => p.id === mode.id)
             if (!editing) return null
             return (
               <PresetForm
@@ -104,13 +109,13 @@ export function FavoritesMenu<Filters>({
                       preset={p}
                       isActive={activeId === p.id}
                       summary={summarize(p.filters)}
-                      canMoveUp={!p.builtIn && i > presets.builtIn.length}
-                      canMoveDown={!p.builtIn && i < presets.all.length - 1}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < presets.all.length - 1}
                       onApply={() => { onApply(p.filters); close() }}
-                      onEdit={p.builtIn ? undefined : () => setMode({ kind: 'edit', id: p.id })}
-                      onDelete={p.builtIn ? undefined : () => presets.remove(p.id)}
-                      onMoveUp={() => presets.reorder(i - presets.builtIn.length, i - presets.builtIn.length - 1)}
-                      onMoveDown={() => presets.reorder(i - presets.builtIn.length, i - presets.builtIn.length + 1)}
+                      onEdit={() => setMode({ kind: 'edit', id: p.id })}
+                      onDelete={() => presets.remove(p.id)}
+                      onMoveUp={() => presets.reorder(i, i - 1)}
+                      onMoveDown={() => presets.reorder(i, i + 1)}
                     />
                   ))}
                 </Stack>

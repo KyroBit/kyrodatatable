@@ -76,6 +76,7 @@ export interface ServerDataTableConfig<Row, Field extends string = string, Filte
   /** Enables grouping. Without it, `groupByColumns` has nothing to call. */
   fetchGroups?: (params: FetchParams<Field, Filters>) => Promise<FetchGroupsResult<Field>>
   data?: undefined
+  applyFilters?: undefined
 }
 
 export interface ClientDataTableConfig<Row, Field extends string = string, Filters = undefined>

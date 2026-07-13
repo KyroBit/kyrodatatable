@@ -54,6 +54,22 @@ export interface DataTableApi<Row, Field extends string = string, Filters = unde
   /** Flat + grouped rows in one display-ordered list — see the `VisibleItem` type. What every built-in renderer actually iterates. */
   visibleItems: VisibleItem<Row, Field>[]
 
+  /** Row selection, keyed by row id. Persists across pages; collapsing a group drops its rows. */
+  selection: Record<string, boolean>
+  selectedIds: string[]
+  isSelected: (id: string) => boolean
+  toggleSelected: (id: string) => void
+  setSelection: (selection: Record<string, boolean>) => void
+  clearSelection: () => void
+  /** Selects every currently visible row; if all are already selected, unselects them. */
+  toggleSelectAll: () => void
+  allVisibleSelected: boolean
+  someVisibleSelected: boolean
+  /** Per-group selection over the group's loaded rows. */
+  groupAllSelected: (key: string) => boolean
+  groupSomeSelected: (key: string) => boolean
+  toggleSelectGroup: (key: string) => void
+
   refetch: () => void
 }
 
@@ -86,6 +102,7 @@ export function useDataTable<Row, Field extends string = string, Filters = undef
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [groupState, setGroupState] = useState<Record<string, GroupRuntime<Row>>>({})
+  const [selection, setSelectionState] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (!searchDebounceMs) { setDebouncedSearch(search); return }
@@ -102,7 +119,7 @@ export function useDataTable<Row, Field extends string = string, Filters = undef
       groupField: groupBy ? (row: Row) => (row as Record<string, unknown>)[groupBy] : undefined,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config, columns, groupBy])
+  }, [config.data, config.applyFilters, columns, groupBy])
 
   const fetchRecords = config.fetchRecords ?? clientEngine!.fetchRecords
   const fetchGroups = config.fetchGroups ?? (clientEngine ? clientEngine.fetchGroups : undefined)
@@ -224,7 +241,17 @@ export function useDataTable<Row, Field extends string = string, Filters = undef
       if (next[key] && !groupState[key]) fetchGroupRows(key, 1)
       return next
     })
-  }, [groupState, fetchGroupRows])
+    if (expanded[key]) {
+      const rows = groupState[key]?.rows ?? []
+      if (rows.length) {
+        setSelectionState((sel) => {
+          const next = { ...sel }
+          for (const row of rows) delete next[getRowId(row)]
+          return next
+        })
+      }
+    }
+  }, [groupState, fetchGroupRows, expanded, getRowId])
 
   const setGroupPage = useCallback((key: string, page: number) => {
     fetchGroupRows(key, page)
@@ -238,6 +265,61 @@ export function useDataTable<Row, Field extends string = string, Filters = undef
     (key: string) => groupState[key]?.pagination ?? { page: 1, pageSize: pagination.pageSize },
     [groupState, pagination.pageSize],
   )
+
+  // ─── selection ──────────────────────────────────────────────────────────────
+  const selectableRows = useMemo<Row[]>(() => {
+    if (!groupBy) return rows
+    return groups.flatMap((g) => (expanded[g.key] ? groupState[g.key]?.rows ?? [] : []))
+  }, [groupBy, rows, groups, expanded, groupState])
+
+  const selectedIds = useMemo(
+    () => Object.keys(selection).filter((id) => selection[id]),
+    [selection],
+  )
+  const allVisibleSelected = selectableRows.length > 0 && selectableRows.every((r) => selection[getRowId(r)])
+  const someVisibleSelected = selectableRows.some((r) => selection[getRowId(r)])
+
+  const isSelected = useCallback((id: string) => Boolean(selection[id]), [selection])
+  const toggleSelected = useCallback((id: string) => {
+    setSelectionState((prev) => ({ ...prev, [id]: !prev[id] }))
+  }, [])
+  const clearSelection = useCallback(() => setSelectionState({}), [])
+  const toggleSelectAll = useCallback(() => {
+    setSelectionState((prev) => {
+      const next = { ...prev }
+      if (allVisibleSelected) {
+        for (const row of selectableRows) delete next[getRowId(row)]
+      } else {
+        for (const row of selectableRows) next[getRowId(row)] = true
+      }
+      return next
+    })
+  }, [allVisibleSelected, selectableRows, getRowId])
+
+  const groupAllSelected = useCallback((key: string) => {
+    const rows = groupState[key]?.rows ?? []
+    return rows.length > 0 && rows.every((r) => selection[getRowId(r)])
+  }, [groupState, selection, getRowId])
+
+  const groupSomeSelected = useCallback((key: string) => {
+    const rows = groupState[key]?.rows ?? []
+    return rows.some((r) => selection[getRowId(r)])
+  }, [groupState, selection, getRowId])
+
+  const toggleSelectGroup = useCallback((key: string) => {
+    const rows = groupState[key]?.rows ?? []
+    if (rows.length === 0) return
+    const all = rows.every((r) => selection[getRowId(r)])
+    setSelectionState((prev) => {
+      const next = { ...prev }
+      if (all) {
+        for (const row of rows) delete next[getRowId(row)]
+      } else {
+        for (const row of rows) next[getRowId(row)] = true
+      }
+      return next
+    })
+  }, [groupState, selection, getRowId])
 
   const visibleItems = useMemo<VisibleItem<Row, Field>[]>(() => {
     if (!groupBy) return rows.map((row) => ({ type: 'row' as const, row }))
@@ -293,6 +375,19 @@ export function useDataTable<Row, Field extends string = string, Filters = undef
 
     visibleItems,
 
+    selection,
+    selectedIds,
+    isSelected,
+    toggleSelected,
+    setSelection: setSelectionState,
+    clearSelection,
+    toggleSelectAll,
+    allVisibleSelected,
+    someVisibleSelected,
+    groupAllSelected,
+    groupSomeSelected,
+    toggleSelectGroup,
+
     refetch,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [
@@ -302,5 +397,8 @@ export function useDataTable<Row, Field extends string = string, Filters = undef
     setFilters, toggleSort, setSort, setPage, setPageSize, setGroupBy,
     isGroupExpanded, toggleGroup, groupRowsFor, groupTotalFor, groupLoadingFor, groupPaginationFor, setGroupPage,
     visibleItems, refetch,
+    selection, selectedIds, isSelected, toggleSelected, clearSelection, toggleSelectAll,
+    allVisibleSelected, someVisibleSelected,
+    groupAllSelected, groupSomeSelected, toggleSelectGroup,
   ])
 }

@@ -22,6 +22,7 @@ export function useDataTable(config) {
     const [groupsLoading, setGroupsLoading] = useState(false);
     const [expanded, setExpanded] = useState({});
     const [groupState, setGroupState] = useState({});
+    const [selection, setSelectionState] = useState({});
     useEffect(() => {
         if (!searchDebounceMs) {
             setDebouncedSearch(search);
@@ -40,7 +41,7 @@ export function useDataTable(config) {
             groupField: groupBy ? (row) => row[groupBy] : undefined,
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [config, columns, groupBy]);
+    }, [config.data, config.applyFilters, columns, groupBy]);
     const fetchRecords = config.fetchRecords ?? clientEngine.fetchRecords;
     const fetchGroups = config.fetchGroups ?? (clientEngine ? clientEngine.fetchGroups : undefined);
     const setFilters = useCallback((next) => {
@@ -157,7 +158,18 @@ export function useDataTable(config) {
                 fetchGroupRows(key, 1);
             return next;
         });
-    }, [groupState, fetchGroupRows]);
+        if (expanded[key]) {
+            const rows = groupState[key]?.rows ?? [];
+            if (rows.length) {
+                setSelectionState((sel) => {
+                    const next = { ...sel };
+                    for (const row of rows)
+                        delete next[getRowId(row)];
+                    return next;
+                });
+            }
+        }
+    }, [groupState, fetchGroupRows, expanded, getRowId]);
     const setGroupPage = useCallback((key, page) => {
         fetchGroupRows(key, page);
     }, [fetchGroupRows]);
@@ -166,6 +178,60 @@ export function useDataTable(config) {
     const groupTotalFor = useCallback((key) => groupState[key]?.total ?? 0, [groupState]);
     const groupLoadingFor = useCallback((key) => groupState[key]?.loading ?? false, [groupState]);
     const groupPaginationFor = useCallback((key) => groupState[key]?.pagination ?? { page: 1, pageSize: pagination.pageSize }, [groupState, pagination.pageSize]);
+    // ─── selection ──────────────────────────────────────────────────────────────
+    const selectableRows = useMemo(() => {
+        if (!groupBy)
+            return rows;
+        return groups.flatMap((g) => (expanded[g.key] ? groupState[g.key]?.rows ?? [] : []));
+    }, [groupBy, rows, groups, expanded, groupState]);
+    const selectedIds = useMemo(() => Object.keys(selection).filter((id) => selection[id]), [selection]);
+    const allVisibleSelected = selectableRows.length > 0 && selectableRows.every((r) => selection[getRowId(r)]);
+    const someVisibleSelected = selectableRows.some((r) => selection[getRowId(r)]);
+    const isSelected = useCallback((id) => Boolean(selection[id]), [selection]);
+    const toggleSelected = useCallback((id) => {
+        setSelectionState((prev) => ({ ...prev, [id]: !prev[id] }));
+    }, []);
+    const clearSelection = useCallback(() => setSelectionState({}), []);
+    const toggleSelectAll = useCallback(() => {
+        setSelectionState((prev) => {
+            const next = { ...prev };
+            if (allVisibleSelected) {
+                for (const row of selectableRows)
+                    delete next[getRowId(row)];
+            }
+            else {
+                for (const row of selectableRows)
+                    next[getRowId(row)] = true;
+            }
+            return next;
+        });
+    }, [allVisibleSelected, selectableRows, getRowId]);
+    const groupAllSelected = useCallback((key) => {
+        const rows = groupState[key]?.rows ?? [];
+        return rows.length > 0 && rows.every((r) => selection[getRowId(r)]);
+    }, [groupState, selection, getRowId]);
+    const groupSomeSelected = useCallback((key) => {
+        const rows = groupState[key]?.rows ?? [];
+        return rows.some((r) => selection[getRowId(r)]);
+    }, [groupState, selection, getRowId]);
+    const toggleSelectGroup = useCallback((key) => {
+        const rows = groupState[key]?.rows ?? [];
+        if (rows.length === 0)
+            return;
+        const all = rows.every((r) => selection[getRowId(r)]);
+        setSelectionState((prev) => {
+            const next = { ...prev };
+            if (all) {
+                for (const row of rows)
+                    delete next[getRowId(row)];
+            }
+            else {
+                for (const row of rows)
+                    next[getRowId(row)] = true;
+            }
+            return next;
+        });
+    }, [groupState, selection, getRowId]);
     const visibleItems = useMemo(() => {
         if (!groupBy)
             return rows.map((row) => ({ type: 'row', row }));
@@ -211,6 +277,18 @@ export function useDataTable(config) {
         groupPagination: groupPaginationFor,
         setGroupPage,
         visibleItems,
+        selection,
+        selectedIds,
+        isSelected,
+        toggleSelected,
+        setSelection: setSelectionState,
+        clearSelection,
+        toggleSelectAll,
+        allVisibleSelected,
+        someVisibleSelected,
+        groupAllSelected,
+        groupSomeSelected,
+        toggleSelectGroup,
         refetch,
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [
@@ -220,5 +298,8 @@ export function useDataTable(config) {
         setFilters, toggleSort, setSort, setPage, setPageSize, setGroupBy,
         isGroupExpanded, toggleGroup, groupRowsFor, groupTotalFor, groupLoadingFor, groupPaginationFor, setGroupPage,
         visibleItems, refetch,
+        selection, selectedIds, isSelected, toggleSelected, clearSelection, toggleSelectAll,
+        allVisibleSelected, someVisibleSelected,
+        groupAllSelected, groupSomeSelected, toggleSelectGroup,
     ]);
 }

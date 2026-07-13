@@ -31,6 +31,21 @@ export interface DataTableApi<Row, Field extends string = string, Filters = unde
     setGroupPage: (key: string, page: number) => void;
     /** Flat + grouped rows in one display-ordered list — see the `VisibleItem` type. What every built-in renderer actually iterates. */
     visibleItems: VisibleItem<Row, Field>[];
+    /** Row selection, keyed by row id. Persists across pages; collapsing a group drops its rows. */
+    selection: Record<string, boolean>;
+    selectedIds: string[];
+    isSelected: (id: string) => boolean;
+    toggleSelected: (id: string) => void;
+    setSelection: (selection: Record<string, boolean>) => void;
+    clearSelection: () => void;
+    /** Selects every currently visible row; if all are already selected, unselects them. */
+    toggleSelectAll: () => void;
+    allVisibleSelected: boolean;
+    someVisibleSelected: boolean;
+    /** Per-group selection over the group's loaded rows. */
+    groupAllSelected: (key: string) => boolean;
+    groupSomeSelected: (key: string) => boolean;
+    toggleSelectGroup: (key: string) => void;
     refetch: () => void;
 }
 export declare function useDataTable<Row, Field extends string = string, Filters = undefined>(config: DataTableConfig<Row, Field, Filters>): DataTableApi<Row, Field, Filters>;

@@ -9,6 +9,7 @@ export type { DataTableGroupBySelectProps } from './GroupBySelect.js';
 export { DataTableBody } from './Body.js';
 export type { DataTableBodyProps } from './Body.js';
 export { DataTablePagination } from './Pagination.js';
+export type { DataTablePaginationProps } from './Pagination.js';
 export { FavoritesMenu } from './FavoritesMenu.js';
 export type { FavoritesMenuProps } from './FavoritesMenu.js';
 //# sourceMappingURL=index.d.ts.map

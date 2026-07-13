@@ -1,1 +1,1 @@
-{"version":3,"file":"Pagination.d.ts","sourceRoot":"","sources":["../../../src/renderers/mui/Pagination.tsx"],"names":[],"mappings":"AAGA,4GAA4G;AAC5G,wBAAgB,mBAAmB,uCAelC"}
+{"version":3,"file":"Pagination.d.ts","sourceRoot":"","sources":["../../../src/renderers/mui/Pagination.tsx"],"names":[],"mappings":"AAGA,MAAM,WAAW,wBAAwB;IACvC,sFAAsF;IACtF,kBAAkB,CAAC,EAAE,MAAM,EAAE,CAAA;CAC9B;AAED,4GAA4G;AAC5G,wBAAgB,mBAAmB,CAAC,EAAE,kBAAuB,EAAE,EAAE,wBAAwB,sCAgBxF"}

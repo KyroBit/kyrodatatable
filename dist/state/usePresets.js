@@ -1,24 +1,39 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-function load(key) {
+function isPreset(p) {
+    return Boolean(p) && typeof p.id === 'string';
+}
+/**
+ * Defaults are seeds, not locks: on first load they are materialized into
+ * storage, after which every preset — seeded or user-created — is equally
+ * editable, deletable, and reorderable. A pre-existing v1 store (a plain
+ * array of custom presets) is migrated by prepending the seeds once.
+ */
+function load(key, defaults) {
     if (typeof window === 'undefined')
-        return [];
+        return [...defaults];
     try {
         const raw = window.localStorage.getItem(key);
         if (!raw)
-            return [];
+            return [...defaults];
         const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed))
-            return [];
-        return parsed.filter((p) => p && typeof p.id === 'string');
+        if (Array.isArray(parsed)) {
+            return [...defaults, ...parsed.filter((isPreset))];
+        }
+        const v2 = parsed;
+        if (v2 && v2.v === 2 && Array.isArray(v2.presets)) {
+            return v2.presets.filter((isPreset));
+        }
+        return [...defaults];
     }
     catch {
-        return [];
+        return [...defaults];
     }
 }
 function persist(key, presets) {
     if (typeof window === 'undefined')
         return;
-    window.localStorage.setItem(key, JSON.stringify(presets));
+    const stored = { v: 2, presets };
+    window.localStorage.setItem(key, JSON.stringify(stored));
 }
 function newId() {
     if (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
@@ -31,24 +46,25 @@ function newId() {
  * of statuses, a date range, whatever your fetchRecords call understands).
  * Wire the active preset's filters into your fetchRecords closure yourself.
  */
-export function usePresets(storageKey, builtIn = []) {
+export function usePresets(storageKey, defaults = []) {
     const key = `kyro-datatable:presets:${storageKey}`;
-    const [custom, setCustom] = useState(() => load(key));
-    useEffect(() => { persist(key, custom); }, [key, custom]);
-    const all = useMemo(() => [...builtIn, ...custom], [builtIn, custom]);
+    const [presets, setPresets] = useState(() => load(key, defaults));
+    useEffect(() => { persist(key, presets); }, [key, presets]);
+    const builtIn = useMemo(() => presets.filter((p) => p.builtIn), [presets]);
+    const custom = useMemo(() => presets.filter((p) => !p.builtIn), [presets]);
     const create = useCallback((name, filters) => {
         const preset = { id: newId(), name, filters };
-        setCustom((prev) => [...prev, preset]);
+        setPresets((prev) => [...prev, preset]);
         return preset.id;
     }, []);
     const update = useCallback((id, name, filters) => {
-        setCustom((prev) => prev.map((p) => (p.id === id ? { ...p, name, filters } : p)));
+        setPresets((prev) => prev.map((p) => (p.id === id ? { ...p, name, filters } : p)));
     }, []);
     const remove = useCallback((id) => {
-        setCustom((prev) => prev.filter((p) => p.id !== id));
+        setPresets((prev) => prev.filter((p) => p.id !== id));
     }, []);
     const reorder = useCallback((fromIndex, toIndex) => {
-        setCustom((prev) => {
+        setPresets((prev) => {
             const next = [...prev];
             const [moved] = next.splice(fromIndex, 1);
             if (moved)
@@ -56,5 +72,5 @@ export function usePresets(storageKey, builtIn = []) {
             return next;
         });
     }, []);
-    return { custom, all, builtIn, create, update, remove, reorder };
+    return { custom, all: presets, builtIn, create, update, remove, reorder };
 }
