@@ -1,6 +1,6 @@
 import type { DataTableApi } from '../../state/useDataTable.js';
 import type { PresetsApi } from '../../state/usePresets.js';
-import type { ChipFilters, FilterColumnDef, ResourceAction } from '../../types/index.js';
+import type { ChipFilters, ExportFormat, ExportRequest, FilterColumnDef, ResourceAction } from '../../types/index.js';
 import { DataTableRoot } from './context.js';
 import { DataTableSearchField } from './SearchField.js';
 import { DataTableBody } from './Body.js';
@@ -16,7 +16,10 @@ export interface DataTableProps<Row, Field extends string = string> {
     searchWidth?: number | string;
     createLabel?: string;
     onCreate?: () => void;
-    onExport?: () => void;
+    /** Receives the full query context; POST it to your export endpoint. */
+    onExport?: (request: ExportRequest<Field, ChipFilters>) => void | Promise<void>;
+    /** More than one format turns the Export button into a dropdown. */
+    exportFormats?: ExportFormat[];
     onImport?: () => void;
     exportTooltip?: string;
     importTooltip?: string;
@@ -35,7 +38,7 @@ export interface DataTableProps<Row, Field extends string = string> {
  * card, and top-right pagination. Every section is opt-in through props; for
  * a custom layout compose the exported pieces yourself.
  */
-export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, emptyFilters, searchPlaceholder, searchWidth, createLabel, onCreate, onExport, onImport, exportTooltip, importTooltip, actions, selectable, onRowClick, rowClass, emptyMessage, stickyHeader, rowsPerPageOptions, }: DataTableProps<Row, Field>): import("react").JSX.Element;
+export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, emptyFilters, searchPlaceholder, searchWidth, createLabel, onCreate, onExport, exportFormats, onImport, exportTooltip, importTooltip, actions, selectable, onRowClick, rowClass, emptyMessage, stickyHeader, rowsPerPageOptions, }: DataTableProps<Row, Field>): import("react").JSX.Element;
 export declare namespace DataTable {
     var Root: typeof DataTableRoot;
     var SearchField: typeof DataTableSearchField;

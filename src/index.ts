@@ -6,6 +6,8 @@ export type {
   ChipFilters,
   ColumnDef,
   DataTableConfig,
+  ExportFormat,
+  ExportRequest,
   FetchGroupsResult,
   FetchParams,
   FetchResult,

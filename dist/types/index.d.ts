@@ -17,6 +17,19 @@ export interface ResourceAction {
     confirmationMessage?: (count: number) => string;
     handle: (rowIds: string[]) => void | Promise<void>;
 }
+export interface ExportFormat {
+    id: string;
+    label: string;
+}
+/** Everything a backend needs to reproduce the current result set for an export. */
+export interface ExportRequest<Field extends string = string, Filters = unknown> {
+    format: string;
+    search: string;
+    sort: SortState<Field> | null;
+    filters: Filters | undefined;
+    groupBy: Field | null;
+    selectedIds: string[];
+}
 export interface SortState<Field extends string = string> {
     field: Field;
     direction: SortDirection;

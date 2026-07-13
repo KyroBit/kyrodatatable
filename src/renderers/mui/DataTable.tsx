@@ -6,7 +6,7 @@ import AddIcon from '@mui/icons-material/Add'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import type { DataTableApi } from '../../state/useDataTable.js'
 import type { PresetsApi } from '../../state/usePresets.js'
-import type { ChipFilters, FilterColumnDef, ResourceAction } from '../../types/index.js'
+import type { ChipFilters, ExportFormat, ExportRequest, FilterColumnDef, ResourceAction } from '../../types/index.js'
 import { DataTableRoot } from './context.js'
 import { DataTableSearchField } from './SearchField.js'
 import { DataTableBody } from './Body.js'
@@ -25,7 +25,10 @@ export interface DataTableProps<Row, Field extends string = string> {
   searchWidth?: number | string
   createLabel?: string
   onCreate?: () => void
-  onExport?: () => void
+  /** Receives the full query context; POST it to your export endpoint. */
+  onExport?: (request: ExportRequest<Field, ChipFilters>) => void | Promise<void>
+  /** More than one format turns the Export button into a dropdown. */
+  exportFormats?: ExportFormat[]
   onImport?: () => void
   exportTooltip?: string
   importTooltip?: string
@@ -55,8 +58,9 @@ export function DataTable<Row, Field extends string = string>({
   createLabel = 'Create',
   onCreate,
   onExport,
+  exportFormats = [{ id: 'csv', label: 'CSV' }],
   onImport,
-  exportTooltip = 'Export current results as CSV',
+  exportTooltip = 'Export current results',
   importTooltip = 'Import from CSV',
   actions,
   selectable,
@@ -70,6 +74,7 @@ export function DataTable<Row, Field extends string = string>({
   const [filterDraft, setFilterDraft] = useState<ChipFilters>(emptyFilters)
   const [groupAnchor, setGroupAnchor] = useState<HTMLElement | null>(null)
   const [actionsAnchor, setActionsAnchor] = useState<HTMLElement | null>(null)
+  const [exportAnchor, setExportAnchor] = useState<HTMLElement | null>(null)
   const [manageOpen, setManageOpen] = useState(false)
 
   const filters = api.filters ?? emptyFilters
@@ -91,6 +96,18 @@ export function DataTable<Row, Field extends string = string>({
     api.clearSelection()
     if (api.groupBy) api.setGroupBy(api.groupBy)
     api.refetch()
+  }
+
+  const runExport = (format: string) => {
+    setExportAnchor(null)
+    void onExport?.({
+      format,
+      search: api.search,
+      sort: api.sort,
+      filters: api.filters,
+      groupBy: api.groupBy,
+      selectedIds: api.selectedIds,
+    })
   }
 
   return (
@@ -161,7 +178,15 @@ export function DataTable<Row, Field extends string = string>({
           {onExport && (
             <Tooltip title={exportTooltip}>
               <span>
-                <ToolbarBtn icon={<ExportIcon />} label="Export" menu={false} onClick={onExport} />
+                <ToolbarBtn
+                  icon={<ExportIcon />}
+                  label="Export"
+                  menu={exportFormats.length > 1}
+                  onClick={(e) => {
+                    if (exportFormats.length > 1) setExportAnchor(e.currentTarget)
+                    else runExport(exportFormats[0]?.id ?? 'csv')
+                  }}
+                />
               </span>
             </Tooltip>
           )}
@@ -195,6 +220,16 @@ export function DataTable<Row, Field extends string = string>({
           {actions.map((action) => (
             <MenuItem key={action.label} onClick={() => { void runAction(action) }}>
               {action.label}
+            </MenuItem>
+          ))}
+        </Menu>
+      )}
+
+      {onExport && exportFormats.length > 1 && (
+        <Menu anchorEl={exportAnchor} open={Boolean(exportAnchor)} onClose={() => setExportAnchor(null)}>
+          {exportFormats.map((format) => (
+            <MenuItem key={format.id} onClick={() => runExport(format.id)}>
+              {format.label}
             </MenuItem>
           ))}
         </Menu>
