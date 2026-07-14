@@ -186,7 +186,7 @@ export function DataTableFilterMenu({
                     color="inherit"
                     disabled={draftEmpty}
                     onClick={() => setMode('save')}
-                    sx={{ height: 36, minHeight: 36, px: '16px', fontSize: '13px', borderRadius: '10px' }}
+                    sx={{ height: 36, minHeight: 36, px: '16px', fontSize: '13px', borderRadius: '8px' }}
                   >
                     Save
                   </Button>
@@ -331,7 +331,7 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, onApp
                 variant="outlined"
                 color="inherit"
                 onClick={() => setEditingId(null)}
-                sx={{ height: 36, minHeight: 36, px: '16px', fontSize: '13px', borderRadius: '10px' }}
+                sx={{ height: 36, minHeight: 36, px: '16px', fontSize: '13px', borderRadius: '8px' }}
               >
                 Cancel
               </Button>
@@ -407,7 +407,7 @@ function SortableViewRow({ id, children, onClick }: { id: string; children: Reac
         pl: 1,
         pr: 1,
         py: 1.25,
-        borderRadius: '10px',
+        borderRadius: '8px',
         cursor: 'pointer',
         transform: CSS.Transform.toString(transform),
         transition,

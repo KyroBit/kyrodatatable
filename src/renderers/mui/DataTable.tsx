@@ -149,7 +149,7 @@ export function DataTable<Row, Field extends string = string>({
                     sx={{
                       width: 45,
                       height: 45,
-                      borderRadius: '10px',
+                      borderRadius: '8px',
                       bgcolor: '#F6F7FB',
                       border: '1px solid #E8E8E8',
                       color: '#292D32',

@@ -76,7 +76,7 @@ export function DataTable({ api, presets, filterColumns, emptyFilters = {}, sear
                                     }, children: [_jsx(ToggleButton, { value: "all", "data-label": "All", children: "All" }), presets.all.map((p) => (_jsx(ToggleButton, { value: p.id, "data-label": p.name, children: p.name }, p.id)))] }), _jsx(Tooltip, { title: "Manage views", children: _jsx(IconButton, { onClick: () => setManageOpen(true), "aria-label": "Manage views", sx: {
                                             width: 45,
                                             height: 45,
-                                            borderRadius: '10px',
+                                            borderRadius: '8px',
                                             bgcolor: '#F6F7FB',
                                             border: '1px solid #E8E8E8',
                                             color: '#292D32',
