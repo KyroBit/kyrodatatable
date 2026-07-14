@@ -93,12 +93,11 @@ export interface DataTableFilterMenuProps {
   onDraftChange: (next: ChipFilters) => void
   /** `presetId` is set when the apply came from saving a view. */
   onApply: (filters: ChipFilters, presetId?: string) => void
-  emptyFilters: ChipFilters
   presets?: PresetsApi<ChipFilters>
 }
 
 export function DataTableFilterMenu({
-  anchorEl, onClose, filterColumns, draft, onDraftChange, onApply, emptyFilters, presets,
+  anchorEl, onClose, filterColumns, draft, onDraftChange, onApply, presets,
 }: DataTableFilterMenuProps) {
   const [mode, setMode] = useState<'filter' | 'save'>('filter')
   const [name, setName] = useState('')
@@ -163,7 +162,7 @@ export function DataTableFilterMenu({
               <Box
                 component="button"
                 type="button"
-                onClick={() => { onApply(emptyFilters); close() }}
+                onClick={() => { onApply({}); close() }}
                 sx={{
                   background: 'none',
                   border: 'none',

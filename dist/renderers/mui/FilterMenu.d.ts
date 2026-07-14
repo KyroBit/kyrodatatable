@@ -11,10 +11,9 @@ export interface DataTableFilterMenuProps {
     onDraftChange: (next: ChipFilters) => void;
     /** `presetId` is set when the apply came from saving a view. */
     onApply: (filters: ChipFilters, presetId?: string) => void;
-    emptyFilters: ChipFilters;
     presets?: PresetsApi<ChipFilters>;
 }
-export declare function DataTableFilterMenu({ anchorEl, onClose, filterColumns, draft, onDraftChange, onApply, emptyFilters, presets, }: DataTableFilterMenuProps): import("react").JSX.Element;
+export declare function DataTableFilterMenu({ anchorEl, onClose, filterColumns, draft, onDraftChange, onApply, presets, }: DataTableFilterMenuProps): import("react").JSX.Element;
 export interface ManageViewsDialogProps {
     open: boolean;
     onClose: () => void;

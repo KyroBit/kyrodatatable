@@ -20,7 +20,6 @@ export interface DataTableProps<Row, Field extends string = string> {
   presets?: PresetsApi<ChipFilters>
   /** Enables the filter popover; each entry renders a chip section. */
   filterColumns?: FilterColumnDef[]
-  emptyFilters?: ChipFilters
   searchPlaceholder?: string
   searchWidth?: number | string
   createLabel?: string
@@ -52,7 +51,6 @@ export function DataTable<Row, Field extends string = string>({
   api,
   presets,
   filterColumns,
-  emptyFilters = {},
   searchPlaceholder,
   searchWidth,
   createLabel = 'Create',
@@ -71,14 +69,14 @@ export function DataTable<Row, Field extends string = string>({
   rowsPerPageOptions,
 }: DataTableProps<Row, Field>) {
   const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null)
-  const [filterDraft, setFilterDraft] = useState<ChipFilters>(emptyFilters)
+  const [filterDraft, setFilterDraft] = useState<ChipFilters>({})
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
   const [groupAnchor, setGroupAnchor] = useState<HTMLElement | null>(null)
   const [actionsAnchor, setActionsAnchor] = useState<HTMLElement | null>(null)
   const [exportAnchor, setExportAnchor] = useState<HTMLElement | null>(null)
   const [manageOpen, setManageOpen] = useState(false)
 
-  const filters = api.filters ?? emptyFilters
+  const filters = api.filters ?? {}
   const filterCount = countChipFilters(filters)
   const withSelection = Boolean(selectable || (actions && actions.length > 0))
 
@@ -87,9 +85,9 @@ export function DataTable<Row, Field extends string = string>({
       const selected = presets.all.find((p) => p.id === selectedPresetId)
       if (selected && chipFiltersEqual(selected.filters, filters)) return selected.id
     }
-    if (chipFiltersEqual(filters, emptyFilters)) return 'all'
+    if (countChipFilters(filters) === 0) return 'all'
     return presets?.all.find((p) => chipFiltersEqual(p.filters, filters))?.id ?? null
-  }, [presets, selectedPresetId, filters, emptyFilters])
+  }, [presets, selectedPresetId, filters])
 
   const applyFilters = (next: ChipFilters, presetId?: string) => {
     setSelectedPresetId(presetId ?? null)
@@ -132,7 +130,7 @@ export function DataTable<Row, Field extends string = string>({
                   value={activePresetId}
                   onChange={(_, nextId: string | null) => {
                     if (!nextId) return
-                    if (nextId === 'all') { applyFilters(emptyFilters); return }
+                    if (nextId === 'all') { applyFilters({}); return }
                     const p = presets.all.find((preset) => preset.id === nextId)
                     if (p) applyFilters(p.filters, p.id)
                   }}
@@ -265,7 +263,6 @@ export function DataTable<Row, Field extends string = string>({
           draft={filterDraft}
           onDraftChange={setFilterDraft}
           onApply={applyFilters}
-          emptyFilters={emptyFilters}
           presets={presets}
         />
       )}

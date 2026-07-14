@@ -45,6 +45,7 @@ export interface ColumnDef<Row, Field extends string = string> {
     /** Included in client-mode search matching. Default `true`. */
     searchable?: boolean;
     align?: 'left' | 'right' | 'center';
+    /** Only needed for exceptional cells (badges, action buttons, custom markup). Plain values render as-is with the table's cell typography. */
     render?: (row: Row) => unknown;
 }
 export interface GroupByColumn<Field extends string = string> {
