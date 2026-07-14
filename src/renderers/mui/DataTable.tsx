@@ -150,10 +150,10 @@ export function DataTable<Row, Field extends string = string>({
                       width: 45,
                       height: 45,
                       borderRadius: '10px',
-                      bgcolor: 'background.paper',
+                      bgcolor: '#F6F7FB',
                       border: '1px solid #E8E8E8',
                       color: '#292D32',
-                      '&:hover': { bgcolor: '#F6F7FB' },
+                      '&:hover': { bgcolor: '#EDEFF5' },
                     }}
                   >
                     <SettingIcon sx={{ fontSize: 18 }} />

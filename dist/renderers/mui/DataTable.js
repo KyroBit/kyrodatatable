@@ -77,10 +77,10 @@ export function DataTable({ api, presets, filterColumns, emptyFilters = {}, sear
                                             width: 45,
                                             height: 45,
                                             borderRadius: '10px',
-                                            bgcolor: 'background.paper',
+                                            bgcolor: '#F6F7FB',
                                             border: '1px solid #E8E8E8',
                                             color: '#292D32',
-                                            '&:hover': { bgcolor: '#F6F7FB' },
+                                            '&:hover': { bgcolor: '#EDEFF5' },
                                         }, children: _jsx(SettingIcon, { sx: { fontSize: 18 } }) }) })] })) }), onCreate && (_jsx(Button, { variant: "contained", startIcon: _jsx(AddIcon, {}), onClick: onCreate, children: createLabel }))] })), _jsxs(Stack, { direction: "row", sx: { alignItems: 'center', justifyContent: 'space-between', gap: 1, minHeight: 40 }, children: [_jsxs(Stack, { direction: "row", spacing: 1, sx: { alignItems: 'center', flexShrink: 0 }, children: [_jsx(DataTableSearchField, { placeholder: searchPlaceholder, width: searchWidth, filterCount: filterColumns ? filterCount : 0, onOpenFilters: filterColumns ? (anchor) => { setFilterDraft(filters); setFilterAnchor(anchor); } : undefined }), api.groupByColumns && api.groupByColumns.length > 0 && (_jsx(ToolbarBtn, { icon: _jsx(GroupIcon, {}), label: activeGroupLabel ? `Group: ${activeGroupLabel}` : 'Group', onClick: (e) => setGroupAnchor(e.currentTarget) })), onExport && (_jsx(Tooltip, { title: exportTooltip, children: _jsx("span", { children: _jsx(ToolbarBtn, { icon: _jsx(ExportIcon, {}), label: "Export", menu: exportFormats.length > 1, onClick: (e) => {
                                             if (exportFormats.length > 1)
                                                 setExportAnchor(e.currentTarget);
