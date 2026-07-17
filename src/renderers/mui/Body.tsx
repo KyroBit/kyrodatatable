@@ -36,7 +36,7 @@ function SortArrows({ direction }: { direction: SortDirection | null }) {
  * Compact inline pager shown at the right edge of an expanded group's header
  * row — each group paginates independently (`api.setGroupPage`).
  */
-function GroupPager({ groupKey, api }: { groupKey: string; api: DataTableApi<unknown> }) {
+function GroupPager({ groupKey, api }: { groupKey: string; api: DataTableApi<unknown, string, undefined> }) {
   const pagination = api.groupPagination(groupKey)
   const total = api.groupTotal(groupKey)
   if (total <= 0) return null
@@ -205,7 +205,7 @@ export function DataTableBody<Row>({
                             <Box component="span" sx={{ color: 'text.secondary', fontSize: 12 }}>loading…</Box>
                           )}
                         </Box>
-                        {item.expanded && <GroupPager groupKey={item.group.key} api={api as DataTableApi<unknown>} />}
+                        {item.expanded && <GroupPager groupKey={item.group.key} api={api as DataTableApi<unknown, string, undefined>} />}
                       </Box>
                     </TableCell>
                   </TableRow>

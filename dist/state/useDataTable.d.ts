@@ -1,5 +1,5 @@
-import type { ColumnDef, DataTableConfig, GroupByColumn, PaginationState, ResourceGroup, SortState, VisibleItem } from '../types/index.js';
-export interface DataTableApi<Row, Field extends string = string, Filters = undefined> {
+import type { ColumnDef, DataTableConfig, FilterValues, GroupByColumn, PaginationState, ResourceGroup, SortState, VisibleItem } from '../types/index.js';
+export interface DataTableApi<Row, Field extends string = string, Filters = FilterValues> {
     columns: ColumnDef<Row, Field>[];
     getRowId: (row: Row) => string;
     groupByColumns?: GroupByColumn<Field>[];
@@ -48,5 +48,5 @@ export interface DataTableApi<Row, Field extends string = string, Filters = unde
     toggleSelectGroup: (key: string) => void;
     refetch: () => void;
 }
-export declare function useDataTable<Row, Field extends string = string, Filters = undefined>(config: DataTableConfig<Row, Field, Filters>): DataTableApi<Row, Field, Filters>;
+export declare function useDataTable<Row, Field extends string = string, Filters = FilterValues>(config: DataTableConfig<Row, Field, Filters>): DataTableApi<Row, Field, Filters>;
 //# sourceMappingURL=useDataTable.d.ts.map

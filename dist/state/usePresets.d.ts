@@ -1,10 +1,11 @@
-export interface Preset<Filters> {
+import type { FilterValues } from '../types/index.js';
+export interface Preset<Filters = FilterValues> {
     id: string;
     name: string;
     filters: Filters;
     builtIn?: boolean;
 }
-export interface PresetsApi<Filters> {
+export interface PresetsApi<Filters = FilterValues> {
     custom: Preset<Filters>[];
     all: Preset<Filters>[];
     builtIn: Preset<Filters>[];
@@ -20,5 +21,5 @@ export interface PresetsApi<Filters> {
  * of statuses, a date range, whatever your fetchRecords call understands).
  * Wire the active preset's filters into your fetchRecords closure yourself.
  */
-export declare function usePresets<Filters>(storageKey: string, defaults?: Preset<Filters>[]): PresetsApi<Filters>;
+export declare function usePresets<Filters = FilterValues>(storageKey: string, defaults?: Preset<Filters>[]): PresetsApi<Filters>;
 //# sourceMappingURL=usePresets.d.ts.map

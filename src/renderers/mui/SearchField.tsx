@@ -25,18 +25,18 @@ export function DataTableSearchField({ placeholder = 'Search', width = 420, onOp
           className: 'search-field',
           startAdornment: (
             <InputAdornment position="start" sx={{ mr: '11px' }}>
-              <SearchIcon sx={{ fontSize: 20, color: '#838383' }} />
+              <SearchIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
             </InputAdornment>
           ),
           endAdornment: onOpenFilters ? (
             <InputAdornment position="end" sx={{ ml: 0, mr: 0 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
-                <Box sx={{ width: '1.2px', height: 20, bgcolor: '#E8E8E8' }} />
+                <Box sx={{ width: '1.2px', height: 20, bgcolor: 'divider' }} />
                 <IconButton
                   size="small"
                   onClick={(e) => onOpenFilters(e.currentTarget)}
                   aria-label="Open filters"
-                  sx={{ color: filterCount > 0 ? 'primary.main' : '#0B0B2C', p: '6px', m: '-6px', borderRadius: '8px' }}
+                  sx={{ color: filterCount > 0 ? 'primary.main' : 'text.primary', p: '6px', m: '-6px', borderRadius: '8px' }}
                 >
                   <FilterIcon sx={{ fontSize: 20 }} />
                   {filterCount > 0 && (

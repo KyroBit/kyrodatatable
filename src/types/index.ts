@@ -1,19 +1,50 @@
 export type SortDirection = 'asc' | 'desc'
 
-/** Filters shape used by the built-in filter UI: field → selected values. */
-export type ChipFilters = Record<string, string[]>
+export interface DateRangeValue {
+  from?: string
+  to?: string
+}
 
-export interface FilterChipOption {
+/**
+ * Filters shape used by the built-in filter UI: field → its current value.
+ * A `select` field holds the selected option values; `text` holds the typed
+ * string; `date` holds a single-sided or two-sided range.
+ */
+export type FilterValues = Record<string, string[] | string | DateRangeValue>
+
+export interface FilterOption {
   label: string
   value: string
 }
 
-/** One section in the built-in filter popover: a label and its chip options. */
-export interface FilterColumnDef {
+/** Sync options render immediately; an async source is called on every search-box change (debounced by the popover). */
+export type FilterOptionsSource = FilterOption[] | ((query: string) => Promise<FilterOption[]>)
+
+export interface SelectFilterColumnDef {
+  type: 'select'
   field: string
   label: string
-  options: FilterChipOption[]
+  options: FilterOptionsSource
 }
+
+export interface TextFilterColumnDef {
+  type: 'text'
+  field: string
+  label: string
+  placeholder?: string
+  inputType?: 'text' | 'number'
+}
+
+export interface DateFilterColumnDef {
+  type: 'date'
+  field: string
+  label: string
+  /** Renders paired From/To inputs instead of a single date. */
+  range?: boolean
+}
+
+/** One section in the built-in filter popover. */
+export type FilterColumnDef = SelectFilterColumnDef | TextFilterColumnDef | DateFilterColumnDef
 
 /** A bulk action offered on the current selection. */
 export interface ResourceAction {
@@ -28,7 +59,7 @@ export interface ExportFormat {
 }
 
 /** Everything a backend needs to reproduce the current result set for an export. */
-export interface ExportRequest<Field extends string = string, Filters = unknown> {
+export interface ExportRequest<Field extends string = string, Filters = FilterValues> {
   format: string
   search: string
   sort: SortState<Field> | null
@@ -70,7 +101,7 @@ export interface ResourceGroup<Field extends string = string> {
   count: number
 }
 
-export interface FetchParams<Field extends string = string, Filters = undefined> {
+export interface FetchParams<Field extends string = string, Filters = FilterValues> {
   page: number
   pageSize: number
   search: string
@@ -107,7 +138,7 @@ interface DataTableConfigBase<Row, Field extends string, Filters> {
   searchDebounceMs?: number
 }
 
-export interface ServerDataTableConfig<Row, Field extends string = string, Filters = undefined>
+export interface ServerDataTableConfig<Row, Field extends string = string, Filters = FilterValues>
   extends DataTableConfigBase<Row, Field, Filters> {
   /** Called for the flat list, and again per-group (with `groupBy`/`groupKey` set) when a group is expanded. */
   fetchRecords: (params: FetchParams<Field, Filters>) => Promise<FetchResult<Row>>
@@ -117,7 +148,7 @@ export interface ServerDataTableConfig<Row, Field extends string = string, Filte
   applyFilters?: undefined
 }
 
-export interface ClientDataTableConfig<Row, Field extends string = string, Filters = undefined>
+export interface ClientDataTableConfig<Row, Field extends string = string, Filters = FilterValues>
   extends DataTableConfigBase<Row, Field, Filters> {
   /** The whole dataset, already loaded. Search, sort, pagination, and grouping all run in memory — no fetch functions needed. */
   data: Row[]
@@ -127,6 +158,6 @@ export interface ClientDataTableConfig<Row, Field extends string = string, Filte
   fetchGroups?: undefined
 }
 
-export type DataTableConfig<Row, Field extends string = string, Filters = undefined> =
+export type DataTableConfig<Row, Field extends string = string, Filters = FilterValues> =
   | ServerDataTableConfig<Row, Field, Filters>
   | ClientDataTableConfig<Row, Field, Filters>

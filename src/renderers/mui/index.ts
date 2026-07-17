@@ -12,7 +12,7 @@ export type { DataTableBodyProps } from './Body.js'
 export { DataTablePagination } from './Pagination.js'
 export type { DataTablePaginationProps } from './Pagination.js'
 
-export { DataTableFilterMenu, ManageViewsDialog, chipFiltersEqual, countChipFilters, summarizeChipFilters } from './FilterMenu.js'
+export { DataTableFilterMenu, ManageViewsDialog } from './FilterMenu.js'
 export type { DataTableFilterMenuProps, ManageViewsDialogProps } from './FilterMenu.js'
 
 export * from './icons.js'

@@ -1,14 +1,14 @@
 import type { DataTableApi } from '../../state/useDataTable.js';
 import type { PresetsApi } from '../../state/usePresets.js';
-import type { ChipFilters, ExportFormat, ExportRequest, FilterColumnDef, ResourceAction } from '../../types/index.js';
+import type { ExportFormat, ExportRequest, FilterColumnDef, FilterValues, ResourceAction } from '../../types/index.js';
 import { DataTableRoot } from './context.js';
 import { DataTableSearchField } from './SearchField.js';
 import { DataTableBody } from './Body.js';
 import { DataTablePagination } from './Pagination.js';
 export interface DataTableProps<Row, Field extends string = string> {
-    api: DataTableApi<Row, Field, ChipFilters>;
+    api: DataTableApi<Row, Field, FilterValues>;
     /** Enables the views pill bar, save-as-view, and the manage dialog. */
-    presets?: PresetsApi<ChipFilters>;
+    presets?: PresetsApi<FilterValues>;
     /** Enables the filter popover; each entry renders a chip section. */
     filterColumns?: FilterColumnDef[];
     searchPlaceholder?: string;
@@ -16,7 +16,7 @@ export interface DataTableProps<Row, Field extends string = string> {
     createLabel?: string;
     onCreate?: () => void;
     /** Receives the full query context; POST it to your export endpoint. */
-    onExport?: (request: ExportRequest<Field, ChipFilters>) => void | Promise<void>;
+    onExport?: (request: ExportRequest<Field, FilterValues>) => void | Promise<void>;
     /** More than one format turns the Export button into a dropdown. */
     exportFormats?: ExportFormat[];
     onImport?: () => void;

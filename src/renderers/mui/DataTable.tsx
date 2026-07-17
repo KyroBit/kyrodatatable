@@ -2,22 +2,24 @@ import { useMemo, useState, type ReactElement } from 'react'
 import {
   Box, Button, Card, IconButton, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography,
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import AddIcon from '@mui/icons-material/Add'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import type { DataTableApi } from '../../state/useDataTable.js'
 import type { PresetsApi } from '../../state/usePresets.js'
-import type { ChipFilters, ExportFormat, ExportRequest, FilterColumnDef, ResourceAction } from '../../types/index.js'
+import type { ExportFormat, ExportRequest, FilterColumnDef, FilterValues, ResourceAction } from '../../types/index.js'
+import { countFilterValues, filterValuesEqual } from '../../filterValues.js'
 import { DataTableRoot } from './context.js'
 import { DataTableSearchField } from './SearchField.js'
 import { DataTableBody } from './Body.js'
 import { DataTablePagination } from './Pagination.js'
-import { DataTableFilterMenu, ManageViewsDialog, chipFiltersEqual, countChipFilters } from './FilterMenu.js'
+import { DataTableFilterMenu, ManageViewsDialog } from './FilterMenu.js'
 import { ActionsIcon, ExportIcon, GroupIcon, ImportIcon, SettingIcon } from './icons.js'
 
 export interface DataTableProps<Row, Field extends string = string> {
-  api: DataTableApi<Row, Field, ChipFilters>
+  api: DataTableApi<Row, Field, FilterValues>
   /** Enables the views pill bar, save-as-view, and the manage dialog. */
-  presets?: PresetsApi<ChipFilters>
+  presets?: PresetsApi<FilterValues>
   /** Enables the filter popover; each entry renders a chip section. */
   filterColumns?: FilterColumnDef[]
   searchPlaceholder?: string
@@ -25,7 +27,7 @@ export interface DataTableProps<Row, Field extends string = string> {
   createLabel?: string
   onCreate?: () => void
   /** Receives the full query context; POST it to your export endpoint. */
-  onExport?: (request: ExportRequest<Field, ChipFilters>) => void | Promise<void>
+  onExport?: (request: ExportRequest<Field, FilterValues>) => void | Promise<void>
   /** More than one format turns the Export button into a dropdown. */
   exportFormats?: ExportFormat[]
   onImport?: () => void
@@ -69,7 +71,7 @@ export function DataTable<Row, Field extends string = string>({
   rowsPerPageOptions,
 }: DataTableProps<Row, Field>) {
   const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null)
-  const [filterDraft, setFilterDraft] = useState<ChipFilters>({})
+  const [filterDraft, setFilterDraft] = useState<FilterValues>({})
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
   const [groupAnchor, setGroupAnchor] = useState<HTMLElement | null>(null)
   const [actionsAnchor, setActionsAnchor] = useState<HTMLElement | null>(null)
@@ -77,19 +79,19 @@ export function DataTable<Row, Field extends string = string>({
   const [manageOpen, setManageOpen] = useState(false)
 
   const filters = api.filters ?? {}
-  const filterCount = countChipFilters(filters)
+  const filterCount = countFilterValues(filters)
   const withSelection = Boolean(selectable || (actions && actions.length > 0))
 
   const activePresetId = useMemo(() => {
     if (selectedPresetId && presets) {
       const selected = presets.all.find((p) => p.id === selectedPresetId)
-      if (selected && chipFiltersEqual(selected.filters, filters)) return selected.id
+      if (selected && filterValuesEqual(selected.filters, filters)) return selected.id
     }
-    if (countChipFilters(filters) === 0) return 'all'
-    return presets?.all.find((p) => chipFiltersEqual(p.filters, filters))?.id ?? null
+    if (countFilterValues(filters) === 0) return 'all'
+    return presets?.all.find((p) => filterValuesEqual(p.filters, filters))?.id ?? null
   }, [presets, selectedPresetId, filters])
 
-  const applyFilters = (next: ChipFilters, presetId?: string) => {
+  const applyFilters = (next: FilterValues, presetId?: string) => {
     setSelectedPresetId(presetId ?? null)
     api.setFilters(next)
   }
@@ -144,15 +146,15 @@ export function DataTable<Row, Field extends string = string>({
                   <IconButton
                     onClick={() => setManageOpen(true)}
                     aria-label="Manage views"
-                    sx={{
+                    sx={(theme) => ({
                       width: 45,
                       height: 45,
                       borderRadius: '8px',
-                      bgcolor: '#F6F7FB',
-                      border: '1px solid #E8E8E8',
-                      color: '#292D32',
-                      '&:hover': { bgcolor: '#EDEFF5' },
-                    }}
+                      bgcolor: alpha(theme.palette.text.primary, 0.04),
+                      border: `1px solid ${theme.palette.divider}`,
+                      color: theme.palette.text.primary,
+                      '&:hover': { bgcolor: alpha(theme.palette.text.primary, 0.08) },
+                    })}
                   >
                     <SettingIcon sx={{ fontSize: 18 }} />
                   </IconButton>
@@ -216,7 +218,7 @@ export function DataTable<Row, Field extends string = string>({
         <Box sx={{ minHeight: 40, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <DataTablePagination rowsPerPageOptions={rowsPerPageOptions} />
           {api.groupBy && (
-            <Typography sx={{ fontSize: '13px', fontWeight: 500, color: '#595959', fontVariantNumeric: 'tabular-nums' }}>
+            <Typography sx={{ fontSize: '13px', fontWeight: 500, color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>
               {api.groups.length} groups · {api.groupsTotal} records
             </Typography>
           )}

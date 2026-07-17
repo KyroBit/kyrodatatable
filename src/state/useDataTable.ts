@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createClientEngine } from './clientEngine.js'
 import type {
-  ColumnDef, DataTableConfig, FetchParams, GroupByColumn, PaginationState,
+  ColumnDef, DataTableConfig, FetchParams, FilterValues, GroupByColumn, PaginationState,
   ResourceGroup, SortState, VisibleItem,
 } from '../types/index.js'
 
@@ -12,7 +12,7 @@ interface GroupRuntime<Row> {
   loading: boolean
 }
 
-export interface DataTableApi<Row, Field extends string = string, Filters = undefined> {
+export interface DataTableApi<Row, Field extends string = string, Filters = FilterValues> {
   // echoed straight back from config, so a renderer only ever needs `api` — never a second copy of these
   columns: ColumnDef<Row, Field>[]
   getRowId: (row: Row) => string
@@ -75,7 +75,7 @@ export interface DataTableApi<Row, Field extends string = string, Filters = unde
 
 const DEFAULT_PAGE_SIZE = 25
 
-export function useDataTable<Row, Field extends string = string, Filters = undefined>(
+export function useDataTable<Row, Field extends string = string, Filters = FilterValues>(
   config: DataTableConfig<Row, Field, Filters>,
 ): DataTableApi<Row, Field, Filters> {
   const { columns, getRowId, groupByColumns, initialPageSize, initialSort, initialFilters, searchDebounceMs } = config
