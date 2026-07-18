@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'KyroDataTable',
   description:
-    'KyroDataTable — data-table state for React, decoupled from rendering. Search, sort, pagination, filters and grouping — client-side or server-side — in one hook; render it with MUI, Bootstrap, or your own markup.',
+    'KyroDataTable — data-table state for React, decoupled from rendering. Search, sort, pagination, filters and grouping — client-side or server-side — in one hook; render it with MUI or your own markup.',
 
   vite: {
     server: {
@@ -44,7 +44,6 @@ export default defineConfig({
         text: 'Renderers',
         items: [
           { text: 'MUI renderer', link: '/guide/mui' },
-          { text: 'Bootstrap renderer', link: '/guide/bootstrap' },
           { text: 'Writing your own renderer', link: '/guide/custom-renderer' },
         ],
       },
@@ -53,7 +52,6 @@ export default defineConfig({
         items: [
           { text: 'Core API', link: '/reference/core-api' },
           { text: 'MUI', link: '/reference/mui' },
-          { text: 'Bootstrap', link: '/reference/bootstrap' },
         ],
       },
     ],

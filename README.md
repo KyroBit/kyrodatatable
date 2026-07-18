@@ -2,7 +2,7 @@
 
 Headless data-table state — pagination, sorting, search, filtering, grouping (client-side or server-side), and saved filter presets ("Favorites") — fully decoupled from rendering. A UI-agnostic core, with optional renderers for whichever library you're actually using.
 
-`useDataTable` owns 100% of the state and has never imported a UI library. `./mui` and `./bootstrap` are both just components that read that state and draw markup — neither is required, and neither is special. Write a third the same way if you need one.
+`useDataTable` owns 100% of the state and has never imported a UI library. `./mui` is just a component that reads that state and draws markup — it isn't required, and it isn't special. Write your own the same way if you need one.
 
 ## Why
 
@@ -17,7 +17,7 @@ cd kyro-datatable && bun run build && bun link
 cd your-app && bun link @kyrobit/datatable
 ```
 
-`react`/`react-dom` are required peers. `@mui/material` is **optional** — only resolved via `./mui`. `./bootstrap` needs no npm package at all, just your app's own Bootstrap CSS.
+`react`/`react-dom` are required peers. `@mui/material` is **optional** — only resolved via `./mui`.
 
 ## At a glance
 
@@ -39,4 +39,4 @@ const table = useDataTable({
 
 ## Documentation
 
-Full documentation lives in [`docs/`](./docs) (VitePress — `bun run docs:dev`): a quick start that builds a real table end to end, guides for server-side grouping, Favorites, both built-in renderers, writing your own renderer, and a complete API reference.
+Full documentation lives in [`docs/`](./docs) (VitePress — `bun run docs:dev`): a quick start that builds a real table end to end, guides for server-side grouping, Favorites, the built-in MUI renderer, writing your own renderer, and a complete API reference.

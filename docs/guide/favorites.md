@@ -67,4 +67,4 @@ const activePresetId = useMemo(
 
 ## Next
 
-- [MUI renderer](/guide/mui) / [Bootstrap renderer](/guide/bootstrap) — the full `FavoritesMenu` prop reference.
+- [MUI renderer](/guide/mui) — the full `FavoritesMenu` prop reference.

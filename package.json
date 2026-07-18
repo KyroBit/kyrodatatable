@@ -1,7 +1,7 @@
 {
   "name": "@kyrobit/datatable",
   "version": "0.1.0",
-  "description": "Headless data-table state (pagination, sorting, search, server-side grouping) fully decoupled from rendering. Bring your own UI, or use the built-in MUI or Bootstrap renderers.",
+  "description": "Headless data-table state (pagination, sorting, search, server-side grouping) fully decoupled from rendering. Bring your own UI, or use the built-in MUI renderer.",
   "license": "UNLICENSED",
   "type": "module",
   "sideEffects": false,
@@ -20,10 +20,6 @@
       "types": "./dist/renderers/mui/index.d.ts",
       "default": "./dist/renderers/mui/index.js"
     },
-    "./bootstrap": {
-      "types": "./dist/renderers/bootstrap/index.d.ts",
-      "default": "./dist/renderers/bootstrap/index.js"
-    },
     "./package.json": "./package.json"
   },
   "repository": {
@@ -38,7 +34,6 @@
     "pagination",
     "react",
     "mui",
-    "bootstrap",
     "headless"
   ],
   "scripts": {

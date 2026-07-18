@@ -1,6 +1,6 @@
 # Writing your own renderer
 
-Neither MUI nor Bootstrap your design system? `useDataTable` was built so this is a normal thing to do, not an escape hatch you're not really supposed to reach for.
+Not using MUI? `useDataTable` was built so writing your own renderer is a normal thing to do, not an escape hatch you're not really supposed to reach for.
 
 ## The contract
 
@@ -99,7 +99,7 @@ Drop this in place of `<DataTable/>` — same `table` from any guide in these do
 
 Without it, drawing a grouped table means nesting a rows-loop inside a groups-loop, hand-tracking where each group's rows insert relative to the group header, and switching between that structure and a plain flat map depending on `api.groupBy`. `visibleItems` does that interleaving once, inside the state layer, and hands back a single array in the exact order things should appear on screen — a flat `{ type: 'row' }` list when ungrouped, or a mix of `{ type: 'group' }` and `{ type: 'group-row' }` items when grouped. The renderer above never branches on "am I grouped" except to decide whether to show pagination — the table body itself is one `.map()`, one `switch`-like `if (item.type === 'group')`, regardless.
 
-This is also exactly what `./mui`'s and `./bootstrap`'s own `DataTable.Body` do internally — reading their source (`src/renderers/mui/Body.tsx`, `src/renderers/bootstrap/Body.tsx`) is the fastest way to see a second, fuller implementation of the same pattern, including loading states per group.
+This is also exactly what `./mui`'s own `DataTable.Body` does internally — reading its source (`src/renderers/mui/Body.tsx`) is the fastest way to see a fuller implementation of the same pattern, including loading states per group.
 
 ## Publishing it back into the library
 
