@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import type { DataTableApi } from '../../state/useDataTable.js';
+import type { DataTableApi } from '@kyrobit/datatable';
 export interface DataTableRootProps<Row, Field extends string, Filters> {
     api: DataTableApi<Row, Field, Filters>;
     children: ReactNode;

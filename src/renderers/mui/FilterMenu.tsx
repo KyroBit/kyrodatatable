@@ -11,14 +11,12 @@ import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, close
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { countFilterValues, filterValuesEqual, summarizeFilterValues } from '../../filterValues.js'
-import type { PresetsApi } from '../../state/usePresets.js'
+import { countFilterValues, filterValuesEqual, summarizeFilterValues } from '@kyrobit/datatable'
 import type {
-  DateFilterColumnDef, DateRangeValue, FilterColumnDef, FilterOption, FilterValues, SelectFilterColumnDef, TextFilterColumnDef,
-} from '../../types/index.js'
-import { EditIcon, TrashIcon } from './icons.js'
-
-export { filterValuesEqual, countFilterValues, summarizeFilterValues } from '../../filterValues.js'
+  PresetsApi, DateFilterColumnDef, DateRangeValue, FilterColumnDef, FilterOption, FilterValues, SelectFilterColumnDef, TextFilterColumnDef,
+} from '@kyrobit/datatable'
+import { TrashIcon } from './icons.js'
+import { ConfirmDialog } from './ConfirmDialog.js'
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value)
@@ -105,7 +103,7 @@ function SelectFilterField({ column, value: raw, onChange }: {
           sx={{ mb: 1 }}
         />
       )}
-      <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1, alignItems: 'center' }}>
+      <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
         {visibleOptions.map((option) => (
           <FilterChip
             key={option.value}
@@ -405,7 +403,7 @@ export function DataTableFilterMenu({
       onClose={close}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      slotProps={{ paper: { sx: { width: 300, mt: 1, borderRadius: '14px' } } }}
+      slotProps={{ paper: { sx: { width: 340, mt: 1, borderRadius: '14px' } } }}
     >
       <Box sx={{ px: 2, pt: 1.25, pb: 2 }}>
         <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.25 }}>
@@ -518,10 +516,9 @@ export interface ManageViewsDialogProps {
   onClose: () => void
   presets: PresetsApi<FilterValues>
   filterColumns: FilterColumnDef[]
-  onApply: (filters: FilterValues, presetId: string) => void
 }
 
-export function ManageViewsDialog({ open, onClose, presets, filterColumns, onApply }: ManageViewsDialogProps) {
+export function ManageViewsDialog({ open, onClose, presets, filterColumns }: ManageViewsDialogProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editFilters, setEditFilters] = useState<FilterValues>({})
@@ -553,6 +550,16 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, onApp
     setEditingId(null)
   }
 
+  const isEditDirty = Boolean(
+    editing && (editName.trim() !== editing.name || !filterValuesEqual(editFilters, editing.filters)),
+  )
+  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false)
+
+  const discardEdit = () => {
+    if (isEditDirty) { setConfirmDiscardOpen(true); return }
+    setEditingId(null)
+  }
+
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) return
     const from = presets.all.findIndex((p) => p.id === active.id)
@@ -564,16 +571,9 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, onApp
     <Dialog open={open} onClose={close} slotProps={{ paper: { sx: { width: 480, maxWidth: '92vw', borderRadius: '16px' } } }}>
       <Box sx={{ px: 3, pt: 2, pb: 2.5 }}>
         <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            {editing && (
-              <IconButton onClick={() => setEditingId(null)} aria-label="Back to views" sx={{ width: 28, height: 28, ml: -0.5, color: 'text.primary' }}>
-                <ArrowBackRoundedIcon sx={{ fontSize: 17 }} />
-              </IconButton>
-            )}
-            <Typography sx={{ fontSize: '18px', fontWeight: 600, color: 'text.primary' }}>
-              {editing ? 'Edit view' : 'Views'}
-            </Typography>
-          </Stack>
+          <Typography sx={{ fontSize: '18px', fontWeight: 600, color: 'text.primary' }}>
+            {editing ? 'Edit view' : 'Views'}
+          </Typography>
           <IconButton
             onClick={close}
             aria-label="Close views"
@@ -615,10 +615,10 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, onApp
               <Button
                 variant="outlined"
                 color="inherit"
-                onClick={() => setEditingId(null)}
+                onClick={discardEdit}
                 sx={{ height: 36, minHeight: 36, px: '16px', fontSize: '13px', borderRadius: '8px' }}
               >
-                Cancel
+                Discard
               </Button>
               <Button
                 variant="contained"
@@ -626,7 +626,7 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, onApp
                 onClick={commitEdit}
                 sx={{ height: 36, minHeight: 36, px: '20px', fontSize: '13px' }}
               >
-                Save changes
+                Save
               </Button>
             </Stack>
           </>
@@ -641,7 +641,7 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, onApp
               >
                 <SortableContext items={presets.all.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                   {presets.all.map((p) => (
-                    <SortableViewRow key={p.id} id={p.id} onClick={() => { onApply(p.filters, p.id); close() }}>
+                    <SortableViewRow key={p.id} id={p.id} onClick={() => startEdit(p.id)}>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography noWrap sx={{ fontSize: '14px', fontWeight: 600, color: 'text.primary' }}>{p.name}</Typography>
                         <Typography noWrap sx={{ fontSize: '12.5px', color: 'text.secondary' }}>
@@ -649,11 +649,6 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, onApp
                         </Typography>
                       </Box>
                       <Stack direction="row" spacing={0.25} onClick={(e) => e.stopPropagation()}>
-                        <Tooltip title="Edit">
-                          <IconButton size="small" aria-label={`Edit ${p.name}`} onClick={() => startEdit(p.id)} sx={{ color: 'text.secondary' }}>
-                            <EditIcon sx={{ fontSize: 15 }} />
-                          </IconButton>
-                        </Tooltip>
                         <Tooltip title="Delete">
                           <IconButton size="small" aria-label={`Delete ${p.name}`} onClick={() => presets.remove(p.id)} sx={{ color: 'error.main' }}>
                             <TrashIcon sx={{ fontSize: 15 }} />
@@ -674,6 +669,17 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, onApp
           </>
         )}
       </Box>
+
+      <ConfirmDialog
+        open={confirmDiscardOpen}
+        title="Discard your changes?"
+        description="Your edits to this view haven't been saved."
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        confirmColor="error"
+        onCancel={() => setConfirmDiscardOpen(false)}
+        onConfirm={() => { setConfirmDiscardOpen(false); setEditingId(null) }}
+      />
     </Dialog>
   )
 }

@@ -3,9 +3,9 @@ import { Box, IconButton, InputAdornment, TextField } from '@mui/material';
 import { useDataTableContext } from './context.js';
 import { FilterIcon, SearchIcon } from './icons.js';
 /** Search input bound to `api.search`, with an optional filter opener and applied-filter badge. */
-export function DataTableSearchField({ placeholder = 'Search', width = 420, onOpenFilters, filterCount = 0 }) {
+export function DataTableSearchField({ placeholder = 'Search', width, onOpenFilters, filterCount = 0 }) {
     const api = useDataTableContext();
-    return (_jsx(TextField, { size: "small", placeholder: placeholder, value: api.search, onChange: (e) => api.setSearch(e.target.value), sx: { width }, slotProps: {
+    return (_jsx(TextField, { size: "small", placeholder: placeholder, value: api.search, onChange: (e) => api.setSearch(e.target.value), sx: { width: width ?? { xs: '100%', sm: 420 } }, slotProps: {
             input: {
                 className: 'search-field',
                 startAdornment: (_jsx(InputAdornment, { position: "start", sx: { mr: '11px' }, children: _jsx(SearchIcon, { sx: { fontSize: 20, color: 'text.secondary' } }) })),

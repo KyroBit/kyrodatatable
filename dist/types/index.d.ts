@@ -71,6 +71,13 @@ export interface ColumnDef<Row, Field extends string = string> {
     /** Included in client-mode search matching. Default `true`. */
     searchable?: boolean;
     align?: 'left' | 'right' | 'center';
+    /**
+     * This column's share of the table's width, e.g. `'40%'` or `'220px'`. Setting it on
+     * any column switches the table to a fixed layout for that render; columns left
+     * without a `width` split the remaining space evenly. Omit entirely (the default)
+     * to keep the browser's content-driven auto layout.
+     */
+    width?: string;
     /** Only needed for exceptional cells (badges, action buttons, custom markup). Plain values render as-is with the table's cell typography. */
     render?: (row: Row) => unknown;
 }

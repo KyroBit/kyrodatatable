@@ -1,19 +1,19 @@
-import { useMemo, useState, type ReactElement } from 'react'
+import { useMemo, useState, type ReactElement, type ReactNode } from 'react'
 import {
   Box, Button, Card, IconButton, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography,
 } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import AddIcon from '@mui/icons-material/Add'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
-import type { DataTableApi } from '../../state/useDataTable.js'
-import type { PresetsApi } from '../../state/usePresets.js'
-import type { ExportFormat, ExportRequest, FilterColumnDef, FilterValues, ResourceAction } from '../../types/index.js'
-import { countFilterValues, filterValuesEqual } from '../../filterValues.js'
+import type {
+  DataTableApi, PresetsApi, ExportFormat, ExportRequest, FilterColumnDef, FilterValues, ResourceAction,
+} from '@kyrobit/datatable'
+import { countFilterValues, filterValuesEqual } from '@kyrobit/datatable'
 import { DataTableRoot } from './context.js'
 import { DataTableSearchField } from './SearchField.js'
 import { DataTableBody } from './Body.js'
 import { DataTablePagination } from './Pagination.js'
 import { DataTableFilterMenu, ManageViewsDialog } from './FilterMenu.js'
+import { ConfirmDialog } from './ConfirmDialog.js'
 import { ActionsIcon, ExportIcon, GroupIcon, ImportIcon, SettingIcon } from './icons.js'
 
 export interface DataTableProps<Row, Field extends string = string> {
@@ -26,6 +26,11 @@ export interface DataTableProps<Row, Field extends string = string> {
   searchWidth?: number | string
   createLabel?: string
   onCreate?: () => void
+  /** Rendered at the trailing end of the views-pill row, alongside the built-in Create
+   * button if `onCreate` is also given. An escape hatch for whatever a consumer needs there
+   * that this component has no opinion on (a different button, a breakpoint-swapped Fab,
+   * more than one action, etc.) — DataTable itself doesn't inspect or care what it is. */
+  toolbarEnd?: ReactNode
   /** Receives the full query context; POST it to your export endpoint. */
   onExport?: (request: ExportRequest<Field, FilterValues>) => void | Promise<void>
   /** More than one format turns the Export button into a dropdown. */
@@ -57,6 +62,7 @@ export function DataTable<Row, Field extends string = string>({
   searchWidth,
   createLabel = 'Create',
   onCreate,
+  toolbarEnd,
   onExport,
   exportFormats = [{ id: 'csv', label: 'CSV' }],
   onImport,
@@ -77,6 +83,7 @@ export function DataTable<Row, Field extends string = string>({
   const [actionsAnchor, setActionsAnchor] = useState<HTMLElement | null>(null)
   const [exportAnchor, setExportAnchor] = useState<HTMLElement | null>(null)
   const [manageOpen, setManageOpen] = useState(false)
+  const [pendingAction, setPendingAction] = useState<ResourceAction | null>(null)
 
   const filters = api.filters ?? {}
   const filterCount = countFilterValues(filters)
@@ -98,14 +105,17 @@ export function DataTable<Row, Field extends string = string>({
 
   const activeGroupLabel = api.groupByColumns?.find((g) => g.field === api.groupBy)?.label
 
-  const runAction = async (action: ResourceAction) => {
-    setActionsAnchor(null)
-    const count = api.selectedIds.length
-    if (action.confirmationMessage && !confirm(action.confirmationMessage(count))) return
+  const executeAction = async (action: ResourceAction) => {
     await action.handle(api.selectedIds)
     api.clearSelection()
     if (api.groupBy) api.setGroupBy(api.groupBy)
     api.refetch()
+  }
+
+  const runAction = (action: ResourceAction) => {
+    setActionsAnchor(null)
+    if (action.confirmationMessage) { setPendingAction(action); return }
+    void executeAction(action)
   }
 
   const runExport = (format: string) => {
@@ -122,10 +132,13 @@ export function DataTable<Row, Field extends string = string>({
 
   return (
     <DataTableRoot api={api}>
-      {(presets || onCreate) && (
-        <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
-            {presets && (
+      {(presets || onCreate || toolbarEnd) && (
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          sx={{ alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 1.5 }}
+        >
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0, flexWrap: 'wrap' }}>
+            {presets && presets.all.length > 0 && (
               <>
                 <ToggleButtonGroup
                   exclusive
@@ -143,19 +156,7 @@ export function DataTable<Row, Field extends string = string>({
                   ))}
                 </ToggleButtonGroup>
                 <Tooltip title="Manage views">
-                  <IconButton
-                    onClick={() => setManageOpen(true)}
-                    aria-label="Manage views"
-                    sx={(theme) => ({
-                      width: 45,
-                      height: 45,
-                      borderRadius: '8px',
-                      bgcolor: alpha(theme.palette.text.primary, 0.04),
-                      border: `1px solid ${theme.palette.divider}`,
-                      color: theme.palette.text.primary,
-                      '&:hover': { bgcolor: alpha(theme.palette.text.primary, 0.08) },
-                    })}
-                  >
+                  <IconButton color="inherit" size="large" onClick={() => setManageOpen(true)} aria-label="Manage views">
                     <SettingIcon sx={{ fontSize: 18 }} />
                   </IconButton>
                 </Tooltip>
@@ -167,53 +168,70 @@ export function DataTable<Row, Field extends string = string>({
               {createLabel}
             </Button>
           )}
+          {toolbarEnd}
         </Stack>
       )}
 
-      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, minHeight: 40 }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexShrink: 0 }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        sx={{ alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 1, minHeight: 40 }}
+      >
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', minWidth: 0 }}>
           <DataTableSearchField
             placeholder={searchPlaceholder}
             width={searchWidth}
             filterCount={filterColumns ? filterCount : 0}
             onOpenFilters={filterColumns ? (anchor) => { setFilterDraft(filters); setFilterAnchor(anchor) } : undefined}
           />
-          {api.groupByColumns && api.groupByColumns.length > 0 && (
-            <ToolbarBtn
-              icon={<GroupIcon />}
-              label={activeGroupLabel ? `Group: ${activeGroupLabel}` : 'Group'}
-              onClick={(e) => setGroupAnchor(e.currentTarget)}
-            />
-          )}
-          {onExport && (
-            <Tooltip title={exportTooltip}>
-              <span>
-                <ToolbarBtn
-                  icon={<ExportIcon />}
-                  label="Export"
-                  menu={exportFormats.length > 1}
-                  onClick={(e) => {
-                    if (exportFormats.length > 1) setExportAnchor(e.currentTarget)
-                    else runExport(exportFormats[0]?.id ?? 'csv')
-                  }}
-                />
-              </span>
-            </Tooltip>
-          )}
-          {onImport && (
-            <Tooltip title={importTooltip}>
-              <span>
-                <ToolbarBtn icon={<ImportIcon />} label="Import" menu={false} onClick={onImport} />
-              </span>
-            </Tooltip>
-          )}
-          {actions && actions.length > 0 && api.selectedIds.length > 0 && (
-            <ToolbarBtn
-              icon={<ActionsIcon />}
-              label={`Actions (${api.selectedIds.length})`}
-              onClick={(e) => setActionsAnchor(e.currentTarget)}
-            />
-          )}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              alignItems: 'center',
+              flexWrap: 'nowrap',
+              overflowX: 'auto',
+              minWidth: 0,
+              scrollbarWidth: 'none',
+              '&::-webkit-scrollbar': { display: 'none' },
+            }}
+          >
+            {api.groupByColumns && api.groupByColumns.length > 0 && (
+              <ToolbarBtn
+                icon={<GroupIcon />}
+                label={activeGroupLabel ? `Group: ${activeGroupLabel}` : 'Group'}
+                onClick={(e) => setGroupAnchor(e.currentTarget)}
+              />
+            )}
+            {onExport && (
+              <Tooltip title={exportTooltip}>
+                <span>
+                  <ToolbarBtn
+                    icon={<ExportIcon />}
+                    label="Export"
+                    menu={exportFormats.length > 1}
+                    onClick={(e) => {
+                      if (exportFormats.length > 1) setExportAnchor(e.currentTarget)
+                      else runExport(exportFormats[0]?.id ?? 'csv')
+                    }}
+                  />
+                </span>
+              </Tooltip>
+            )}
+            {onImport && (
+              <Tooltip title={importTooltip}>
+                <span>
+                  <ToolbarBtn icon={<ImportIcon />} label="Import" menu={false} onClick={onImport} />
+                </span>
+              </Tooltip>
+            )}
+            {actions && actions.length > 0 && api.selectedIds.length > 0 && (
+              <ToolbarBtn
+                icon={<ActionsIcon />}
+                label={`Actions (${api.selectedIds.length})`}
+                onClick={(e) => setActionsAnchor(e.currentTarget)}
+              />
+            )}
+          </Stack>
         </Stack>
         <Box sx={{ minHeight: 40, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <DataTablePagination rowsPerPageOptions={rowsPerPageOptions} />
@@ -233,6 +251,21 @@ export function DataTable<Row, Field extends string = string>({
             </MenuItem>
           ))}
         </Menu>
+      )}
+
+      {pendingAction && (
+        <ConfirmDialog
+          open
+          title={pendingAction.confirmationMessage!(api.selectedIds.length)}
+          confirmLabel={pendingAction.label}
+          confirmColor="error"
+          onCancel={() => setPendingAction(null)}
+          onConfirm={() => {
+            const action = pendingAction
+            setPendingAction(null)
+            void executeAction(action)
+          }}
+        />
       )}
 
       {onExport && exportFormats.length > 1 && (
@@ -275,7 +308,6 @@ export function DataTable<Row, Field extends string = string>({
           onClose={() => setManageOpen(false)}
           presets={presets}
           filterColumns={filterColumns}
-          onApply={(next, presetId) => { applyFilters(next, presetId); setManageOpen(false) }}
         />
       )}
 

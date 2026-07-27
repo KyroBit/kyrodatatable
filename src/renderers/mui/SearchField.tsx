@@ -10,7 +10,7 @@ export interface DataTableSearchFieldProps {
 }
 
 /** Search input bound to `api.search`, with an optional filter opener and applied-filter badge. */
-export function DataTableSearchField({ placeholder = 'Search', width = 420, onOpenFilters, filterCount = 0 }: DataTableSearchFieldProps) {
+export function DataTableSearchField({ placeholder = 'Search', width, onOpenFilters, filterCount = 0 }: DataTableSearchFieldProps) {
   const api = useDataTableContext()
 
   return (
@@ -19,7 +19,7 @@ export function DataTableSearchField({ placeholder = 'Search', width = 420, onOp
       placeholder={placeholder}
       value={api.search}
       onChange={(e) => api.setSearch(e.target.value)}
-      sx={{ width }}
+      sx={{ width: width ?? { xs: '100%', sm: 420 } }}
       slotProps={{
         input: {
           className: 'search-field',

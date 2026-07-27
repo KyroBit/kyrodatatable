@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import type { PresetsApi } from '../../state/usePresets.js';
+import type { PresetsApi } from '@kyrobit/datatable';
 export interface FavoritesMenuProps<Filters> {
     presets: PresetsApi<Filters>;
     activeId: string | null;

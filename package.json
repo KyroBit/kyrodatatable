@@ -8,8 +8,14 @@
   "engines": {
     "node": ">=20.19"
   },
+  "bin": {
+    "kyro-datatable": "./bin/cli.js"
+  },
   "files": [
-    "dist"
+    "dist",
+    "src/renderers",
+    "registry",
+    "bin"
   ],
   "exports": {
     ".": {

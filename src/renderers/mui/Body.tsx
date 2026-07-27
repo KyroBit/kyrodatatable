@@ -7,8 +7,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight'
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft'
 import { useDataTableContext } from './context.js'
-import type { DataTableApi } from '../../state/useDataTable.js'
-import type { SortDirection } from '../../types/index.js'
+import type { DataTableApi, SortDirection } from '@kyrobit/datatable'
 
 /**
  * Stacked up/down triangles — the "double arrow" sort indicator modern apps
@@ -92,10 +91,19 @@ export function DataTableBody<Row>({
   const items = api.visibleItems
   const colSpan = api.columns.length + (selectable ? 1 : 0)
   const isEmpty = items.length === 0 && !api.loading && !api.groupsLoading
+  const hasExplicitWidths = api.columns.some((col) => col.width)
 
   return (
     <TableContainer sx={{ flex: '1 1 auto', minHeight: 0 }}>
-      <Table size="small" stickyHeader={stickyHeader}>
+      <Table size="small" stickyHeader={stickyHeader} sx={hasExplicitWidths ? { tableLayout: 'fixed' } : undefined}>
+        {hasExplicitWidths && (
+          <colgroup>
+            {selectable && <col style={{ width: 48 }} />}
+            {api.columns.map((col) => (
+              <col key={col.field} style={col.width ? { width: col.width } : undefined} />
+            ))}
+          </colgroup>
+        )}
         <TableHead>
           <TableRow>
             {selectable && (

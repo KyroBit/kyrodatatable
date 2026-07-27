@@ -16,6 +16,10 @@
     "declarationMap": true,
     "outDir": "dist",
     "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@kyrobit/datatable": ["./src/index.ts"]
+    },
     "noEmit": true,
     "skipLibCheck": true,
     "types": ["node", "bun-types"]

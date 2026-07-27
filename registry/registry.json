@@ -1,0 +1,13 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "@kyrobit/datatable",
+  "homepage": "https://github.com/KyroBit/kyro-datatable",
+  "items": [
+    {
+      "name": "mui",
+      "type": "registry:block",
+      "title": "MUI renderer",
+      "description": "The built-in MUI-based table renderer — copy it into your project to fully customize."
+    }
+  ]
+}

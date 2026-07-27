@@ -1,0 +1,29 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "mui",
+  "type": "registry:block",
+  "title": "MUI renderer",
+  "description": "The built-in MUI-based table renderer (DataTable, filters, presets, confirm dialogs), built entirely from real MUI theme tokens. Copy it into your project to fully customize — the state layer (useDataTable/usePresets/filterValuesEqual) stays a normal dependency on @kyrobit/datatable.",
+  "dependencies": [
+    "@kyrobit/datatable",
+    "@mui/material",
+    "@mui/icons-material",
+    "@dnd-kit/core",
+    "@dnd-kit/sortable",
+    "@dnd-kit/utilities",
+    "@dnd-kit/modifiers"
+  ],
+  "files": [
+    { "path": "src/renderers/mui/Body.tsx", "type": "registry:component", "target": "Body.tsx" },
+    { "path": "src/renderers/mui/ConfirmDialog.tsx", "type": "registry:component", "target": "ConfirmDialog.tsx" },
+    { "path": "src/renderers/mui/DataTable.tsx", "type": "registry:component", "target": "DataTable.tsx" },
+    { "path": "src/renderers/mui/FavoritesMenu.tsx", "type": "registry:component", "target": "FavoritesMenu.tsx" },
+    { "path": "src/renderers/mui/FilterMenu.tsx", "type": "registry:component", "target": "FilterMenu.tsx" },
+    { "path": "src/renderers/mui/GroupBySelect.tsx", "type": "registry:component", "target": "GroupBySelect.tsx" },
+    { "path": "src/renderers/mui/Pagination.tsx", "type": "registry:component", "target": "Pagination.tsx" },
+    { "path": "src/renderers/mui/SearchField.tsx", "type": "registry:component", "target": "SearchField.tsx" },
+    { "path": "src/renderers/mui/context.tsx", "type": "registry:component", "target": "context.tsx" },
+    { "path": "src/renderers/mui/icons.tsx", "type": "registry:component", "target": "icons.tsx" },
+    { "path": "src/renderers/mui/index.ts", "type": "registry:lib", "target": "index.ts" }
+  ]
+}

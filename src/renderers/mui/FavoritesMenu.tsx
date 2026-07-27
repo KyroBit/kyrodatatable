@@ -10,7 +10,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded'
-import type { PresetsApi, Preset } from '../../state/usePresets.js'
+import type { PresetsApi, Preset } from '@kyrobit/datatable'
 
 export interface FavoritesMenuProps<Filters> {
   presets: PresetsApi<Filters>

@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react'
-import type { DataTableApi } from '../../state/useDataTable.js'
+import type { DataTableApi } from '@kyrobit/datatable'
 
 const DataTableContext = createContext<DataTableApi<unknown, string, unknown> | null>(null)
 

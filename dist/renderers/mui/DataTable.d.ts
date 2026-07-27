@@ -1,6 +1,5 @@
-import type { DataTableApi } from '../../state/useDataTable.js';
-import type { PresetsApi } from '../../state/usePresets.js';
-import type { ExportFormat, ExportRequest, FilterColumnDef, FilterValues, ResourceAction } from '../../types/index.js';
+import { type ReactNode } from 'react';
+import type { DataTableApi, PresetsApi, ExportFormat, ExportRequest, FilterColumnDef, FilterValues, ResourceAction } from '@kyrobit/datatable';
 import { DataTableRoot } from './context.js';
 import { DataTableSearchField } from './SearchField.js';
 import { DataTableBody } from './Body.js';
@@ -15,6 +14,11 @@ export interface DataTableProps<Row, Field extends string = string> {
     searchWidth?: number | string;
     createLabel?: string;
     onCreate?: () => void;
+    /** Rendered at the trailing end of the views-pill row, alongside the built-in Create
+     * button if `onCreate` is also given. An escape hatch for whatever a consumer needs there
+     * that this component has no opinion on (a different button, a breakpoint-swapped Fab,
+     * more than one action, etc.) — DataTable itself doesn't inspect or care what it is. */
+    toolbarEnd?: ReactNode;
     /** Receives the full query context; POST it to your export endpoint. */
     onExport?: (request: ExportRequest<Field, FilterValues>) => void | Promise<void>;
     /** More than one format turns the Export button into a dropdown. */
@@ -37,7 +41,7 @@ export interface DataTableProps<Row, Field extends string = string> {
  * card, and top-right pagination. Every section is opt-in through props; for
  * a custom layout compose the exported pieces yourself.
  */
-export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, searchPlaceholder, searchWidth, createLabel, onCreate, onExport, exportFormats, onImport, exportTooltip, importTooltip, actions, selectable, onRowClick, rowClass, emptyMessage, stickyHeader, rowsPerPageOptions, }: DataTableProps<Row, Field>): import("react").JSX.Element;
+export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, searchPlaceholder, searchWidth, createLabel, onCreate, toolbarEnd, onExport, exportFormats, onImport, exportTooltip, importTooltip, actions, selectable, onRowClick, rowClass, emptyMessage, stickyHeader, rowsPerPageOptions, }: DataTableProps<Row, Field>): import("react").JSX.Element;
 export declare namespace DataTable {
     var Root: typeof DataTableRoot;
     var SearchField: typeof DataTableSearchField;
