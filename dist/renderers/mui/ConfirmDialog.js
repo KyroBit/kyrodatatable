@@ -1,16 +1,19 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { Box, Button, Dialog, Divider, IconButton, Stack, Typography } from '@mui/material';
-import { alpha } from '@mui/material/styles';
+import { useState } from 'react';
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Stack, } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-/** A styled stand-in for `window.confirm()` — same header/body/actions shape already used by
- * `ManageViewsDialog` in this file, so anything in this library asking "are you sure?" (bulk
- * actions, discarding a dirty edit, or a consumer's own use) looks native to it. */
-export function ConfirmDialog({ open, title, description, confirmLabel = 'Confirm', cancelLabel = 'Cancel', confirmColor = 'primary', onConfirm, onCancel, }) {
-    return (_jsx(Dialog, { open: open, onClose: onCancel, slotProps: { paper: { sx: { width: 400, maxWidth: '92vw', borderRadius: '16px' } } }, children: _jsxs(Box, { sx: { px: 3, pt: 2, pb: 2.5 }, children: [_jsxs(Stack, { direction: "row", sx: { alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }, children: [_jsx(Typography, { sx: { fontSize: '18px', fontWeight: 600, color: 'text.primary' }, children: title }), _jsx(IconButton, { onClick: onCancel, "aria-label": "Close", sx: (theme) => ({
-                                width: 28,
-                                height: 28,
-                                bgcolor: alpha(theme.palette.text.primary, 0.04),
-                                color: theme.palette.text.primary,
-                                '&:hover': { bgcolor: alpha(theme.palette.text.primary, 0.08) },
-                            }), children: _jsx(CloseRoundedIcon, { sx: { fontSize: 16 } }) })] }), _jsx(Divider, {}), description && (_jsx(Typography, { sx: { fontSize: '13.5px', color: 'text.secondary', mt: 2 }, children: description })), _jsxs(Stack, { direction: "row", spacing: 1, sx: { justifyContent: 'flex-end', mt: 3 }, children: [_jsx(Button, { variant: "outlined", color: "inherit", onClick: onCancel, sx: { height: 36, minHeight: 36, px: '16px', fontSize: '13px', borderRadius: '8px' }, children: cancelLabel }), _jsx(Button, { variant: "contained", color: confirmColor, onClick: onConfirm, sx: { height: 36, minHeight: 36, px: '20px', fontSize: '13px' }, children: confirmLabel })] })] }) }));
+/** A stand-in for `window.confirm()` built from MUI's dialog slots, so it inherits whatever the
+ * consumer's theme says a dialog looks like rather than carrying its own opinion. */
+export function ConfirmDialog({ open, title, description, confirmLabel = 'Confirm', cancelLabel = 'Cancel', confirmColor = 'primary', onConfirm, onCancel, slotProps, maxWidth, fullWidth, }) {
+    const [busy, setBusy] = useState(false);
+    const confirm = async () => {
+        setBusy(true);
+        try {
+            await onConfirm();
+        }
+        finally {
+            setBusy(false);
+        }
+    };
+    return (_jsxs(Dialog, { open: open, onClose: busy ? undefined : onCancel, slotProps: slotProps, maxWidth: maxWidth, fullWidth: fullWidth, children: [_jsx(DialogTitle, { children: _jsxs(Stack, { direction: "row", spacing: 2, sx: { alignItems: 'center' }, children: [_jsx("span", { style: { flex: 1 }, children: title }), _jsx(IconButton, { size: "small", edge: "end", onClick: onCancel, disabled: busy, "aria-label": "Close", children: _jsx(CloseRoundedIcon, { fontSize: "small" }) })] }) }), description && (_jsx(DialogContent, { children: _jsx(DialogContentText, { children: description }) })), _jsxs(DialogActions, { children: [_jsx(Button, { color: "inherit", onClick: onCancel, disabled: busy, children: cancelLabel }), _jsx(Button, { variant: "contained", color: confirmColor, loading: busy, onClick: confirm, children: confirmLabel })] })] }));
 }

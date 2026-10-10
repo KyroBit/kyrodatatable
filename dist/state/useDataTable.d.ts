@@ -3,6 +3,10 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
     columns: ColumnDef<Row, Field>[];
     getRowId: (row: Row) => string;
     groupByColumns?: GroupByColumn<Field>[];
+    /** `columns` minus the hidden ones, in the original order. What a renderer draws. */
+    visibleColumns: ColumnDef<Row, Field>[];
+    hiddenColumns: Field[];
+    setColumnHidden: (field: Field, hidden: boolean) => void;
     search: string;
     setSearch: (value: string) => void;
     filters: Filters | undefined;

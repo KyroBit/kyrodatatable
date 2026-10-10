@@ -1,8 +1,8 @@
 {
   "name": "@kyrobit/datatable",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Headless data-table state (pagination, sorting, search, server-side grouping) fully decoupled from rendering. Bring your own UI, or use the built-in MUI renderer.",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "sideEffects": false,
   "publishConfig": {

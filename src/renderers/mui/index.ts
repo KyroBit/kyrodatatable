@@ -12,8 +12,16 @@ export type { DataTableBodyProps } from './Body.js'
 export { DataTablePagination } from './Pagination.js'
 export type { DataTablePaginationProps } from './Pagination.js'
 
+export { ConfirmDialog } from './ConfirmDialog.js'
+export type { ConfirmDialogProps, ConfirmColor } from './ConfirmDialog.js'
+
 export { DataTableFilterMenu, ManageViewsDialog } from './FilterMenu.js'
+export { DataTableSettingsDialog } from './SettingsDialog.js'
+export type { DataTableSettingsDialogProps } from './SettingsDialog.js'
 export type { DataTableFilterMenuProps, ManageViewsDialogProps } from './FilterMenu.js'
+
+export { Select } from './Select.js'
+export type { SelectProps, SelectOption } from './Select.js'
 
 export * from './icons.js'
 

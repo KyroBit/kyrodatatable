@@ -1,6 +1,7 @@
-import { useEffect, useState, type ReactNode } from 'react'
-import { Box, Button, Dialog, Divider, IconButton, Menu, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Box, Button, Dialog, Divider, IconButton, Menu, Stack, TextField, Tooltip, Typography, type DialogProps as MuiDialogProps } from '@mui/material'
 import { alpha } from '@mui/material/styles'
+import { Select } from './Select.js'
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
 import CalendarTodayRoundedIcon from '@mui/icons-material/CalendarTodayRounded'
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
@@ -13,19 +14,10 @@ import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalList
 import { CSS } from '@dnd-kit/utilities'
 import { countFilterValues, filterValuesEqual, summarizeFilterValues } from '@kyrobit/datatable'
 import type {
-  PresetsApi, DateFilterColumnDef, DateRangeValue, FilterColumnDef, FilterOption, FilterValues, SelectFilterColumnDef, TextFilterColumnDef,
+  Preset, PresetsApi, ChoiceFilterColumnDef, FilterRenderers, FilterFieldProps, DateFilterColumnDef, DateRangeValue, FilterColumnDef, FilterOption, FilterValues, SelectFilterColumnDef, TextFilterColumnDef,
 } from '@kyrobit/datatable'
 import { TrashIcon } from './icons.js'
 import { ConfirmDialog } from './ConfirmDialog.js'
-
-function useDebouncedValue<T>(value: T, delayMs: number): T {
-  const [debounced, setDebounced] = useState(value)
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delayMs)
-    return () => clearTimeout(id)
-  }, [value, delayMs])
-  return debounced
-}
 
 function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
@@ -53,76 +45,96 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
   )
 }
 
-function SelectFilterField({ column, value: raw, onChange }: {
-  column: SelectFilterColumnDef
-  value: FilterValues[string] | undefined
-  onChange: (next: FilterValues[string]) => void
-}) {
+function ChoiceFilterField({ column, value: raw, onChange }: FilterFieldProps<ChoiceFilterColumnDef>) {
   const value = Array.isArray(raw) ? raw : []
-  const isAsync = typeof column.options === 'function'
-  const [query, setQuery] = useState('')
-  const debouncedQuery = useDebouncedValue(query, 250)
-  const [asyncOptions, setAsyncOptions] = useState<FilterOption[]>([])
-  const [loading, setLoading] = useState(false)
-  const [labelCache, setLabelCache] = useState<Record<string, string>>({})
-
-  useEffect(() => {
-    if (!isAsync) return
-    let cancelled = false
-    const load = column.options as (query: string) => Promise<FilterOption[]>
-    setLoading(true)
-    load(debouncedQuery)
-      .then((results) => {
-        if (cancelled) return
-        setAsyncOptions(results)
-        setLabelCache((prev) => {
-          const next = { ...prev }
-          for (const option of results) next[option.value] = option.label
-          return next
-        })
-      })
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [isAsync, debouncedQuery, column.options])
-
-  const options = isAsync ? asyncOptions : (column.options as FilterOption[])
-  const selectedElsewhere = isAsync
-    ? value.filter((v) => !options.some((o) => o.value === v)).map((v) => ({ label: labelCache[v] ?? v, value: v }))
-    : []
-  const visibleOptions = [...selectedElsewhere, ...options]
+  const multi = column.multi !== false
 
   return (
-    <Box>
-      {isAsync && (
-        <TextField
-          size="small"
-          fullWidth
-          placeholder={`Search ${column.label.toLowerCase()}…`}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          sx={{ mb: 1 }}
-        />
-      )}
-      <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
-        {visibleOptions.map((option) => (
+    <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+      {column.options.map((option) => {
+        const active = value.includes(option.value)
+        return (
           <FilterChip
             key={option.value}
             label={option.label}
-            active={value.includes(option.value)}
-            onClick={() => onChange(
-              value.includes(option.value) ? value.filter((v) => v !== option.value) : [...value, option.value],
-            )}
+            active={active}
+            onClick={() => {
+              if (!multi) return onChange(active ? [] : [option.value])
+              onChange(active ? value.filter((v) => v !== option.value) : [...value, option.value])
+            }}
           />
-        ))}
-        {isAsync && loading && (
-          <Typography sx={{ fontSize: '12px', color: 'text.secondary' }}>Searching…</Typography>
-        )}
-        {isAsync && !loading && visibleOptions.length === 0 && (
-          <Typography sx={{ fontSize: '12px', color: 'text.secondary' }}>No matches</Typography>
-        )}
-      </Stack>
-    </Box>
+        )
+      })}
+    </Stack>
   )
+}
+
+const optionLabels = new WeakMap<object, Map<string, string>>()
+
+function labelsFor(source: object) {
+  let cache = optionLabels.get(source)
+  if (!cache) {
+    cache = new Map()
+    optionLabels.set(source, cache)
+  }
+  return cache
+}
+
+function SelectFilterField({ column, value: raw, onChange }: FilterFieldProps<SelectFilterColumnDef>) {
+  const value = Array.isArray(raw) ? raw : typeof raw === 'string' && raw ? [raw] : []
+  const multiple = column.multi !== false
+  const source = column.options
+  const cache = labelsFor(source)
+  const [, redraw] = useState(0)
+  const resolved = useRef(false)
+
+  const remember = useCallback((options: FilterOption[]) => {
+    let changed = false
+    for (const option of options) {
+      if (cache.get(option.value) === option.label) continue
+      cache.set(option.value, option.label)
+      changed = true
+    }
+    if (changed) redraw((tick) => tick + 1)
+  }, [cache])
+
+  const staticOptions = useMemo(
+    () => (typeof source === 'function' ? undefined : source.map((option) => ({ id: option.value, label: option.label }))),
+    [source],
+  )
+
+  const search = useMemo(() => {
+    if (typeof source !== 'function') return undefined
+    return async (query: string) => {
+      const results = await source(query)
+      remember(results)
+      return results.map((option) => ({ id: option.value, label: option.label }))
+    }
+  }, [source, remember])
+
+  const unresolved = value.filter((id) => !cache.has(id)).join(',')
+
+  useEffect(() => {
+    if (typeof source !== 'function' || !unresolved || resolved.current) return
+    resolved.current = true
+    void source('').then(remember)
+  }, [source, remember, unresolved])
+
+  const selected = value.map((id) => ({
+    id,
+    label: cache.get(id) ?? staticOptions?.find((option) => option.id === id)?.label ?? id,
+  }))
+
+  const shared = {
+    options: staticOptions,
+    search,
+    getOptionLabel: (option: { id: string; label: string }) => option.label,
+    placeholder: `Select ${column.label.toLowerCase()}`,
+  }
+
+  return multiple
+    ? <Select {...shared} multiple value={selected} onChange={(next) => onChange(next.map((option) => option.id))} />
+    : <Select {...shared} value={selected[0] ?? null} onChange={(next) => onChange(next ? [next.id] : [])} />
 }
 
 function TextFilterField({ column, value: raw, onChange }: {
@@ -333,13 +345,18 @@ function DateFilterField({ column, value: raw, onChange }: {
  * type by adding a variant to `FilterColumnDef` and a case here; nothing else
  * in the popover or the manage-views dialog needs to change.
  */
-function FilterField({ column, value, onChange }: {
+function FilterField({ column, value, onChange, renderers }: {
   column: FilterColumnDef
   value: FilterValues[string] | undefined
   onChange: (next: FilterValues[string]) => void
+  renderers?: FilterRenderers
 }) {
+  const Custom = renderers?.[column.type]
+  if (Custom) return <>{Custom({ column, value, onChange } as never)}</>
+
   switch (column.type) {
     case 'select': return <SelectFilterField column={column} value={value} onChange={onChange} />
+    case 'choice': return <ChoiceFilterField column={column} value={value} onChange={onChange} />
     case 'text': return <TextFilterField column={column} value={value} onChange={onChange} />
     case 'date': return <DateFilterField column={column} value={value} onChange={onChange} />
   }
@@ -372,10 +389,12 @@ export interface DataTableFilterMenuProps {
   /** `presetId` is set when the apply came from saving a view. */
   onApply: (filters: FilterValues, presetId?: string) => void
   presets?: PresetsApi<FilterValues>
+  /** Swap the component used for a filter type; anything omitted keeps the MUI default. */
+  filterRenderers?: FilterRenderers
 }
 
 export function DataTableFilterMenu({
-  anchorEl, onClose, filterColumns, draft, onDraftChange, onApply, presets,
+  anchorEl, onClose, filterColumns, draft, onDraftChange, onApply, presets, filterRenderers,
 }: DataTableFilterMenuProps) {
   const [mode, setMode] = useState<'filter' | 'save'>('filter')
   const [name, setName] = useState('')
@@ -403,7 +422,7 @@ export function DataTableFilterMenu({
       onClose={close}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      slotProps={{ paper: { sx: { width: 340, mt: 1, borderRadius: '14px' } } }}
+      slotProps={{ paper: { sx: { width: 400, maxWidth: 'calc(100vw - 32px)', mt: 1 } } }}
     >
       <Box sx={{ px: 2, pt: 1.25, pb: 2 }}>
         <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.25 }}>
@@ -432,6 +451,7 @@ export function DataTableFilterMenu({
                   column={column}
                   value={draft[column.field]}
                   onChange={(next) => onDraftChange({ ...draft, [column.field]: next })}
+                  renderers={filterRenderers}
                 />
               </Box>
             ))}
@@ -463,7 +483,7 @@ export function DataTableFilterMenu({
                     color="inherit"
                     disabled={draftEmpty}
                     onClick={() => setMode('save')}
-                    sx={{ height: 36, minHeight: 36, px: '16px', fontSize: '13px', borderRadius: '8px' }}
+                    sx={{ height: 36, minHeight: 36, px: '16px', fontSize: '13px' }}
                   >
                     Save
                   </Button>
@@ -516,9 +536,11 @@ export interface ManageViewsDialogProps {
   onClose: () => void
   presets: PresetsApi<FilterValues>
   filterColumns: FilterColumnDef[]
+  /** Forwarded to the underlying MUI `Dialog`. Sizing and chrome otherwise come from your theme. */
+  DialogProps?: Omit<MuiDialogProps, 'open' | 'onClose' | 'children'>
 }
 
-export function ManageViewsDialog({ open, onClose, presets, filterColumns }: ManageViewsDialogProps) {
+export function ManageViewsDialog({ open, onClose, presets, filterColumns, DialogProps }: ManageViewsDialogProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editFilters, setEditFilters] = useState<FilterValues>({})
@@ -554,6 +576,7 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
     editing && (editName.trim() !== editing.name || !filterValuesEqual(editFilters, editing.filters)),
   )
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<Preset<FilterValues> | null>(null)
 
   const discardEdit = () => {
     if (isEditDirty) { setConfirmDiscardOpen(true); return }
@@ -568,7 +591,7 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
   }
 
   return (
-    <Dialog open={open} onClose={close} slotProps={{ paper: { sx: { width: 480, maxWidth: '92vw', borderRadius: '16px' } } }}>
+    <Dialog open={open} onClose={close} {...DialogProps}>
       <Box sx={{ px: 3, pt: 2, pb: 2.5 }}>
         <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
           <Typography sx={{ fontSize: '18px', fontWeight: 600, color: 'text.primary' }}>
@@ -616,7 +639,7 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
                 variant="outlined"
                 color="inherit"
                 onClick={discardEdit}
-                sx={{ height: 36, minHeight: 36, px: '16px', fontSize: '13px', borderRadius: '8px' }}
+                sx={{ height: 36, minHeight: 36, px: '16px', fontSize: '13px' }}
               >
                 Discard
               </Button>
@@ -650,7 +673,7 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
                       </Box>
                       <Stack direction="row" spacing={0.25} onClick={(e) => e.stopPropagation()}>
                         <Tooltip title="Delete">
-                          <IconButton size="small" aria-label={`Delete ${p.name}`} onClick={() => presets.remove(p.id)} sx={{ color: 'error.main' }}>
+                          <IconButton size="small" aria-label={`Delete ${p.name}`} onClick={() => setPendingDelete(p)} sx={{ color: 'error.main' }}>
                             <TrashIcon sx={{ fontSize: 15 }} />
                           </IconButton>
                         </Tooltip>
@@ -669,6 +692,19 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
           </>
         )}
       </Box>
+
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="Delete this view?"
+        description={`"${pendingDelete?.name}" will be removed for good.`}
+        confirmLabel="Delete"
+        confirmColor="error"
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (pendingDelete) presets.remove(pendingDelete.id)
+          setPendingDelete(null)
+        }}
+      />
 
       <ConfirmDialog
         open={confirmDiscardOpen}

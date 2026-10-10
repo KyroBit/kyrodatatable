@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createClientEngine } from './clientEngine.js';
 const DEFAULT_PAGE_SIZE = 25;
 export function useDataTable(config) {
     const { columns, getRowId, groupByColumns, initialPageSize, initialSort, initialFilters, searchDebounceMs } = config;
+    const [hiddenColumns, setHiddenColumns] = useState(config.initialHiddenColumns ?? []);
+    const setColumnHidden = useCallback((field, hidden) => {
+        setHiddenColumns((current) => hidden ? (current.includes(field) ? current : [...current, field]) : current.filter((f) => f !== field));
+    }, []);
+    const visibleColumns = useMemo(() => columns.filter((column) => !hiddenColumns.includes(column.field)), [columns, hiddenColumns]);
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [filters, setFiltersInternal] = useState(initialFilters);
@@ -44,6 +49,19 @@ export function useDataTable(config) {
     }, [config.data, config.applyFilters, columns, groupBy]);
     const fetchRecords = config.fetchRecords ?? clientEngine.fetchRecords;
     const fetchGroups = config.fetchGroups ?? (clientEngine ? clientEngine.fetchGroups : undefined);
+    /**
+     * Held in refs so a caller writing `fetchRecords={(p) => ...}` inline — or passing
+     * `data={rows ?? []}` — does not re-trigger the effects below on identity alone.
+     * The query inputs decide when to fetch; the functions are only how.
+     */
+    const fetchRecordsRef = useRef(fetchRecords);
+    fetchRecordsRef.current = fetchRecords;
+    const fetchGroupsRef = useRef(fetchGroups);
+    fetchGroupsRef.current = fetchGroups;
+    /**
+     * A fetch that returns the same rows must not re-render, or an unstable prop
+     * becomes an infinite loop: new identity -> effect -> setState -> new identity.
+     */
     const setFilters = useCallback((next) => {
         setFiltersInternal(next);
         setPagination((p) => ({ ...p, page: 1 }));
@@ -75,6 +93,16 @@ export function useDataTable(config) {
         setPagination({ page: 1, pageSize });
     }, []);
     const refetch = useCallback(() => setFetchTick((t) => t + 1), []);
+    const depsKey = JSON.stringify(config.deps ?? []);
+    const knownDeps = useRef(depsKey);
+    useEffect(() => {
+        if (knownDeps.current === depsKey)
+            return;
+        knownDeps.current = depsKey;
+        setSelectionState({});
+        setPagination((prev) => ({ ...prev, page: 1 }));
+        setFetchTick((t) => t + 1);
+    }, [depsKey]);
     // ─── ungrouped mode: fetch a flat page of rows ─────────────────────────────
     useEffect(() => {
         if (groupBy)
@@ -83,7 +111,7 @@ export function useDataTable(config) {
         setLoading(true);
         setError(null);
         const params = { page: pagination.page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters };
-        fetchRecords(params)
+        fetchRecordsRef.current(params)
             .then((result) => {
             if (cancelled)
                 return;
@@ -99,7 +127,7 @@ export function useDataTable(config) {
                 setLoading(false);
         });
         return () => { cancelled = true; };
-    }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, fetchRecords, fetchTick]);
+    }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, config.data, fetchTick]);
     // ─── grouped mode: fetch the group list ────────────────────────────────────
     useEffect(() => {
         if (!groupBy || !fetchGroups)
@@ -250,6 +278,9 @@ export function useDataTable(config) {
         columns,
         getRowId,
         groupByColumns,
+        visibleColumns,
+        hiddenColumns,
+        setColumnHidden,
         search,
         setSearch: (value) => { setSearch(value); setPagination((p) => ({ ...p, page: 1 })); },
         filters,
@@ -293,6 +324,7 @@ export function useDataTable(config) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [
         columns, getRowId, groupByColumns,
+        visibleColumns, hiddenColumns, setColumnHidden,
         search, filters, sort, pagination, rows, total, loading, error,
         groupBy, groups, groupsTotal, groupsLoading,
         setFilters, toggleSort, setSort, setPage, setPageSize, setGroupBy,

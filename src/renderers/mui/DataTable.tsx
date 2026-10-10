@@ -1,11 +1,11 @@
 import { useMemo, useState, type ReactElement, type ReactNode } from 'react'
 import {
-  Box, Button, Card, IconButton, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography,
+  Badge, Box, Button, Card, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import type {
-  DataTableApi, PresetsApi, ExportFormat, ExportRequest, FilterColumnDef, FilterValues, ResourceAction,
+  DataTableApi, PresetsApi, ExportFormat, ExportRequest, FilterColumnDef, FilterRenderers, FilterValues, ResourceAction,
 } from '@kyrobit/datatable'
 import { countFilterValues, filterValuesEqual } from '@kyrobit/datatable'
 import { DataTableRoot } from './context.js'
@@ -13,8 +13,9 @@ import { DataTableSearchField } from './SearchField.js'
 import { DataTableBody } from './Body.js'
 import { DataTablePagination } from './Pagination.js'
 import { DataTableFilterMenu, ManageViewsDialog } from './FilterMenu.js'
+import { DataTableSettingsDialog } from './SettingsDialog.js'
 import { ConfirmDialog } from './ConfirmDialog.js'
-import { ActionsIcon, ExportIcon, GroupIcon, ImportIcon, SettingIcon } from './icons.js'
+import { ActionsIcon, ExportIcon, FilterIcon, GroupIcon, ImportIcon, SettingIcon } from './icons.js'
 
 export interface DataTableProps<Row, Field extends string = string> {
   api: DataTableApi<Row, Field, FilterValues>
@@ -35,15 +36,19 @@ export interface DataTableProps<Row, Field extends string = string> {
   onExport?: (request: ExportRequest<Field, FilterValues>) => void | Promise<void>
   /** More than one format turns the Export button into a dropdown. */
   exportFormats?: ExportFormat[]
+  filterRenderers?: FilterRenderers
   onImport?: () => void
   exportTooltip?: string
   importTooltip?: string
   /** Bulk actions offered while rows are selected. Enables the checkbox column. */
   actions?: ResourceAction[]
   selectable?: boolean
+  /** The toolbar's settings button and its dialog. Default `true`; pass `false` where a table
+   * has one fixed column set and nothing to configure. */
+  settings?: boolean
   onRowClick?: (row: Row) => void
   rowClass?: (row: Row) => string
-  emptyMessage?: string
+  emptyMessage?: ReactNode
   stickyHeader?: boolean
   rowsPerPageOptions?: number[]
 }
@@ -65,11 +70,13 @@ export function DataTable<Row, Field extends string = string>({
   toolbarEnd,
   onExport,
   exportFormats = [{ id: 'csv', label: 'CSV' }],
+  filterRenderers,
   onImport,
   exportTooltip = 'Export current results',
   importTooltip = 'Import from CSV',
   actions,
   selectable,
+  settings = true,
   onRowClick,
   rowClass,
   emptyMessage,
@@ -83,6 +90,7 @@ export function DataTable<Row, Field extends string = string>({
   const [actionsAnchor, setActionsAnchor] = useState<HTMLElement | null>(null)
   const [exportAnchor, setExportAnchor] = useState<HTMLElement | null>(null)
   const [manageOpen, setManageOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [pendingAction, setPendingAction] = useState<ResourceAction | null>(null)
 
   const filters = api.filters ?? {}
@@ -139,36 +147,31 @@ export function DataTable<Row, Field extends string = string>({
         >
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0, flexWrap: 'wrap' }}>
             {presets && presets.all.length > 0 && (
-              <>
-                <ToggleButtonGroup
-                  exclusive
-                  value={activePresetId}
-                  onChange={(_, nextId: string | null) => {
-                    if (!nextId) return
-                    if (nextId === 'all') { applyFilters({}); return }
-                    const p = presets.all.find((preset) => preset.id === nextId)
-                    if (p) applyFilters(p.filters, p.id)
-                  }}
-                >
-                  <ToggleButton value="all" data-label="All">All</ToggleButton>
-                  {presets.all.map((p) => (
-                    <ToggleButton key={p.id} value={p.id} data-label={p.name}>{p.name}</ToggleButton>
-                  ))}
-                </ToggleButtonGroup>
-                <Tooltip title="Manage views">
-                  <IconButton color="inherit" size="large" onClick={() => setManageOpen(true)} aria-label="Manage views">
-                    <SettingIcon sx={{ fontSize: 18 }} />
-                  </IconButton>
-                </Tooltip>
-              </>
+              <ToggleButtonGroup
+                exclusive
+                value={activePresetId}
+                onChange={(_, nextId: string | null) => {
+                  if (!nextId) return
+                  if (nextId === 'all') { applyFilters({}); return }
+                  const p = presets.all.find((preset) => preset.id === nextId)
+                  if (p) applyFilters(p.filters, p.id)
+                }}
+              >
+                <ToggleButton value="all" data-label="All">All</ToggleButton>
+                {presets.all.map((p) => (
+                  <ToggleButton key={p.id} value={p.id} data-label={p.name}>{p.name}</ToggleButton>
+                ))}
+              </ToggleButtonGroup>
             )}
           </Stack>
-          {onCreate && (
-            <Button variant="contained" startIcon={<AddIcon />} onClick={onCreate}>
-              {createLabel}
-            </Button>
-          )}
-          {toolbarEnd}
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexShrink: 0 }}>
+            {onCreate && (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={onCreate}>
+                {createLabel}
+              </Button>
+            )}
+            {toolbarEnd}
+          </Stack>
         </Stack>
       )}
 
@@ -177,12 +180,17 @@ export function DataTable<Row, Field extends string = string>({
         sx={{ alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 1, minHeight: 40 }}
       >
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', minWidth: 0 }}>
-          <DataTableSearchField
-            placeholder={searchPlaceholder}
-            width={searchWidth}
-            filterCount={filterColumns ? filterCount : 0}
-            onOpenFilters={filterColumns ? (anchor) => { setFilterDraft(filters); setFilterAnchor(anchor) } : undefined}
-          />
+          <DataTableSearchField placeholder={searchPlaceholder} width={searchWidth} alwaysOpen />
+          {filterColumns && (
+            <Badge badgeContent={filterCount} color="primary">
+              <ToolbarBtn
+                icon={<FilterIcon />}
+                label="Filters"
+                menu={false}
+                onClick={(e) => { setFilterDraft(filters); setFilterAnchor(e.currentTarget) }}
+              />
+            </Badge>
+          )}
           <Stack
             direction="row"
             spacing={1}
@@ -231,6 +239,14 @@ export function DataTable<Row, Field extends string = string>({
                 onClick={(e) => setActionsAnchor(e.currentTarget)}
               />
             )}
+            {settings && (
+              <ToolbarBtn
+                icon={<SettingIcon />}
+                label="Settings"
+                menu={false}
+                onClick={() => setSettingsOpen(true)}
+              />
+            )}
           </Stack>
         </Stack>
         <Box sx={{ minHeight: 40, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
@@ -257,8 +273,9 @@ export function DataTable<Row, Field extends string = string>({
         <ConfirmDialog
           open
           title={pendingAction.confirmationMessage!(api.selectedIds.length)}
+          description={pendingAction.confirmationDescription?.(api.selectedIds.length)}
           confirmLabel={pendingAction.label}
-          confirmColor="error"
+          confirmColor={pendingAction.confirmColor ?? 'error'}
           onCancel={() => setPendingAction(null)}
           onConfirm={() => {
             const action = pendingAction
@@ -292,6 +309,7 @@ export function DataTable<Row, Field extends string = string>({
 
       {filterColumns && (
         <DataTableFilterMenu
+          filterRenderers={filterRenderers}
           anchorEl={filterAnchor}
           onClose={() => setFilterAnchor(null)}
           filterColumns={filterColumns}
@@ -308,6 +326,18 @@ export function DataTable<Row, Field extends string = string>({
           onClose={() => setManageOpen(false)}
           presets={presets}
           filterColumns={filterColumns}
+        />
+      )}
+
+      {settings && (
+        <DataTableSettingsDialog
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          onManageViews={
+            presets && filterColumns
+              ? () => { setSettingsOpen(false); setManageOpen(true) }
+              : undefined
+          }
         />
       )}
 

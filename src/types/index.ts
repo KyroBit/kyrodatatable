@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 export type SortDirection = 'asc' | 'desc'
 
 export interface DateRangeValue {
@@ -25,6 +26,7 @@ export interface SelectFilterColumnDef {
   field: string
   label: string
   options: FilterOptionsSource
+  multi?: boolean
 }
 
 export interface TextFilterColumnDef {
@@ -43,13 +45,44 @@ export interface DateFilterColumnDef {
   range?: boolean
 }
 
+/** Toggle chips, for a handful of fixed values you switch between at a glance. */
+export interface ChoiceFilterColumnDef {
+  type: 'choice'
+  field: string
+  label: string
+  options: FilterOption[]
+  multi?: boolean
+}
+
+/** What every filter field renderer receives, built-in or your own. */
+export interface FilterFieldProps<Column = FilterColumnDef> {
+  column: Column
+  value: FilterValues[string] | undefined
+  onChange: (next: FilterValues[string]) => void
+}
+
+/**
+ * Swap the component used for a filter type. Anything you leave out keeps the
+ * bundled MUI renderer, so the library still works with no configuration.
+ */
+export type FilterRenderers = Partial<Record<FilterColumnDef['type'], (props: FilterFieldProps<never>) => ReactNode>>
+
 /** One section in the built-in filter popover. */
-export type FilterColumnDef = SelectFilterColumnDef | TextFilterColumnDef | DateFilterColumnDef
+export type FilterColumnDef =
+  | SelectFilterColumnDef
+  | ChoiceFilterColumnDef
+  | TextFilterColumnDef
+  | DateFilterColumnDef
 
 /** A bulk action offered on the current selection. */
 export interface ResourceAction {
   label: string
+  /** Shown as the dialog's title, so write it as a question. */
   confirmationMessage?: (count: number) => string
+  /** Optional body line under the title — the consequence of confirming. */
+  confirmationDescription?: (count: number) => string
+  /** Colour of the confirm button. Defaults to `error`. */
+  confirmColor?: 'primary' | 'error' | 'warning' | 'success'
   handle: (rowIds: string[]) => void | Promise<void>
 }
 
@@ -143,6 +176,12 @@ interface DataTableConfigBase<Row, Field extends string, Filters> {
   initialFilters?: Filters
   /** Delay, in ms, between a `setSearch` call and the query it triggers actually running. Default `0` (no debounce). */
   searchDebounceMs?: number
+  /** Columns hidden until the reader turns them on. Anything not listed starts visible. */
+  initialHiddenColumns?: Field[]
+  /** External values the data depends on — an active organisation, a selected branch. When any
+   * of them changes the table drops back to page 1, clears its selection and refetches, the way
+   * a query key does. Compared by value, so inline arrays are fine. */
+  deps?: readonly unknown[]
 }
 
 export interface ServerDataTableConfig<Row, Field extends string = string, Filters = FilterValues>

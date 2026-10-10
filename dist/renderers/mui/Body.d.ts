@@ -1,6 +1,7 @@
+import type { ReactNode } from 'react';
 export interface DataTableBodyProps<Row> {
     onRowClick?: (row: Row) => void;
-    emptyMessage?: string;
+    emptyMessage?: ReactNode;
     /** Renders a leading checkbox column wired to `api.selection`. */
     selectable?: boolean;
     /** Keeps the header row visible while rows scroll inside the container. Default `true`. */

@@ -8,9 +8,16 @@ import { useDataTableContext } from './context.js';
  * Stacked up/down triangles — the "double arrow" sort indicator modern apps
  * use. Both grey when the column is unsorted; the active direction darkens.
  */
+function SortChevron({ points, active }) {
+    return (_jsx(Box, { component: "svg", width: 11, height: 7, viewBox: "0 0 24 14", sx: {
+            display: 'block',
+            fill: 'none',
+            color: active ? 'text.primary' : 'action.disabled',
+            transition: 'color 0.15s',
+        }, children: _jsx("path", { d: points, stroke: "currentColor", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round" }) }));
+}
 function SortArrows({ direction }) {
-    const fill = (dir) => (direction === dir ? 'text.primary' : 'action.disabled');
-    return (_jsxs(Box, { component: "span", className: "KyroTable-sortArrows", sx: { display: 'inline-flex', flexDirection: 'column', gap: '2px', ml: 0.75, flex: 'none' }, children: [_jsx(Box, { component: "svg", width: 8, height: 5, viewBox: "0 0 8 5", sx: { display: 'block', color: fill('asc'), transition: 'color 0.15s' }, children: _jsx("path", { d: "M4 0 L7.6 4.6 H0.4 Z", fill: "currentColor" }) }), _jsx(Box, { component: "svg", width: 8, height: 5, viewBox: "0 0 8 5", sx: { display: 'block', color: fill('desc'), transition: 'color 0.15s' }, children: _jsx("path", { d: "M4 5 L7.6 0.4 H0.4 Z", fill: "currentColor" }) })] }));
+    return (_jsxs(Box, { component: "span", className: "KyroTable-sortArrows", sx: { display: 'inline-flex', flexDirection: 'column', gap: '2px', ml: 0.75, flex: 'none' }, children: [_jsx(SortChevron, { points: "M5 9.5 L12 3.5 L19 9.5", active: direction === 'asc' }), _jsx(SortChevron, { points: "M5 4.5 L12 10.5 L19 4.5", active: direction === 'desc' })] }));
 }
 /**
  * Compact inline pager shown at the right edge of an expanded group's header
@@ -29,10 +36,10 @@ function GroupPager({ groupKey, api }) {
 export function DataTableBody({ onRowClick, emptyMessage = 'No records found.', selectable = false, stickyHeader = true, rowClass, }) {
     const api = useDataTableContext();
     const items = api.visibleItems;
-    const colSpan = api.columns.length + (selectable ? 1 : 0);
+    const colSpan = api.visibleColumns.length + (selectable ? 1 : 0);
     const isEmpty = items.length === 0 && !api.loading && !api.groupsLoading;
-    const hasExplicitWidths = api.columns.some((col) => col.width);
-    return (_jsx(TableContainer, { sx: { flex: '1 1 auto', minHeight: 0 }, children: _jsxs(Table, { size: "small", stickyHeader: stickyHeader, sx: hasExplicitWidths ? { tableLayout: 'fixed' } : undefined, children: [hasExplicitWidths && (_jsxs("colgroup", { children: [selectable && _jsx("col", { style: { width: 48 } }), api.columns.map((col) => (_jsx("col", { style: col.width ? { width: col.width } : undefined }, col.field)))] })), _jsx(TableHead, { children: _jsxs(TableRow, { children: [selectable && (_jsx(TableCell, { padding: "checkbox", children: _jsx(Checkbox, { size: "small", checked: api.allVisibleSelected, indeterminate: api.someVisibleSelected && !api.allVisibleSelected, onChange: () => api.toggleSelectAll(), slotProps: { input: { 'aria-label': 'Select all rows' } } }) })), api.columns.map((col) => (_jsx(TableCell, { align: col.align, sortDirection: api.sort?.field === col.field ? api.sort.direction : false, onClick: col.sortable === false ? undefined : () => api.toggleSort(col.field), sx: col.sortable === false ? undefined : {
+    const hasExplicitWidths = api.visibleColumns.some((col) => col.width);
+    return (_jsx(TableContainer, { sx: { flex: '1 1 auto', minHeight: 0 }, children: _jsxs(Table, { size: "small", stickyHeader: stickyHeader, sx: hasExplicitWidths ? { tableLayout: 'fixed' } : undefined, children: [hasExplicitWidths && (_jsxs("colgroup", { children: [selectable && _jsx("col", { style: { width: 48 } }), api.visibleColumns.map((col) => (_jsx("col", { style: col.width ? { width: col.width } : undefined }, col.field)))] })), _jsx(TableHead, { children: _jsxs(TableRow, { children: [selectable && (_jsx(TableCell, { padding: "checkbox", children: _jsx(Checkbox, { size: "small", checked: api.allVisibleSelected, indeterminate: api.someVisibleSelected && !api.allVisibleSelected, onChange: () => api.toggleSelectAll(), slotProps: { input: { 'aria-label': 'Select all rows' } } }) })), api.visibleColumns.map((col) => (_jsx(TableCell, { align: col.align, sortDirection: api.sort?.field === col.field ? api.sort.direction : false, onClick: col.sortable === false ? undefined : () => api.toggleSort(col.field), sx: col.sortable === false ? undefined : {
                                     cursor: 'pointer',
                                     userSelect: 'none',
                                     '&:hover': { color: 'text.primary' },
@@ -53,7 +60,7 @@ export function DataTableBody({ onRowClick, emptyMessage = 'No records found.', 
                                         userSelect: 'none',
                                         whiteSpace: 'nowrap',
                                         '&:hover': { color: 'text.primary' },
-                                    }, children: [col.headerName, _jsx(SortArrows, { direction: api.sort?.field === col.field ? api.sort.direction : null })] })) }, col.field)))] }) }), _jsx(TableBody, { children: isEmpty ? (_jsx(TableRow, { children: _jsx(TableCell, { colSpan: colSpan, children: _jsx(Typography, { color: "text.secondary", sx: { py: 4, textAlign: 'center' }, children: emptyMessage }) }) })) : (items.map((item) => {
+                                    }, children: [col.headerName, _jsx(SortArrows, { direction: api.sort?.field === col.field ? api.sort.direction : null })] })) }, col.field)))] }) }), _jsx(TableBody, { children: isEmpty ? (_jsx(TableRow, { children: _jsx(TableCell, { colSpan: colSpan, children: typeof emptyMessage === 'string' ? (_jsx(Typography, { color: "text.secondary", sx: { py: 4, textAlign: 'center' }, children: emptyMessage })) : (_jsx(Box, { sx: { py: 4 }, children: emptyMessage })) }) })) : (items.map((item) => {
                         if (item.type === 'group') {
                             return (_jsx(TableRow, { className: "KyroTable-groupRow", onClick: () => api.toggleGroup(item.group.key), sx: { cursor: 'pointer' }, children: _jsx(TableCell, { className: "KyroTable-groupCell", colSpan: colSpan, children: _jsxs(Box, { sx: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }, children: [_jsxs(Box, { sx: { display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }, children: [item.expanded
                                                         ? _jsx(KeyboardArrowDownIcon, { sx: { fontSize: 18, color: 'text.secondary' } })
@@ -69,6 +76,6 @@ export function DataTableBody({ onRowClick, emptyMessage = 'No records found.', 
                             item.type === 'group-row' ? 'KyroTable-groupChildRow' : '',
                             rowClass ? rowClass(row) : '',
                         ].filter(Boolean).join(' ');
-                        return (_jsxs(TableRow, { hover: true, selected: selectable && api.isSelected(rowId), className: classes || undefined, sx: { cursor: onRowClick ? 'pointer' : undefined }, onClick: () => onRowClick?.(row), children: [selectable && (_jsx(TableCell, { padding: "checkbox", onClick: (e) => e.stopPropagation(), children: _jsx(Checkbox, { size: "small", checked: api.isSelected(rowId), onChange: () => api.toggleSelected(rowId), slotProps: { input: { 'aria-label': 'Select row' } } }) })), api.columns.map((col) => (_jsx(TableCell, { align: col.align, children: (col.render ? col.render(row) : row[col.field]) }, col.field)))] }, rowId));
+                        return (_jsxs(TableRow, { hover: true, selected: selectable && api.isSelected(rowId), className: classes || undefined, sx: { cursor: onRowClick ? 'pointer' : undefined }, onClick: () => onRowClick?.(row), children: [selectable && (_jsx(TableCell, { padding: "checkbox", onClick: (e) => e.stopPropagation(), children: _jsx(Checkbox, { size: "small", checked: api.isSelected(rowId), onChange: () => api.toggleSelected(rowId), slotProps: { input: { 'aria-label': 'Select row' } } }) })), api.visibleColumns.map((col) => (_jsx(TableCell, { align: col.align, children: (col.render ? col.render(row) : row[col.field]) }, col.field)))] }, rowId));
                     })) })] }) }));
 }

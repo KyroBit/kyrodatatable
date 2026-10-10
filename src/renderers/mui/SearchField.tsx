@@ -1,73 +1,77 @@
-import { Box, IconButton, InputAdornment, TextField } from '@mui/material'
+import { useState } from 'react'
+import { Box, ClickAwayListener, IconButton, InputAdornment, TextField, Tooltip } from '@mui/material'
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import { useDataTableContext } from './context.js'
-import { FilterIcon, SearchIcon } from './icons.js'
+import { SearchIcon } from './icons.js'
 
 export interface DataTableSearchFieldProps {
   placeholder?: string
   width?: number | string
-  onOpenFilters?: (anchor: HTMLElement) => void
-  filterCount?: number
+  /** Render the field open from the start instead of behind its icon. */
+  alwaysOpen?: boolean
 }
 
-/** Search input bound to `api.search`, with an optional filter opener and applied-filter badge. */
-export function DataTableSearchField({ placeholder = 'Search', width, onOpenFilters, filterCount = 0 }: DataTableSearchFieldProps) {
+/**
+ * Search bound to `api.search`. Collapsed to its icon until asked for, so a toolbar
+ * spends its width on the table rather than on an empty box.
+ */
+export function DataTableSearchField({ placeholder = 'Search', width, alwaysOpen }: DataTableSearchFieldProps) {
   const api = useDataTableContext()
+  const [open, setOpen] = useState(false)
+
+  const expanded = alwaysOpen || open || Boolean(api.search)
+
+  if (!expanded) {
+    return (
+      <Tooltip title={placeholder}>
+        <IconButton
+          className="search-toggle"
+          color="inherit"
+          size="large"
+          onClick={() => setOpen(true)}
+          aria-label={placeholder}
+        >
+          <SearchIcon sx={{ fontSize: 20 }} />
+        </IconButton>
+      </Tooltip>
+    )
+  }
+
+  const collapse = () => {
+    api.setSearch('')
+    setOpen(false)
+  }
 
   return (
-    <TextField
-      size="small"
-      placeholder={placeholder}
-      value={api.search}
-      onChange={(e) => api.setSearch(e.target.value)}
-      sx={{ width: width ?? { xs: '100%', sm: 420 } }}
-      slotProps={{
-        input: {
-          className: 'search-field',
-          startAdornment: (
-            <InputAdornment position="start" sx={{ mr: '11px' }}>
-              <SearchIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
-            </InputAdornment>
-          ),
-          endAdornment: onOpenFilters ? (
-            <InputAdornment position="end" sx={{ ml: 0, mr: 0 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
-                <Box sx={{ width: '1.2px', height: 20, bgcolor: 'divider' }} />
-                <IconButton
-                  size="small"
-                  onClick={(e) => onOpenFilters(e.currentTarget)}
-                  aria-label="Open filters"
-                  sx={{ color: filterCount > 0 ? 'primary.main' : 'text.primary', p: '6px', m: '-6px', borderRadius: '8px' }}
-                >
-                  <FilterIcon sx={{ fontSize: 20 }} />
-                  {filterCount > 0 && (
-                    <Box
-                      component="span"
-                      sx={{
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        minWidth: 15,
-                        height: 15,
-                        px: '3px',
-                        borderRadius: 999,
-                        bgcolor: 'primary.main',
-                        color: 'primary.contrastText',
-                        fontSize: '9.5px',
-                        fontWeight: 700,
-                        lineHeight: '15px',
-                        textAlign: 'center',
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
-                    >
-                      {filterCount}
-                    </Box>
-                  )}
-                </IconButton>
-              </Box>
-            </InputAdornment>
-          ) : undefined,
-        },
-      }}
-    />
+    <ClickAwayListener onClickAway={() => !api.search && setOpen(false)}>
+      <Box sx={{ width: width ?? { xs: '100%', sm: 280 } }}>
+        <TextField
+          size="small"
+          fullWidth
+          autoFocus={!alwaysOpen}
+          placeholder={placeholder}
+          value={api.search}
+          onChange={(e) => api.setSearch(e.target.value)}
+          onKeyDown={(e) => e.key === 'Escape' && collapse()}
+          slotProps={{
+            input: {
+              className: 'search-field',
+              startAdornment: (
+                <InputAdornment position="start" sx={{ mr: '11px' }}>
+                  <SearchIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+              endAdornment: api.search ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={collapse} aria-label="Clear search">
+                    <CloseRoundedIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </InputAdornment>
+              ) : undefined,
+            },
+          }}
+        />
+      </Box>
+    </ClickAwayListener>
   )
 }

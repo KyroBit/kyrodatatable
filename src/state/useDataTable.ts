@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClientEngine } from './clientEngine.js'
 import type {
   ColumnDef, DataTableConfig, FetchParams, FilterValues, GroupByColumn, PaginationState,
@@ -17,6 +17,11 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
   columns: ColumnDef<Row, Field>[]
   getRowId: (row: Row) => string
   groupByColumns?: GroupByColumn<Field>[]
+
+  /** `columns` minus the hidden ones, in the original order. What a renderer draws. */
+  visibleColumns: ColumnDef<Row, Field>[]
+  hiddenColumns: Field[]
+  setColumnHidden: (field: Field, hidden: boolean) => void
 
   search: string
   setSearch: (value: string) => void
@@ -80,6 +85,19 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
 ): DataTableApi<Row, Field, Filters> {
   const { columns, getRowId, groupByColumns, initialPageSize, initialSort, initialFilters, searchDebounceMs } = config
 
+  const [hiddenColumns, setHiddenColumns] = useState<Field[]>(config.initialHiddenColumns ?? [])
+
+  const setColumnHidden = useCallback((field: Field, hidden: boolean) => {
+    setHiddenColumns((current) =>
+      hidden ? (current.includes(field) ? current : [...current, field]) : current.filter((f) => f !== field),
+    )
+  }, [])
+
+  const visibleColumns = useMemo(
+    () => columns.filter((column) => !hiddenColumns.includes(column.field)),
+    [columns, hiddenColumns],
+  )
+
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [filters, setFiltersInternal] = useState<Filters | undefined>(initialFilters)
@@ -124,6 +142,22 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const fetchRecords = config.fetchRecords ?? clientEngine!.fetchRecords
   const fetchGroups = config.fetchGroups ?? (clientEngine ? clientEngine.fetchGroups : undefined)
 
+  /**
+   * Held in refs so a caller writing `fetchRecords={(p) => ...}` inline — or passing
+   * `data={rows ?? []}` — does not re-trigger the effects below on identity alone.
+   * The query inputs decide when to fetch; the functions are only how.
+   */
+  const fetchRecordsRef = useRef(fetchRecords)
+  fetchRecordsRef.current = fetchRecords
+  const fetchGroupsRef = useRef(fetchGroups)
+  fetchGroupsRef.current = fetchGroups
+
+  /**
+   * A fetch that returns the same rows must not re-render, or an unstable prop
+   * becomes an infinite loop: new identity -> effect -> setState -> new identity.
+   */
+
+
   const setFilters = useCallback((next: Filters) => {
     setFiltersInternal(next)
     setPagination((p) => ({ ...p, page: 1 }))
@@ -160,6 +194,17 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
 
   const refetch = useCallback(() => setFetchTick((t) => t + 1), [])
 
+  const depsKey = JSON.stringify(config.deps ?? [])
+  const knownDeps = useRef(depsKey)
+
+  useEffect(() => {
+    if (knownDeps.current === depsKey) return
+    knownDeps.current = depsKey
+    setSelectionState({})
+    setPagination((prev) => ({ ...prev, page: 1 }))
+    setFetchTick((t) => t + 1)
+  }, [depsKey])
+
   // ─── ungrouped mode: fetch a flat page of rows ─────────────────────────────
   useEffect(() => {
     if (groupBy) return
@@ -168,7 +213,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     setError(null)
 
     const params: FetchParams<Field, Filters> = { page: pagination.page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters }
-    fetchRecords(params)
+    fetchRecordsRef.current(params)
       .then((result) => {
         if (cancelled) return
         setRows(result.rows)
@@ -182,7 +227,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
       })
 
     return () => { cancelled = true }
-  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, fetchRecords, fetchTick])
+  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, config.data, fetchTick])
 
   // ─── grouped mode: fetch the group list ────────────────────────────────────
   useEffect(() => {
@@ -340,6 +385,10 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     getRowId,
     groupByColumns,
 
+    visibleColumns,
+    hiddenColumns,
+    setColumnHidden,
+
     search,
     setSearch: (value: string) => { setSearch(value); setPagination((p) => ({ ...p, page: 1 })) },
 
@@ -392,6 +441,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [
     columns, getRowId, groupByColumns,
+    visibleColumns, hiddenColumns, setColumnHidden,
     search, filters, sort, pagination, rows, total, loading, error,
     groupBy, groups, groupsTotal, groupsLoading,
     setFilters, toggleSort, setSort, setPage, setPageSize, setGroupBy,

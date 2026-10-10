@@ -1,6 +1,18 @@
-import { Box, Button, Dialog, Divider, IconButton, Stack, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
+import { useState } from 'react'
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Stack,
+  type DialogProps,
+} from '@mui/material'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
+
+export type ConfirmColor = 'primary' | 'error' | 'warning' | 'success'
 
 export interface ConfirmDialogProps {
   open: boolean
@@ -8,14 +20,17 @@ export interface ConfirmDialogProps {
   description?: string
   confirmLabel?: string
   cancelLabel?: string
-  confirmColor?: 'primary' | 'error' | 'warning'
-  onConfirm: () => void
+  confirmColor?: ConfirmColor
+  onConfirm: () => void | Promise<void>
   onCancel: () => void
+  /** Forwarded to the underlying MUI `Dialog`, so a consumer can size or restyle this instance. */
+  slotProps?: DialogProps['slotProps']
+  maxWidth?: DialogProps['maxWidth']
+  fullWidth?: DialogProps['fullWidth']
 }
 
-/** A styled stand-in for `window.confirm()` — same header/body/actions shape already used by
- * `ManageViewsDialog` in this file, so anything in this library asking "are you sure?" (bulk
- * actions, discarding a dirty edit, or a consumer's own use) looks native to it. */
+/** A stand-in for `window.confirm()` built from MUI's dialog slots, so it inherits whatever the
+ * consumer's theme says a dialog looks like rather than carrying its own opinion. */
 export function ConfirmDialog({
   open,
   title,
@@ -25,44 +40,52 @@ export function ConfirmDialog({
   confirmColor = 'primary',
   onConfirm,
   onCancel,
+  slotProps,
+  maxWidth,
+  fullWidth,
 }: ConfirmDialogProps) {
+  const [busy, setBusy] = useState(false)
+
+  const confirm = async () => {
+    setBusy(true)
+    try {
+      await onConfirm()
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
-    <Dialog open={open} onClose={onCancel} slotProps={{ paper: { sx: { width: 400, maxWidth: '92vw', borderRadius: '16px' } } }}>
-      <Box sx={{ px: 3, pt: 2, pb: 2.5 }}>
-        <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-          <Typography sx={{ fontSize: '18px', fontWeight: 600, color: 'text.primary' }}>{title}</Typography>
-          <IconButton
-            onClick={onCancel}
-            aria-label="Close"
-            sx={(theme) => ({
-              width: 28,
-              height: 28,
-              bgcolor: alpha(theme.palette.text.primary, 0.04),
-              color: theme.palette.text.primary,
-              '&:hover': { bgcolor: alpha(theme.palette.text.primary, 0.08) },
-            })}
-          >
-            <CloseRoundedIcon sx={{ fontSize: 16 }} />
+    <Dialog
+      open={open}
+      onClose={busy ? undefined : onCancel}
+      slotProps={slotProps}
+      maxWidth={maxWidth}
+      fullWidth={fullWidth}
+    >
+      <DialogTitle>
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+          <span style={{ flex: 1 }}>{title}</span>
+          <IconButton size="small" edge="end" onClick={onCancel} disabled={busy} aria-label="Close">
+            <CloseRoundedIcon fontSize="small" />
           </IconButton>
         </Stack>
-        <Divider />
-        {description && (
-          <Typography sx={{ fontSize: '13.5px', color: 'text.secondary', mt: 2 }}>{description}</Typography>
-        )}
-        <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', mt: 3 }}>
-          <Button
-            variant="outlined"
-            color="inherit"
-            onClick={onCancel}
-            sx={{ height: 36, minHeight: 36, px: '16px', fontSize: '13px', borderRadius: '8px' }}
-          >
-            {cancelLabel}
-          </Button>
-          <Button variant="contained" color={confirmColor} onClick={onConfirm} sx={{ height: 36, minHeight: 36, px: '20px', fontSize: '13px' }}>
-            {confirmLabel}
-          </Button>
-        </Stack>
-      </Box>
+      </DialogTitle>
+
+      {description && (
+        <DialogContent>
+          <DialogContentText>{description}</DialogContentText>
+        </DialogContent>
+      )}
+
+      <DialogActions>
+        <Button color="inherit" onClick={onCancel} disabled={busy}>
+          {cancelLabel}
+        </Button>
+        <Button variant="contained" color={confirmColor} loading={busy} onClick={confirm}>
+          {confirmLabel}
+        </Button>
+      </DialogActions>
     </Dialog>
   )
 }

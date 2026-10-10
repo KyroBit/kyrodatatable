@@ -13,20 +13,40 @@ import type { DataTableApi, SortDirection } from '@kyrobit/datatable'
  * Stacked up/down triangles — the "double arrow" sort indicator modern apps
  * use. Both grey when the column is unsorted; the active direction darkens.
  */
+function SortChevron({ points, active }: { points: string; active: boolean }) {
+  return (
+    <Box
+      component="svg"
+      width={11}
+      height={7}
+      viewBox="0 0 24 14"
+      sx={{
+        display: 'block',
+        fill: 'none',
+        color: active ? 'text.primary' : 'action.disabled',
+        transition: 'color 0.15s',
+      }}
+    >
+      <path
+        d={points}
+        stroke="currentColor"
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Box>
+  )
+}
+
 function SortArrows({ direction }: { direction: SortDirection | null }) {
-  const fill = (dir: SortDirection) => (direction === dir ? 'text.primary' : 'action.disabled')
   return (
     <Box
       component="span"
       className="KyroTable-sortArrows"
       sx={{ display: 'inline-flex', flexDirection: 'column', gap: '2px', ml: 0.75, flex: 'none' }}
     >
-      <Box component="svg" width={8} height={5} viewBox="0 0 8 5" sx={{ display: 'block', color: fill('asc'), transition: 'color 0.15s' }}>
-        <path d="M4 0 L7.6 4.6 H0.4 Z" fill="currentColor" />
-      </Box>
-      <Box component="svg" width={8} height={5} viewBox="0 0 8 5" sx={{ display: 'block', color: fill('desc'), transition: 'color 0.15s' }}>
-        <path d="M4 5 L7.6 0.4 H0.4 Z" fill="currentColor" />
-      </Box>
+      <SortChevron points="M5 9.5 L12 3.5 L19 9.5" active={direction === 'asc'} />
+      <SortChevron points="M5 4.5 L12 10.5 L19 4.5" active={direction === 'desc'} />
     </Box>
   )
 }
@@ -74,7 +94,7 @@ function GroupPager({ groupKey, api }: { groupKey: string; api: DataTableApi<unk
 
 export interface DataTableBodyProps<Row> {
   onRowClick?: (row: Row) => void
-  emptyMessage?: string
+  emptyMessage?: ReactNode
   /** Renders a leading checkbox column wired to `api.selection`. */
   selectable?: boolean
   /** Keeps the header row visible while rows scroll inside the container. Default `true`. */
@@ -89,9 +109,9 @@ export function DataTableBody<Row>({
 }: DataTableBodyProps<Row>) {
   const api = useDataTableContext<Row>()
   const items = api.visibleItems
-  const colSpan = api.columns.length + (selectable ? 1 : 0)
+  const colSpan = api.visibleColumns.length + (selectable ? 1 : 0)
   const isEmpty = items.length === 0 && !api.loading && !api.groupsLoading
-  const hasExplicitWidths = api.columns.some((col) => col.width)
+  const hasExplicitWidths = api.visibleColumns.some((col) => col.width)
 
   return (
     <TableContainer sx={{ flex: '1 1 auto', minHeight: 0 }}>
@@ -99,7 +119,7 @@ export function DataTableBody<Row>({
         {hasExplicitWidths && (
           <colgroup>
             {selectable && <col style={{ width: 48 }} />}
-            {api.columns.map((col) => (
+            {api.visibleColumns.map((col) => (
               <col key={col.field} style={col.width ? { width: col.width } : undefined} />
             ))}
           </colgroup>
@@ -117,7 +137,7 @@ export function DataTableBody<Row>({
                 />
               </TableCell>
             )}
-            {api.columns.map((col) => (
+            {api.visibleColumns.map((col) => (
               <TableCell
                 key={col.field}
                 align={col.align}
@@ -165,7 +185,11 @@ export function DataTableBody<Row>({
           {isEmpty ? (
             <TableRow>
               <TableCell colSpan={colSpan}>
-                <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>{emptyMessage}</Typography>
+                {typeof emptyMessage === 'string' ? (
+                  <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>{emptyMessage}</Typography>
+                ) : (
+                  <Box sx={{ py: 4 }}>{emptyMessage}</Box>
+                )}
               </TableCell>
             </TableRow>
           ) : (
@@ -244,7 +268,7 @@ export function DataTableBody<Row>({
                       />
                     </TableCell>
                   )}
-                  {api.columns.map((col) => (
+                  {api.visibleColumns.map((col) => (
                     <TableCell key={col.field} align={col.align}>
                       {(col.render ? col.render(row) : (row as Record<string, unknown>)[col.field]) as ReactNode}
                     </TableCell>

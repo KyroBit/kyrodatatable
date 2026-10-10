@@ -12,6 +12,7 @@ The default assembly — `Root` + `SearchField` + `GroupBySelect` + `Body` + `Pa
 | `onRowClick` | `(row: Row) => void` | optional | Rows render as clickable, with a hover state, when set. |
 | `searchPlaceholder` | `string` | optional | Default `"Search…"`. |
 | `emptyMessage` | `string` | optional | Default `"No records found."` |
+| `settings` | `boolean` | optional | Default `true`. Pass `false` to drop the settings button and its dialog, where a table has one fixed column set and nothing to configure. |
 
 ## The primitives
 
