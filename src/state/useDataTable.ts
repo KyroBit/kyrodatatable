@@ -109,7 +109,9 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
 
   const [rows, setRows] = useState<Row[]>([])
   const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(false)
+  // The first fetch starts on mount, so the first render must already read as loading, or a
+  // table flashes its empty state before the first page arrives.
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<unknown>(null)
   const [fetchTick, setFetchTick] = useState(0)
 
@@ -139,7 +141,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.data, config.applyFilters, columns, groupBy])
 
-  const fetchRecords = config.fetchRecords ?? clientEngine!.fetchRecords
+  const fetchRecords = config.fetchRecords ?? clientEngine?.fetchRecords
   const fetchGroups = config.fetchGroups ?? (clientEngine ? clientEngine.fetchGroups : undefined)
 
   /**
@@ -211,9 +213,11 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     let cancelled = false
     setLoading(true)
     setError(null)
+    const fetch = fetchRecordsRef.current
+    if (!fetch) return
 
     const params: FetchParams<Field, Filters> = { page: pagination.page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters }
-    fetchRecordsRef.current(params)
+    fetch(params)
       .then((result) => {
         if (cancelled) return
         setRows(result.rows)
@@ -255,7 +259,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, fetchGroups, fetchTick])
 
   const fetchGroupRows = useCallback((key: string, page: number) => {
-    if (!groupBy) return
+    if (!groupBy || !fetchRecords) return
     setGroupState((prev) => ({
       ...prev,
       [key]: { rows: prev[key]?.rows ?? [], total: prev[key]?.total ?? 0, pagination: { page, pageSize: pagination.pageSize }, loading: true },

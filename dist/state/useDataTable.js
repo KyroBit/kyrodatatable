@@ -18,7 +18,9 @@ export function useDataTable(config) {
     });
     const [rows, setRows] = useState([]);
     const [total, setTotal] = useState(0);
-    const [loading, setLoading] = useState(false);
+    // The first fetch starts on mount, so the first render must already read as loading, or a
+    // table flashes its empty state before the first page arrives.
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [fetchTick, setFetchTick] = useState(0);
     const [groupBy, setGroupByField] = useState(null);
@@ -47,7 +49,7 @@ export function useDataTable(config) {
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [config.data, config.applyFilters, columns, groupBy]);
-    const fetchRecords = config.fetchRecords ?? clientEngine.fetchRecords;
+    const fetchRecords = config.fetchRecords ?? clientEngine?.fetchRecords;
     const fetchGroups = config.fetchGroups ?? (clientEngine ? clientEngine.fetchGroups : undefined);
     /**
      * Held in refs so a caller writing `fetchRecords={(p) => ...}` inline — or passing
@@ -110,8 +112,11 @@ export function useDataTable(config) {
         let cancelled = false;
         setLoading(true);
         setError(null);
+        const fetch = fetchRecordsRef.current;
+        if (!fetch)
+            return;
         const params = { page: pagination.page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters };
-        fetchRecordsRef.current(params)
+        fetch(params)
             .then((result) => {
             if (cancelled)
                 return;
@@ -155,7 +160,7 @@ export function useDataTable(config) {
         return () => { cancelled = true; };
     }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, fetchGroups, fetchTick]);
     const fetchGroupRows = useCallback((key, page) => {
-        if (!groupBy)
+        if (!groupBy || !fetchRecords)
             return;
         setGroupState((prev) => ({
             ...prev,

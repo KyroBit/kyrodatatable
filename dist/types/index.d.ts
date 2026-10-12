@@ -172,8 +172,9 @@ export interface ServerDataTableConfig<Row, Field extends string = string, Filte
     applyFilters?: undefined;
 }
 export interface ClientDataTableConfig<Row, Field extends string = string, Filters = FilterValues> extends DataTableConfigBase<Row, Field, Filters> {
-    /** The whole dataset, already loaded. Search, sort, pagination, and grouping all run in memory — no fetch functions needed. */
-    data: Row[];
+    /** The whole dataset. Search, sort, pagination, and grouping all run in memory — no fetch functions needed.
+     * `undefined` while the dataset is still loading, so the table shows its loading state rather than an empty one. */
+    data: Row[] | undefined;
     /** Only needed if you also use `filters` in client mode — filtering has no generic default, since a filter's shape is yours. */
     applyFilters?: (row: Row, filters: Filters) => boolean;
     fetchRecords?: undefined;

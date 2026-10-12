@@ -6,7 +6,7 @@ export interface DataTablePaginationProps {
   rowsPerPageOptions?: number[]
 }
 
-/** Hidden automatically while grouped — pagination happens per-group there instead (`api.setGroupPage`). */
+/** Invisible while there is nothing to page through, keeping its space so the toolbar does not shift when rows arrive. Hidden while grouped — pagination happens per-group there instead (`api.setGroupPage`). */
 export function DataTablePagination({ rowsPerPageOptions = [] }: DataTablePaginationProps) {
   const api = useDataTableContext()
   if (api.groupBy) return null
@@ -21,6 +21,7 @@ export function DataTablePagination({ rowsPerPageOptions = [] }: DataTablePagina
       onPageChange={(_, page) => api.setPage(page + 1)}
       onRowsPerPageChange={(e) => api.setPageSize(Number(e.target.value))}
       labelDisplayedRows={({ from, to, count }) => `${from}–${to} of ${count}`}
+      sx={{ visibility: api.total === 0 ? 'hidden' : undefined }}
     />
   )
 }

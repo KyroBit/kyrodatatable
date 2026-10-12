@@ -48,7 +48,12 @@ export interface DataTableProps<Row, Field extends string = string> {
   settings?: boolean
   onRowClick?: (row: Row) => void
   rowClass?: (row: Row) => string
+  /** Shown in place of the table when there are no records at all. */
   emptyMessage?: ReactNode
+  /** Shown in place of the table when a search or filter matches nothing. */
+  noResultsMessage?: ReactNode
+  /** Shown in place of the table when the fetch fails. */
+  errorMessage?: ReactNode
   stickyHeader?: boolean
   rowsPerPageOptions?: number[]
 }
@@ -80,6 +85,8 @@ export function DataTable<Row, Field extends string = string>({
   onRowClick,
   rowClass,
   emptyMessage,
+  noResultsMessage,
+  errorMessage,
   stickyHeader,
   rowsPerPageOptions,
 }: DataTableProps<Row, Field>) {
@@ -345,6 +352,8 @@ export function DataTable<Row, Field extends string = string>({
         <DataTableBody<Row>
           selectable={withSelection}
           emptyMessage={emptyMessage}
+          noResultsMessage={noResultsMessage}
+          errorMessage={errorMessage}
           stickyHeader={stickyHeader}
           onRowClick={onRowClick}
           rowClass={rowClass}

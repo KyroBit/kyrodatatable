@@ -1,13 +1,14 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
-  Box, Checkbox, IconButton, Table, TableBody, TableCell, TableContainer, TableHead,
+  Box, Button, Checkbox, IconButton, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Typography,
 } from '@mui/material'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight'
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft'
 import { useDataTableContext } from './context.js'
-import type { DataTableApi, SortDirection } from '@kyrobit/datatable'
+import { countFilterValues } from '@kyrobit/datatable'
+import type { DataTableApi, FilterValues, SortDirection } from '@kyrobit/datatable'
 
 /**
  * Stacked up/down triangles — the "double arrow" sort indicator modern apps
@@ -92,9 +93,16 @@ function GroupPager({ groupKey, api }: { groupKey: string; api: DataTableApi<unk
   )
 }
 
+const SKELETON_ROWS = 10
+
 export interface DataTableBodyProps<Row> {
   onRowClick?: (row: Row) => void
+  /** Shown in place of the table when there are no records at all. */
   emptyMessage?: ReactNode
+  /** Shown in place of the table when a search or filter matches nothing. */
+  noResultsMessage?: ReactNode
+  /** Shown in place of the table when the fetch fails. Defaults to a message with a retry button. */
+  errorMessage?: ReactNode
   /** Renders a leading checkbox column wired to `api.selection`. */
   selectable?: boolean
   /** Keeps the header row visible while rows scroll inside the container. Default `true`. */
@@ -105,13 +113,46 @@ export interface DataTableBodyProps<Row> {
 
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
 export function DataTableBody<Row>({
-  onRowClick, emptyMessage = 'No records found.', selectable = false, stickyHeader = true, rowClass,
+  onRowClick,
+  emptyMessage = 'No records found.',
+  noResultsMessage = 'No records match your search.',
+  errorMessage,
+  selectable = false,
+  stickyHeader = true,
+  rowClass,
 }: DataTableBodyProps<Row>) {
   const api = useDataTableContext<Row>()
   const items = api.visibleItems
   const colSpan = api.visibleColumns.length + (selectable ? 1 : 0)
-  const isEmpty = items.length === 0 && !api.loading && !api.groupsLoading
+  const fetching = api.loading || api.groupsLoading
   const hasExplicitWidths = api.visibleColumns.some((col) => col.width)
+
+  // Once a fetch has settled, a refetch keeps what is on screen instead of dropping back to
+  // placeholders, so typing in the search box never blinks between skeleton and message.
+  const [settled, setSettled] = useState(false)
+  useEffect(() => {
+    if (!fetching) setSettled(true)
+  }, [fetching])
+
+  if (items.length === 0 && !(fetching && !settled)) {
+    const filtered = Boolean(api.search) || countFilterValues((api.filters ?? {}) as FilterValues) > 0
+    const message = api.error
+      ? (errorMessage ?? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, py: 6 }}>
+            <Typography sx={{ color: 'text.secondary' }}>These records could not be loaded.</Typography>
+            <Button variant="outlined" color="inherit" onClick={() => api.refetch()}>Try again</Button>
+          </Box>
+        ))
+      : filtered ? noResultsMessage : emptyMessage
+
+    return (
+      <Box className="KyroTable-empty" sx={{ flex: '1 1 auto', py: 4 }}>
+        {typeof message === 'string'
+          ? <Typography sx={{ color: 'text.secondary', textAlign: 'center', py: 6 }}>{message}</Typography>
+          : message}
+      </Box>
+    )
+  }
 
   return (
     <TableContainer sx={{ flex: '1 1 auto', minHeight: 0 }}>
@@ -182,16 +223,21 @@ export function DataTableBody<Row>({
           </TableRow>
         </TableHead>
         <TableBody>
-          {isEmpty ? (
-            <TableRow>
-              <TableCell colSpan={colSpan}>
-                {typeof emptyMessage === 'string' ? (
-                  <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>{emptyMessage}</Typography>
-                ) : (
-                  <Box sx={{ py: 4 }}>{emptyMessage}</Box>
-                )}
-              </TableCell>
-            </TableRow>
+          {items.length === 0 ? (
+            Array.from({ length: Math.min(api.pagination.pageSize, SKELETON_ROWS) }, (_, index) => (
+              <TableRow key={index} className="KyroTable-skeletonRow">
+                {selectable && <TableCell padding="checkbox" />}
+                {api.visibleColumns.map((col) => (
+                  <TableCell key={col.field} align={col.align}>
+                    <Skeleton
+                      variant="rounded"
+                      animation="wave"
+                      sx={{ display: 'inline-block', width: '60%', maxWidth: 120, height: 12, borderRadius: 999 }}
+                    />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
           ) : (
             items.map((item) => {
               if (item.type === 'group') {

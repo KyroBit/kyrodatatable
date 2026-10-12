@@ -11,7 +11,9 @@ The default assembly — `Root` + `SearchField` + `GroupBySelect` + `Body` + `Pa
 | `api` | `DataTableApi<Row, Field, Filters>` | required | The object returned by `useDataTable`. |
 | `onRowClick` | `(row: Row) => void` | optional | Rows render as clickable, with a hover state, when set. |
 | `searchPlaceholder` | `string` | optional | Default `"Search…"`. |
-| `emptyMessage` | `string` | optional | Default `"No records found."` |
+| `emptyMessage` | `ReactNode` | optional | Shown in place of the table when there are no records at all. Default `"No records found."` |
+| `noResultsMessage` | `ReactNode` | optional | Shown in place of the table when a search or filter matches nothing. Default `"No records match your search."` |
+| `errorMessage` | `ReactNode` | optional | Shown in place of the table when the fetch fails. Defaults to a message with a "Try again" button that calls `api.refetch()`. |
 | `settings` | `boolean` | optional | Default `true`. Pass `false` to drop the settings button and its dialog, where a table has one fixed column set and nothing to configure. |
 
 ## The primitives
@@ -47,13 +49,17 @@ Renders nothing if `groupByColumns` wasn't set on the hook config — there's no
 | Prop | Type | | Description |
 |---|---|---|---|
 | `onRowClick` | `(row: Row) => void` | optional | |
-| `emptyMessage` | `string` | optional | Default `"No records found."` |
+| `emptyMessage` | `ReactNode` | optional | Default `"No records found."` |
+| `noResultsMessage` | `ReactNode` | optional | Default `"No records match your search."` |
+| `errorMessage` | `ReactNode` | optional | Defaults to a message with a "Try again" button. |
+
+Until the first fetch settles, the body renders the real headers over up to ten placeholder rows. After that a refetch keeps what is on screen, rows or message, until the new result arrives.
 
 Iterates `api.visibleItems` — see [Core API](/reference/core-api) — so grouped and flat rendering share one path.
 
 ### `DataTable.Pagination` (`DataTablePagination`)
 
-No props. Renders `TablePagination` bound to `api.pagination`/`api.total`. Renders nothing while `api.groupBy` is set.
+No props. Renders `TablePagination` bound to `api.pagination`/`api.total`. Invisible, but still taking its space, while `api.total` is 0. Renders nothing while `api.groupBy` is set.
 
 ## `<FavoritesMenu/>`
 

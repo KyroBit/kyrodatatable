@@ -67,7 +67,7 @@ const presets = usePresets<Filters>('blog-categories', BUILT_IN)
 
 | Field | Type | | Description |
 |---|---|---|---|
-| `data` | `Row[]` | required | The whole dataset, already loaded. Search, sort, pagination, and grouping all run in memory. |
+| `data` | `Row[] \| undefined` | required | The whole dataset. Search, sort, pagination, and grouping all run in memory. Pass `undefined` while it is still loading, and the table shows its loading state instead of an empty one. |
 | `applyFilters` | `(row: Row, filters: Filters) => boolean` | optional | Only needed if you also use `filters` in client mode — there's no generic default, since a filter's shape is yours. |
 
 ### `FetchParams<Field, Filters>`
