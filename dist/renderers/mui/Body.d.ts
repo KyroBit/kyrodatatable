@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 export interface DataTableBodyProps<Row> {
     onRowClick?: (row: Row) => void;
     /** Shown in place of the table when there are no records at all. */

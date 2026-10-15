@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import {
   Box, Button, Checkbox, IconButton, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Typography,
@@ -127,14 +127,9 @@ export function DataTableBody<Row>({
   const fetching = api.loading || api.groupsLoading
   const hasExplicitWidths = api.visibleColumns.some((col) => col.width)
 
-  // Once a fetch has settled, a refetch keeps what is on screen instead of dropping back to
-  // placeholders, so typing in the search box never blinks between skeleton and message.
-  const [settled, setSettled] = useState(false)
-  useEffect(() => {
-    if (!fetching) setSettled(true)
-  }, [fetching])
-
-  if (items.length === 0 && !(fetching && !settled)) {
+  // An empty message describes a finished result, so it never stands in for one still loading:
+  // a list with rows keeps them while the next page arrives, an empty one shows placeholders.
+  if (items.length === 0 && !fetching) {
     const filtered = Boolean(api.search) || countFilterValues((api.filters ?? {}) as FilterValues) > 0
     const message = api.error
       ? (errorMessage ?? (

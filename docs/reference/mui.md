@@ -53,7 +53,7 @@ Renders nothing if `groupByColumns` wasn't set on the hook config — there's no
 | `noResultsMessage` | `ReactNode` | optional | Default `"No records match your search."` |
 | `errorMessage` | `ReactNode` | optional | Defaults to a message with a "Try again" button. |
 
-Until the first fetch settles, the body renders the real headers over up to ten placeholder rows. After that a refetch keeps what is on screen, rows or message, until the new result arrives.
+While a fetch with no rows on screen is loading, the body renders the real headers over up to ten placeholder rows. A list that has rows keeps them until the next result arrives, and an empty message only ever describes a finished result.
 
 Iterates `api.visibleItems` — see [Core API](/reference/core-api) — so grouped and flat rendering share one path.
 

@@ -1,5 +1,4 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useEffect, useState } from 'react';
 import { Box, Button, Checkbox, IconButton, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
@@ -42,14 +41,9 @@ export function DataTableBody({ onRowClick, emptyMessage = 'No records found.', 
     const colSpan = api.visibleColumns.length + (selectable ? 1 : 0);
     const fetching = api.loading || api.groupsLoading;
     const hasExplicitWidths = api.visibleColumns.some((col) => col.width);
-    // Once a fetch has settled, a refetch keeps what is on screen instead of dropping back to
-    // placeholders, so typing in the search box never blinks between skeleton and message.
-    const [settled, setSettled] = useState(false);
-    useEffect(() => {
-        if (!fetching)
-            setSettled(true);
-    }, [fetching]);
-    if (items.length === 0 && !(fetching && !settled)) {
+    // An empty message describes a finished result, so it never stands in for one still loading:
+    // a list with rows keeps them while the next page arrives, an empty one shows placeholders.
+    if (items.length === 0 && !fetching) {
         const filtered = Boolean(api.search) || countFilterValues((api.filters ?? {})) > 0;
         const message = api.error
             ? (errorMessage ?? (_jsxs(Box, { sx: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, py: 6 }, children: [_jsx(Typography, { sx: { color: 'text.secondary' }, children: "These records could not be loaded." }), _jsx(Button, { variant: "outlined", color: "inherit", onClick: () => api.refetch(), children: "Try again" })] })))
