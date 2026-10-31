@@ -136,8 +136,9 @@ export function DataTableBody<Row>({
   const [headHeight, setHeadHeight] = useState(0)
   const [lockedWidths, setLockedWidths] = useState<string[] | null>(null)
 
-  // A page keeps one height whatever it holds, so a short last page or an empty result never
-  // moves the controls below it. Rows differ slightly (a status chip is taller than text), so the
+  // A paged table keeps one height whatever it holds, so a short last page or an empty result
+  // never moves the controls below it; a scrolling one has no controls below, so a page is only
+  // its ceiling. Rows differ slightly (a status chip is taller than text), so the
   // tallest seen sets the height, and it only grows.
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -173,7 +174,7 @@ export function DataTableBody<Row>({
       : filtered ? noResultsMessage : emptyMessage
 
     return (
-      <Box className="KyroTable-empty" sx={{ flex: '1 1 auto', py: 'xl' }} style={{ minHeight: pageHeight }}>
+      <Box className="KyroTable-empty" sx={{ flex: '1 1 auto', py: 'xl' }} style={infiniteScroll ? undefined : { minHeight: pageHeight }}>
         {typeof message === 'string'
           ? <Typography sx={{ color: 'text.secondary', textAlign: 'center', py: 'xl' }}>{message}</Typography>
           : message}
@@ -274,7 +275,7 @@ export function DataTableBody<Row>({
       ref={containerRef}
       data-scroll-root=""
       sx={{ flex: '1 1 auto', minHeight: 0 }}
-      style={infiniteScroll ? { height: pageHeight, overflowY: 'auto' } : { minHeight: pageHeight }}
+      style={infiniteScroll ? { maxHeight: pageHeight, overflowY: 'auto' } : { minHeight: pageHeight }}
     >
       <Table size="small" stickyHeader={stickyHeader} sx={fixedWidths ? { tableLayout: 'fixed' } : undefined}>
         {hasExplicitWidths ? (

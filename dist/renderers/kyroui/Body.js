@@ -281,7 +281,7 @@ const ESTIMATED_ROW_HEIGHT = 41;
 const OVERSCAN = 10;
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
 export function DataTableBody(t0) {
-  const $ = _c(83);
+  const $ = _c(84);
   const {
     onRowClick,
     emptyMessage: t1,
@@ -402,17 +402,18 @@ export function DataTableBody(t0) {
       t10 = $[17];
     }
     let t11;
-    if ($[18] !== pageHeight) {
-      t11 = {
+    if ($[18] !== infiniteScroll || $[19] !== pageHeight) {
+      t11 = infiniteScroll ? undefined : {
         minHeight: pageHeight
       };
-      $[18] = pageHeight;
-      $[19] = t11;
+      $[18] = infiniteScroll;
+      $[19] = pageHeight;
+      $[20] = t11;
     } else {
-      t11 = $[19];
+      t11 = $[20];
     }
     let t12;
-    if ($[20] !== message) {
+    if ($[21] !== message) {
       t12 = typeof message === "string" ? /*#__PURE__*/_jsx(Typography, {
         sx: {
           color: "text.secondary",
@@ -421,29 +422,29 @@ export function DataTableBody(t0) {
         },
         children: message
       }) : message;
-      $[20] = message;
-      $[21] = t12;
+      $[21] = message;
+      $[22] = t12;
     } else {
-      t12 = $[21];
+      t12 = $[22];
     }
     let t13;
-    if ($[22] !== t11 || $[23] !== t12) {
+    if ($[23] !== t11 || $[24] !== t12) {
       t13 = /*#__PURE__*/_jsx(Box, {
         className: "KyroTable-empty",
         sx: t10,
         style: t11,
         children: t12
       });
-      $[22] = t11;
-      $[23] = t12;
-      $[24] = t13;
+      $[23] = t11;
+      $[24] = t12;
+      $[25] = t13;
     } else {
-      t13 = $[24];
+      t13 = $[25];
     }
     return t13;
   }
   let t8;
-  if ($[25] !== api || $[26] !== colSpan || $[27] !== items || $[28] !== onRowClick || $[29] !== rowClass || $[30] !== selectable) {
+  if ($[26] !== api || $[27] !== colSpan || $[28] !== items || $[29] !== onRowClick || $[30] !== rowClass || $[31] !== selectable) {
     t8 = (index, measure) => {
       const item = items[index];
       const measured = measure ? {
@@ -561,53 +562,53 @@ export function DataTableBody(t0) {
         }, col_0.field))]
       }, rowId);
     };
-    $[25] = api;
-    $[26] = colSpan;
-    $[27] = items;
-    $[28] = onRowClick;
-    $[29] = rowClass;
-    $[30] = selectable;
-    $[31] = t8;
+    $[26] = api;
+    $[27] = colSpan;
+    $[28] = items;
+    $[29] = onRowClick;
+    $[30] = rowClass;
+    $[31] = selectable;
+    $[32] = t8;
   } else {
-    t8 = $[31];
+    t8 = $[32];
   }
   const renderItem = t8;
   let t9;
-  if ($[32] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[33] === Symbol.for("react.memo_cache_sentinel")) {
     t9 = {
       flex: "1 1 auto",
       minHeight: 0
     };
-    $[32] = t9;
+    $[33] = t9;
   } else {
-    t9 = $[32];
+    t9 = $[33];
   }
   let t10;
-  if ($[33] !== infiniteScroll || $[34] !== pageHeight) {
+  if ($[34] !== infiniteScroll || $[35] !== pageHeight) {
     t10 = infiniteScroll ? {
-      height: pageHeight,
+      maxHeight: pageHeight,
       overflowY: "auto"
     } : {
       minHeight: pageHeight
     };
-    $[33] = infiniteScroll;
-    $[34] = pageHeight;
-    $[35] = t10;
+    $[34] = infiniteScroll;
+    $[35] = pageHeight;
+    $[36] = t10;
   } else {
-    t10 = $[35];
+    t10 = $[36];
   }
   let t11;
-  if ($[36] !== fixedWidths) {
+  if ($[37] !== fixedWidths) {
     t11 = fixedWidths ? {
       tableLayout: "fixed"
     } : undefined;
-    $[36] = fixedWidths;
-    $[37] = t11;
+    $[37] = fixedWidths;
+    $[38] = t11;
   } else {
-    t11 = $[37];
+    t11 = $[38];
   }
   let t12;
-  if ($[38] !== api.visibleColumns || $[39] !== hasExplicitWidths || $[40] !== infiniteScroll || $[41] !== lockedWidths || $[42] !== selectable) {
+  if ($[39] !== api.visibleColumns || $[40] !== hasExplicitWidths || $[41] !== infiniteScroll || $[42] !== lockedWidths || $[43] !== selectable) {
     t12 = hasExplicitWidths ? /*#__PURE__*/_jsxs("colgroup", {
       children: [selectable && /*#__PURE__*/_jsx("col", {
         style: {
@@ -617,17 +618,17 @@ export function DataTableBody(t0) {
     }) : infiniteScroll && lockedWidths ? /*#__PURE__*/_jsx("colgroup", {
       children: lockedWidths.map(_temp7)
     }) : null;
-    $[38] = api.visibleColumns;
-    $[39] = hasExplicitWidths;
-    $[40] = infiniteScroll;
-    $[41] = lockedWidths;
-    $[42] = selectable;
-    $[43] = t12;
+    $[39] = api.visibleColumns;
+    $[40] = hasExplicitWidths;
+    $[41] = infiniteScroll;
+    $[42] = lockedWidths;
+    $[43] = selectable;
+    $[44] = t12;
   } else {
-    t12 = $[43];
+    t12 = $[44];
   }
   let t13;
-  if ($[44] !== api || $[45] !== selectable) {
+  if ($[45] !== api || $[46] !== selectable) {
     t13 = selectable && /*#__PURE__*/_jsx(TableCell, {
       variant: "head",
       children: /*#__PURE__*/_jsx(Checkbox, {
@@ -637,14 +638,14 @@ export function DataTableBody(t0) {
         "aria-label": "Select all rows"
       })
     });
-    $[44] = api;
-    $[45] = selectable;
-    $[46] = t13;
+    $[45] = api;
+    $[46] = selectable;
+    $[47] = t13;
   } else {
-    t13 = $[46];
+    t13 = $[47];
   }
   let t14;
-  if ($[47] !== api) {
+  if ($[48] !== api) {
     t14 = api.visibleColumns.map(col_2 => /*#__PURE__*/_jsx(TableCell, {
       variant: "head",
       align: col_2.align,
@@ -679,26 +680,26 @@ export function DataTableBody(t0) {
         })]
       })
     }, col_2.field));
-    $[47] = api;
-    $[48] = t14;
+    $[48] = api;
+    $[49] = t14;
   } else {
-    t14 = $[48];
+    t14 = $[49];
   }
   let t15;
-  if ($[49] !== t13 || $[50] !== t14) {
+  if ($[50] !== t13 || $[51] !== t14) {
     t15 = /*#__PURE__*/_jsx(TableHead, {
       children: /*#__PURE__*/_jsxs(TableRow, {
         children: [t13, t14]
       })
     });
-    $[49] = t13;
-    $[50] = t14;
-    $[51] = t15;
+    $[50] = t13;
+    $[51] = t14;
+    $[52] = t15;
   } else {
-    t15 = $[51];
+    t15 = $[52];
   }
   let t16;
-  if ($[52] !== api.pagination.pageSize || $[53] !== colSpan || $[54] !== headHeight || $[55] !== infiniteScroll || $[56] !== items || $[57] !== renderItem || $[58] !== rowHeight || $[59] !== selectable) {
+  if ($[53] !== api.pagination.pageSize || $[54] !== colSpan || $[55] !== headHeight || $[56] !== infiniteScroll || $[57] !== items || $[58] !== renderItem || $[59] !== rowHeight || $[60] !== selectable) {
     t16 = items.length === 0 ? /*#__PURE__*/_jsx(SkeletonRows, {
       count: Math.min(api.pagination.pageSize, SKELETON_ROWS),
       selectable: selectable
@@ -710,75 +711,75 @@ export function DataTableBody(t0) {
       colSpan: colSpan,
       render: renderItem
     }) : items.map((_, index_1) => renderItem(index_1));
-    $[52] = api.pagination.pageSize;
-    $[53] = colSpan;
-    $[54] = headHeight;
-    $[55] = infiniteScroll;
-    $[56] = items;
-    $[57] = renderItem;
-    $[58] = rowHeight;
-    $[59] = selectable;
-    $[60] = t16;
+    $[53] = api.pagination.pageSize;
+    $[54] = colSpan;
+    $[55] = headHeight;
+    $[56] = infiniteScroll;
+    $[57] = items;
+    $[58] = renderItem;
+    $[59] = rowHeight;
+    $[60] = selectable;
+    $[61] = t16;
   } else {
-    t16 = $[60];
+    t16 = $[61];
   }
   let t17;
-  if ($[61] !== api.loadingMore || $[62] !== infiniteScroll || $[63] !== selectable) {
+  if ($[62] !== api.loadingMore || $[63] !== infiniteScroll || $[64] !== selectable) {
     t17 = infiniteScroll && api.loadingMore && /*#__PURE__*/_jsx(SkeletonRows, {
       count: LOADING_MORE_ROWS,
       selectable: selectable
     });
-    $[61] = api.loadingMore;
-    $[62] = infiniteScroll;
-    $[63] = selectable;
-    $[64] = t17;
+    $[62] = api.loadingMore;
+    $[63] = infiniteScroll;
+    $[64] = selectable;
+    $[65] = t17;
   } else {
-    t17 = $[64];
+    t17 = $[65];
   }
   let t18;
-  if ($[65] !== api.hasMore || $[66] !== api.loadingMore || $[67] !== colSpan || $[68] !== infiniteScroll) {
+  if ($[66] !== api.hasMore || $[67] !== api.loadingMore || $[68] !== colSpan || $[69] !== infiniteScroll) {
     t18 = infiniteScroll && api.hasMore && !api.loadingMore && /*#__PURE__*/_jsx(ScrollEnd, {
       colSpan: colSpan
     });
-    $[65] = api.hasMore;
-    $[66] = api.loadingMore;
-    $[67] = colSpan;
-    $[68] = infiniteScroll;
-    $[69] = t18;
+    $[66] = api.hasMore;
+    $[67] = api.loadingMore;
+    $[68] = colSpan;
+    $[69] = infiniteScroll;
+    $[70] = t18;
   } else {
-    t18 = $[69];
+    t18 = $[70];
   }
   let t19;
-  if ($[70] !== t16 || $[71] !== t17 || $[72] !== t18) {
+  if ($[71] !== t16 || $[72] !== t17 || $[73] !== t18) {
     t19 = /*#__PURE__*/_jsxs(TableBody, {
       children: [t16, t17, t18]
     });
-    $[70] = t16;
-    $[71] = t17;
-    $[72] = t18;
-    $[73] = t19;
+    $[71] = t16;
+    $[72] = t17;
+    $[73] = t18;
+    $[74] = t19;
   } else {
-    t19 = $[73];
+    t19 = $[74];
   }
   let t20;
-  if ($[74] !== stickyHeader || $[75] !== t11 || $[76] !== t12 || $[77] !== t15 || $[78] !== t19) {
+  if ($[75] !== stickyHeader || $[76] !== t11 || $[77] !== t12 || $[78] !== t15 || $[79] !== t19) {
     t20 = /*#__PURE__*/_jsxs(Table, {
       size: "small",
       stickyHeader: stickyHeader,
       sx: t11,
       children: [t12, t15, t19]
     });
-    $[74] = stickyHeader;
-    $[75] = t11;
-    $[76] = t12;
-    $[77] = t15;
-    $[78] = t19;
-    $[79] = t20;
+    $[75] = stickyHeader;
+    $[76] = t11;
+    $[77] = t12;
+    $[78] = t15;
+    $[79] = t19;
+    $[80] = t20;
   } else {
-    t20 = $[79];
+    t20 = $[80];
   }
   let t21;
-  if ($[80] !== t10 || $[81] !== t20) {
+  if ($[81] !== t10 || $[82] !== t20) {
     t21 = /*#__PURE__*/_jsx(TableContainer, {
       ref: containerRef,
       "data-scroll-root": "",
@@ -786,11 +787,11 @@ export function DataTableBody(t0) {
       style: t10,
       children: t20
     });
-    $[80] = t10;
-    $[81] = t20;
-    $[82] = t21;
+    $[81] = t10;
+    $[82] = t20;
+    $[83] = t21;
   } else {
-    t21 = $[82];
+    t21 = $[83];
   }
   return t21;
 }
