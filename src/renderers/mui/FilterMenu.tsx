@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Box, Button, Dialog, Divider, IconButton, Menu, Stack, TextField, Tooltip, Typography, type DialogProps as MuiDialogProps } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { Select } from './Select.js'
@@ -88,7 +88,7 @@ function SelectFilterField({ column, value: raw, onChange }: FilterFieldProps<Se
   const [, redraw] = useState(0)
   const resolved = useRef(false)
 
-  const remember = useCallback((options: FilterOption[]) => {
+  const remember = (options: FilterOption[]) => {
     let changed = false
     for (const option of options) {
       if (cache.get(option.value) === option.label) continue
@@ -96,21 +96,21 @@ function SelectFilterField({ column, value: raw, onChange }: FilterFieldProps<Se
       changed = true
     }
     if (changed) redraw((tick) => tick + 1)
-  }, [cache])
+  }
 
   const staticOptions = useMemo(
     () => (typeof source === 'function' ? undefined : source.map((option) => ({ id: option.value, label: option.label }))),
     [source],
   )
 
-  const search = useMemo(() => {
-    if (typeof source !== 'function') return undefined
-    return async (query: string) => {
-      const results = await source(query)
-      remember(results)
-      return results.map((option) => ({ id: option.value, label: option.label }))
-    }
-  }, [source, remember])
+  const search =
+    typeof source === 'function'
+      ? async (query: string) => {
+          const results = await source(query)
+          remember(results)
+          return results.map((option) => ({ id: option.value, label: option.label }))
+        }
+      : undefined
 
   const unresolved = value.filter((id) => !cache.has(id)).join(',')
 
@@ -118,7 +118,7 @@ function SelectFilterField({ column, value: raw, onChange }: FilterFieldProps<Se
     if (typeof source !== 'function' || !unresolved || resolved.current) return
     resolved.current = true
     void source('').then(remember)
-  }, [source, remember, unresolved])
+  }, [source, unresolved])
 
   const selected = value.map((id) => ({
     id,

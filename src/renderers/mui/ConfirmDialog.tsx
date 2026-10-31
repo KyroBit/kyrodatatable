@@ -48,11 +48,9 @@ export function ConfirmDialog({
 
   const confirm = async () => {
     setBusy(true)
-    try {
-      await onConfirm()
-    } finally {
-      setBusy(false)
-    }
+    await Promise.resolve()
+      .then(onConfirm)
+      .finally(() => setBusy(false))
   }
 
   return (

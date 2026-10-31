@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { createClientEngine } from './clientEngine.js'
 import type {
   ColumnDef, DataTableConfig, FetchParams, FilterValues, GroupByColumn, PaginationState,
@@ -41,6 +41,12 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
   total: number
   loading: boolean
   error: unknown
+
+  /** Appends the next page to `rows` instead of replacing them, for scroll-to-load lists. A new search, sort or filter starts again from the first page. */
+  loadMore: () => void
+  /** More rows exist beyond those loaded. Always false while grouped. */
+  hasMore: boolean
+  loadingMore: boolean
 
   groupBy: Field | null
   setGroupBy: (field: Field | null) => void
@@ -87,16 +93,13 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
 
   const [hiddenColumns, setHiddenColumns] = useState<Field[]>(config.initialHiddenColumns ?? [])
 
-  const setColumnHidden = useCallback((field: Field, hidden: boolean) => {
+  const setColumnHidden = (field: Field, hidden: boolean) => {
     setHiddenColumns((current) =>
       hidden ? (current.includes(field) ? current : [...current, field]) : current.filter((f) => f !== field),
     )
-  }, [])
+  }
 
-  const visibleColumns = useMemo(
-    () => columns.filter((column) => !hiddenColumns.includes(column.field)),
-    [columns, hiddenColumns],
-  )
+  const visibleColumns = columns.filter((column) => !hiddenColumns.includes(column.field))
 
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -114,6 +117,10 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<unknown>(null)
   const [fetchTick, setFetchTick] = useState(0)
+  const [loadedPage, setLoadedPage] = useState(1)
+  const [loadingMore, setLoadingMore] = useState(false)
+  /** Bumped by every fresh fetch, so a `loadMore` that lands after a new search is dropped instead of appended to the wrong list. */
+  const generation = useRef(0)
 
   const [groupBy, setGroupByField] = useState<Field | null>(null)
   const [groups, setGroups] = useState<ResourceGroup<Field>[]>([])
@@ -130,71 +137,61 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     return () => clearTimeout(id)
   }, [search, searchDebounceMs])
 
-  const clientEngine = useMemo(() => {
-    if (!config.data) return null
-    return createClientEngine<Row, Field, Filters>({
-      data: config.data,
-      columns,
-      applyFilters: config.applyFilters,
-      groupField: groupBy ? (row: Row) => (row as Record<string, unknown>)[groupBy] : undefined,
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config.data, config.applyFilters, columns, groupBy])
+  const clientEngine = config.data
+    ? createClientEngine<Row, Field, Filters>({
+        data: config.data,
+        columns,
+        applyFilters: config.applyFilters,
+        groupField: groupBy ? (row: Row) => (row as Record<string, unknown>)[groupBy] : undefined,
+      })
+    : null
 
   const fetchRecords = config.fetchRecords ?? clientEngine?.fetchRecords
-  const fetchGroups = config.fetchGroups ?? (clientEngine ? clientEngine.fetchGroups : undefined)
+  const fetchGroups = config.fetchGroups ?? clientEngine?.fetchGroups
 
   /**
-   * Held in refs so a caller writing `fetchRecords={(p) => ...}` inline — or passing
-   * `data={rows ?? []}` — does not re-trigger the effects below on identity alone.
-   * The query inputs decide when to fetch; the functions are only how.
+   * A caller writing `fetchRecords={(p) => ...}` inline, or passing `data={rows ?? []}`, must not
+   * re-trigger the fetch effects on identity alone. The query inputs decide when to fetch; the
+   * functions are only how.
    */
-  const fetchRecordsRef = useRef(fetchRecords)
-  fetchRecordsRef.current = fetchRecords
-  const fetchGroupsRef = useRef(fetchGroups)
-  fetchGroupsRef.current = fetchGroups
+  const fetchPage = useEffectEvent((params: FetchParams<Field, Filters>) => fetchRecords?.(params))
+  const fetchGroupPage = useEffectEvent((params: FetchParams<Field, Filters>) => fetchGroups?.(params))
 
-  /**
-   * A fetch that returns the same rows must not re-render, or an unstable prop
-   * becomes an infinite loop: new identity -> effect -> setState -> new identity.
-   */
-
-
-  const setFilters = useCallback((next: Filters) => {
+  const setFilters = (next: Filters) => {
     setFiltersInternal(next)
     setPagination((p) => ({ ...p, page: 1 }))
-  }, [])
+  }
 
-  const setGroupBy = useCallback((field: Field | null) => {
+  const setGroupBy = (field: Field | null) => {
     setGroupByField(field)
     setExpanded({})
     setGroupState({})
     setPagination((p) => ({ ...p, page: 1 }))
-  }, [])
+  }
 
-  const toggleSort = useCallback((field: Field) => {
+  const toggleSort = (field: Field) => {
     setSortInternal((current) => {
       if (!current || current.field !== field) return { field, direction: 'asc' }
       if (current.direction === 'asc') return { field, direction: 'desc' }
       return null
     })
     setPagination((p) => ({ ...p, page: 1 }))
-  }, [])
+  }
 
-  const setSort = useCallback((next: SortState<Field> | null) => {
+  const setSort = (next: SortState<Field> | null) => {
     setSortInternal(next)
     setPagination((p) => ({ ...p, page: 1 }))
-  }, [])
+  }
 
-  const setPage = useCallback((page: number) => {
+  const setPage = (page: number) => {
     setPagination((p) => ({ ...p, page }))
-  }, [])
+  }
 
-  const setPageSize = useCallback((pageSize: number) => {
+  const setPageSize = (pageSize: number) => {
     setPagination({ page: 1, pageSize })
-  }, [])
+  }
 
-  const refetch = useCallback(() => setFetchTick((t) => t + 1), [])
+  const refetch = () => setFetchTick((t) => t + 1)
 
   const depsKey = JSON.stringify(config.deps ?? [])
   const knownDeps = useRef(depsKey)
@@ -213,15 +210,17 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     let cancelled = false
     setLoading(true)
     setError(null)
-    const fetch = fetchRecordsRef.current
-    if (!fetch) return
 
     const params: FetchParams<Field, Filters> = { page: pagination.page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters }
-    fetch(params)
+    const pending = fetchPage(params)
+    if (!pending) return
+    generation.current += 1
+    pending
       .then((result) => {
         if (cancelled) return
         setRows(result.rows)
         setTotal(result.total)
+        setLoadedPage(params.page)
       })
       .catch((err) => {
         if (!cancelled) setError(err)
@@ -235,14 +234,15 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
 
   // ─── grouped mode: fetch the group list ────────────────────────────────────
   useEffect(() => {
-    if (!groupBy || !fetchGroups) return
-    let cancelled = false
-    setGroupsLoading(true)
-
+    if (!groupBy) return
     const params: FetchParams<Field, Filters> = {
       page: pagination.page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters, groupBy,
     }
-    fetchGroups(params)
+    const pending = fetchGroupPage(params)
+    if (!pending) return
+    let cancelled = false
+    setGroupsLoading(true)
+    pending
       .then((result) => {
         if (cancelled) return
         setGroups(result.groups)
@@ -256,9 +256,29 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
       })
 
     return () => { cancelled = true }
-  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, fetchGroups, fetchTick])
+  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, config.data, fetchTick])
 
-  const fetchGroupRows = useCallback((key: string, page: number) => {
+  const hasMore = !groupBy && (pagination.page - 1) * pagination.pageSize + rows.length < total
+
+  const loadMore = () => {
+    if (!fetchRecords || !hasMore || loading || loadingMore) return
+    const page = loadedPage + 1
+    const started = generation.current
+    setLoadingMore(true)
+    fetchRecords({ page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters })
+      .then((result) => {
+        if (generation.current !== started) return
+        setRows((prev) => [...prev, ...result.rows])
+        setTotal(result.total)
+        setLoadedPage(page)
+      })
+      .catch((err) => {
+        if (generation.current === started) setError(err)
+      })
+      .finally(() => setLoadingMore(false))
+  }
+
+  const fetchGroupRows = (key: string, page: number) => {
     if (!groupBy || !fetchRecords) return
     setGroupState((prev) => ({
       ...prev,
@@ -282,9 +302,9 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
           [key]: { rows: prev[key]?.rows ?? [], total: prev[key]?.total ?? 0, pagination: { page, pageSize: pagination.pageSize }, loading: false },
         }))
       })
-  }, [groupBy, pagination.pageSize, debouncedSearch, sort, filters, fetchRecords])
+  }
 
-  const toggleGroup = useCallback((key: string) => {
+  const toggleGroup = (key: string) => {
     setExpanded((prev) => {
       const next = { ...prev, [key]: !prev[key] }
       if (next[key] && !groupState[key]) fetchGroupRows(key, 1)
@@ -300,40 +320,33 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
         })
       }
     }
-  }, [groupState, fetchGroupRows, expanded, getRowId])
+  }
 
-  const setGroupPage = useCallback((key: string, page: number) => {
+  const setGroupPage = (key: string, page: number) => {
     fetchGroupRows(key, page)
-  }, [fetchGroupRows])
+  }
 
-  const isGroupExpanded = useCallback((key: string) => Boolean(expanded[key]), [expanded])
-  const groupRowsFor = useCallback((key: string) => groupState[key]?.rows ?? [], [groupState])
-  const groupTotalFor = useCallback((key: string) => groupState[key]?.total ?? 0, [groupState])
-  const groupLoadingFor = useCallback((key: string) => groupState[key]?.loading ?? false, [groupState])
-  const groupPaginationFor = useCallback(
-    (key: string) => groupState[key]?.pagination ?? { page: 1, pageSize: pagination.pageSize },
-    [groupState, pagination.pageSize],
-  )
+  const isGroupExpanded = (key: string) => Boolean(expanded[key])
+  const groupRowsFor = (key: string) => groupState[key]?.rows ?? []
+  const groupTotalFor = (key: string) => groupState[key]?.total ?? 0
+  const groupLoadingFor = (key: string) => groupState[key]?.loading ?? false
+  const groupPaginationFor = (key: string) => groupState[key]?.pagination ?? { page: 1, pageSize: pagination.pageSize }
 
   // ─── selection ──────────────────────────────────────────────────────────────
-  const selectableRows = useMemo<Row[]>(() => {
-    if (!groupBy) return rows
-    return groups.flatMap((g) => (expanded[g.key] ? groupState[g.key]?.rows ?? [] : []))
-  }, [groupBy, rows, groups, expanded, groupState])
+  const selectableRows: Row[] = groupBy
+    ? groups.flatMap((g) => (expanded[g.key] ? groupState[g.key]?.rows ?? [] : []))
+    : rows
 
-  const selectedIds = useMemo(
-    () => Object.keys(selection).filter((id) => selection[id]),
-    [selection],
-  )
+  const selectedIds = Object.keys(selection).filter((id) => selection[id])
   const allVisibleSelected = selectableRows.length > 0 && selectableRows.every((r) => selection[getRowId(r)])
   const someVisibleSelected = selectableRows.some((r) => selection[getRowId(r)])
 
-  const isSelected = useCallback((id: string) => Boolean(selection[id]), [selection])
-  const toggleSelected = useCallback((id: string) => {
+  const isSelected = (id: string) => Boolean(selection[id])
+  const toggleSelected = (id: string) => {
     setSelectionState((prev) => ({ ...prev, [id]: !prev[id] }))
-  }, [])
-  const clearSelection = useCallback(() => setSelectionState({}), [])
-  const toggleSelectAll = useCallback(() => {
+  }
+  const clearSelection = () => setSelectionState({})
+  const toggleSelectAll = () => {
     setSelectionState((prev) => {
       const next = { ...prev }
       if (allVisibleSelected) {
@@ -343,19 +356,19 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
       }
       return next
     })
-  }, [allVisibleSelected, selectableRows, getRowId])
+  }
 
-  const groupAllSelected = useCallback((key: string) => {
+  const groupAllSelected = (key: string) => {
     const rows = groupState[key]?.rows ?? []
     return rows.length > 0 && rows.every((r) => selection[getRowId(r)])
-  }, [groupState, selection, getRowId])
+  }
 
-  const groupSomeSelected = useCallback((key: string) => {
+  const groupSomeSelected = (key: string) => {
     const rows = groupState[key]?.rows ?? []
     return rows.some((r) => selection[getRowId(r)])
-  }, [groupState, selection, getRowId])
+  }
 
-  const toggleSelectGroup = useCallback((key: string) => {
+  const toggleSelectGroup = (key: string) => {
     const rows = groupState[key]?.rows ?? []
     if (rows.length === 0) return
     const all = rows.every((r) => selection[getRowId(r)])
@@ -368,23 +381,24 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
       }
       return next
     })
-  }, [groupState, selection, getRowId])
+  }
 
-  const visibleItems = useMemo<VisibleItem<Row, Field>[]>(() => {
-    if (!groupBy) return rows.map((row) => ({ type: 'row' as const, row }))
-    const items: VisibleItem<Row, Field>[] = []
+  const visibleItems: VisibleItem<Row, Field>[] = []
+  if (groupBy) {
     for (const group of groups) {
-      items.push({ type: 'group', group, expanded: isGroupExpanded(group.key) })
-      if (isGroupExpanded(group.key)) {
-        for (const row of groupRowsFor(group.key)) {
-          items.push({ type: 'group-row', row, groupKey: group.key })
+      const open = Boolean(expanded[group.key])
+      visibleItems.push({ type: 'group', group, expanded: open })
+      if (open) {
+        for (const row of groupState[group.key]?.rows ?? []) {
+          visibleItems.push({ type: 'group-row', row, groupKey: group.key })
         }
       }
     }
-    return items
-  }, [groupBy, rows, groups, expanded, groupState, isGroupExpanded, groupRowsFor]) // eslint-disable-line react-hooks/exhaustive-deps
+  } else {
+    for (const row of rows) visibleItems.push({ type: 'row', row })
+  }
 
-  return useMemo(() => ({
+  return {
     columns,
     getRowId,
     groupByColumns,
@@ -411,6 +425,10 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     total,
     loading,
     error,
+
+    loadMore,
+    hasMore,
+    loadingMore,
 
     groupBy,
     setGroupBy,
@@ -442,17 +460,5 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     toggleSelectGroup,
 
     refetch,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [
-    columns, getRowId, groupByColumns,
-    visibleColumns, hiddenColumns, setColumnHidden,
-    search, filters, sort, pagination, rows, total, loading, error,
-    groupBy, groups, groupsTotal, groupsLoading,
-    setFilters, toggleSort, setSort, setPage, setPageSize, setGroupBy,
-    isGroupExpanded, toggleGroup, groupRowsFor, groupTotalFor, groupLoadingFor, groupPaginationFor, setGroupPage,
-    visibleItems, refetch,
-    selection, selectedIds, isSelected, toggleSelected, clearSelection, toggleSelectAll,
-    allVisibleSelected, someVisibleSelected,
-    groupAllSelected, groupSomeSelected, toggleSelectGroup,
-  ])
+  }
 }

@@ -1,10 +1,81 @@
-import { jsx as _jsx } from "react/jsx-runtime";
+import { c as _c } from "react/compiler-runtime";
 import { TablePagination } from '@mui/material';
 import { useDataTableContext } from './context.js';
+import { jsx as _jsx } from "react/jsx-runtime";
 /** Invisible while there is nothing to page through, keeping its space so the toolbar does not shift when rows arrive. Hidden while grouped — pagination happens per-group there instead (`api.setGroupPage`). */
-export function DataTablePagination({ rowsPerPageOptions = [] }) {
-    const api = useDataTableContext();
-    if (api.groupBy)
-        return null;
-    return (_jsx(TablePagination, { component: "div", rowsPerPageOptions: rowsPerPageOptions, count: api.total, page: api.pagination.page - 1, rowsPerPage: api.pagination.pageSize, onPageChange: (_, page) => api.setPage(page + 1), onRowsPerPageChange: (e) => api.setPageSize(Number(e.target.value)), labelDisplayedRows: ({ from, to, count }) => `${from}–${to} of ${count}`, sx: { visibility: api.total === 0 ? 'hidden' : undefined } }));
+export function DataTablePagination(t0) {
+  const $ = _c(15);
+  const {
+    rowsPerPageOptions: t1
+  } = t0;
+  let t2;
+  if ($[0] !== t1) {
+    t2 = t1 === undefined ? [] : t1;
+    $[0] = t1;
+    $[1] = t2;
+  } else {
+    t2 = $[1];
+  }
+  const rowsPerPageOptions = t2;
+  const api = useDataTableContext();
+  if (api.groupBy) {
+    return null;
+  }
+  const t3 = api.pagination.page - 1;
+  let t4;
+  let t5;
+  if ($[2] !== api) {
+    t4 = (_, page) => api.setPage(page + 1);
+    t5 = e => api.setPageSize(Number(e.target.value));
+    $[2] = api;
+    $[3] = t4;
+    $[4] = t5;
+  } else {
+    t4 = $[3];
+    t5 = $[4];
+  }
+  const t6 = api.total === 0 ? "hidden" : undefined;
+  let t7;
+  if ($[5] !== t6) {
+    t7 = {
+      visibility: t6
+    };
+    $[5] = t6;
+    $[6] = t7;
+  } else {
+    t7 = $[6];
+  }
+  let t8;
+  if ($[7] !== api.pagination.pageSize || $[8] !== api.total || $[9] !== rowsPerPageOptions || $[10] !== t3 || $[11] !== t4 || $[12] !== t5 || $[13] !== t7) {
+    t8 = /*#__PURE__*/_jsx(TablePagination, {
+      component: "div",
+      rowsPerPageOptions: rowsPerPageOptions,
+      count: api.total,
+      page: t3,
+      rowsPerPage: api.pagination.pageSize,
+      onPageChange: t4,
+      onRowsPerPageChange: t5,
+      labelDisplayedRows: _temp,
+      sx: t7
+    });
+    $[7] = api.pagination.pageSize;
+    $[8] = api.total;
+    $[9] = rowsPerPageOptions;
+    $[10] = t3;
+    $[11] = t4;
+    $[12] = t5;
+    $[13] = t7;
+    $[14] = t8;
+  } else {
+    t8 = $[14];
+  }
+  return t8;
+}
+function _temp(t0) {
+  const {
+    from,
+    to,
+    count
+  } = t0;
+  return `${from}–${to} of ${count}`;
 }

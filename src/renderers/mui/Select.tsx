@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type Ref, type UIEvent } from 'react'
+import { forwardRef, useEffect, useEffectEvent, useRef, useState, type KeyboardEvent, type ReactNode, type Ref, type UIEvent } from 'react'
 import {
   Box, Button, Chip, CircularProgress, FormHelperText, IconButton, InputAdornment, InputLabel, List,
   ListItemButton, ListItemText, OutlinedInput, Popover, TextField, Typography,
@@ -169,15 +169,19 @@ export function Select<T extends SelectOption>(props: SelectProps<T>) {
     return () => clearTimeout(timer)
   }, [query, debounceMs, isAsync])
 
+  const runSearch = useEffectEvent((text: string) => search?.(text))
+
   useEffect(() => {
-    if (!open || !search) return
+    if (!open) return
+    const pending = runSearch(debouncedQuery)
+    if (!pending) return
     let cancelled = false
     setSearchLoading(true)
-    search(debouncedQuery)
+    pending
       .then((results) => { if (!cancelled) setAsyncOptions(results) })
       .finally(() => { if (!cancelled) setSearchLoading(false) })
     return () => { cancelled = true }
-  }, [debouncedQuery, open, search])
+  }, [debouncedQuery, open])
 
   useEffect(() => {
     if (!open || !fetchPage) return

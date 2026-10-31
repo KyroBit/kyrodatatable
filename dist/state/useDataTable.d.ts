@@ -21,6 +21,11 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
     total: number;
     loading: boolean;
     error: unknown;
+    /** Appends the next page to `rows` instead of replacing them, for scroll-to-load lists. A new search, sort or filter starts again from the first page. */
+    loadMore: () => void;
+    /** More rows exist beyond those loaded. Always false while grouped. */
+    hasMore: boolean;
+    loadingMore: boolean;
     groupBy: Field | null;
     setGroupBy: (field: Field | null) => void;
     groups: ResourceGroup<Field>[];
