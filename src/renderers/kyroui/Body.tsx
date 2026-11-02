@@ -97,6 +97,7 @@ const SCROLL_END_THRESHOLD = 80
 const ESTIMATED_ROW_HEIGHT = 41
 const OVERSCAN = 10
 const ROW_INTENT_DELAY = 80
+const SKELETON_DELAY = 150
 
 export interface DataTableBodyProps<Row> {
   onRowClick?: (row: Row) => void
@@ -416,6 +417,14 @@ function Spacer({ height, colSpan }: { height: number; colSpan: number }) {
 
 function SkeletonRows({ count, selectable }: { count: number; selectable: boolean }) {
   const api = useDataTableContext()
+  const [shown, setShown] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShown(true), SKELETON_DELAY)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (!shown) return null
   return Array.from({ length: count }, (_, index) => (
     <TableRow key={`skeleton-${index}`} className="KyroTable-skeletonRow">
       {selectable && <TableCell />}

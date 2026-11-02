@@ -203,7 +203,7 @@ test('a table under a different cacheKey never shows another table\'s rows', asy
   const { container } = render(<Table cacheKey={freshKey()} fetchRecords={other.fetchRecords} frames={frames} />)
 
   expect(frames[0]).toEqual({ rows: [], loading: true })
-  expect(container.querySelector('.KyroTable-skeletonRow')).not.toBeNull()
+  expect(renderedNames(container)).toEqual([])
   await other.resolveAll()
   await waitFor(() => expect(renderedNames(container)).toEqual(['Customers one', 'Customers two']))
 })

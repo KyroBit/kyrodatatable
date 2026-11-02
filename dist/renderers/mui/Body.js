@@ -1,5 +1,5 @@
 import { c as _c } from "react/compiler-runtime";
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Button, Checkbox, IconButton, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
@@ -282,6 +282,7 @@ function _temp(e) {
 }
 const SKELETON_ROWS = 10;
 const ROW_INTENT_DELAY = 80;
+const SKELETON_DELAY = 150;
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
 export function DataTableBody(t0) {
   const $ = _c(49);
@@ -527,14 +528,10 @@ export function DataTableBody(t0) {
   }
   let t14;
   if ($[33] !== api || $[34] !== colSpan || $[35] !== items || $[36] !== onRowClick || $[37] !== onRowIntent || $[38] !== rowClass || $[39] !== selectable) {
-    t14 = items.length === 0 ? Array.from({
-      length: Math.min(api.pagination.pageSize, SKELETON_ROWS)
-    }, (_, index) => /*#__PURE__*/_jsxs(TableRow, {
-      className: "KyroTable-skeletonRow",
-      children: [selectable && /*#__PURE__*/_jsx(TableCell, {
-        padding: "checkbox"
-      }), api.visibleColumns.map(_temp4)]
-    }, index)) : items.map(item => {
+    t14 = items.length === 0 ? /*#__PURE__*/_jsx(SkeletonRows, {
+      count: Math.min(api.pagination.pageSize, SKELETON_ROWS),
+      selectable: selectable
+    }) : items.map(item => {
       if (item.type === "group") {
         return /*#__PURE__*/_jsx(TableRow, {
           className: "KyroTable-groupRow",
@@ -575,7 +572,7 @@ export function DataTableBody(t0) {
                     p: 0.25,
                     ml: -0.5
                   },
-                  onClick: _temp5,
+                  onClick: _temp4,
                   checked: api.groupAllSelected(item.group.key),
                   indeterminate: api.groupSomeSelected(item.group.key) && !api.groupAllSelected(item.group.key),
                   onChange: () => api.toggleSelectGroup(item.group.key),
@@ -642,7 +639,7 @@ export function DataTableBody(t0) {
         onFocus: onRowIntent && (event => event.target === event.currentTarget && onRowIntent(row)),
         children: [selectable && /*#__PURE__*/_jsx(TableCell, {
           padding: "checkbox",
-          onClick: _temp6,
+          onClick: _temp5,
           children: /*#__PURE__*/_jsx(Checkbox, {
             size: "small",
             checked: api.isSelected(rowId),
@@ -653,10 +650,10 @@ export function DataTableBody(t0) {
               }
             }
           })
-        }), api.visibleColumns.map(col_3 => /*#__PURE__*/_jsx(TableCell, {
-          align: col_3.align,
-          children: col_3.render ? col_3.render(row) : row[col_3.field]
-        }, col_3.field))]
+        }), api.visibleColumns.map(col_2 => /*#__PURE__*/_jsx(TableCell, {
+          align: col_2.align,
+          children: col_2.render ? col_2.render(row) : row[col_2.field]
+        }, col_2.field))]
       }, rowId);
     });
     $[33] = api;
@@ -702,15 +699,79 @@ export function DataTableBody(t0) {
   }
   return t16;
 }
-function _temp6(e_0) {
+function _temp5(e_0) {
   return e_0.stopPropagation();
 }
-function _temp5(e) {
+function _temp4(e) {
   return e.stopPropagation();
 }
-function _temp4(col_2) {
+function _temp3(col_0) {
+  return /*#__PURE__*/_jsx("col", {
+    style: col_0.width ? {
+      width: col_0.width
+    } : undefined
+  }, col_0.field);
+}
+function _temp2(col) {
+  return col.width;
+}
+function SkeletonRows(t0) {
+  const $ = _c(9);
+  const {
+    count,
+    selectable
+  } = t0;
+  const api = useDataTableContext();
+  const [shown, setShown] = useState(false);
+  let t1;
+  let t2;
+  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    t1 = () => {
+      const timer = setTimeout(() => setShown(true), SKELETON_DELAY);
+      return () => clearTimeout(timer);
+    };
+    t2 = [];
+    $[0] = t1;
+    $[1] = t2;
+  } else {
+    t1 = $[0];
+    t2 = $[1];
+  }
+  useEffect(t1, t2);
+  if (!shown) {
+    return null;
+  }
+  let t3;
+  if ($[2] !== api || $[3] !== count || $[4] !== selectable) {
+    let t4;
+    if ($[6] !== api || $[7] !== selectable) {
+      t4 = (_, index) => /*#__PURE__*/_jsxs(TableRow, {
+        className: "KyroTable-skeletonRow",
+        children: [selectable && /*#__PURE__*/_jsx(TableCell, {
+          padding: "checkbox"
+        }), api.visibleColumns.map(_temp6)]
+      }, index);
+      $[6] = api;
+      $[7] = selectable;
+      $[8] = t4;
+    } else {
+      t4 = $[8];
+    }
+    t3 = Array.from({
+      length: count
+    }, t4);
+    $[2] = api;
+    $[3] = count;
+    $[4] = selectable;
+    $[5] = t3;
+  } else {
+    t3 = $[5];
+  }
+  return t3;
+}
+function _temp6(col) {
   return /*#__PURE__*/_jsx(TableCell, {
-    align: col_2.align,
+    align: col.align,
     children: /*#__PURE__*/_jsx(Skeleton, {
       variant: "rounded",
       animation: "wave",
@@ -722,15 +783,5 @@ function _temp4(col_2) {
         borderRadius: 999
       }
     })
-  }, col_2.field);
-}
-function _temp3(col_0) {
-  return /*#__PURE__*/_jsx("col", {
-    style: col_0.width ? {
-      width: col_0.width
-    } : undefined
-  }, col_0.field);
-}
-function _temp2(col) {
-  return col.width;
+  }, col.field);
 }

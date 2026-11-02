@@ -279,6 +279,7 @@ const SCROLL_END_THRESHOLD = 80;
 const ESTIMATED_ROW_HEIGHT = 41;
 const OVERSCAN = 10;
 const ROW_INTENT_DELAY = 80;
+const SKELETON_DELAY = 150;
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
 export function DataTableBody(t0) {
   const $ = _c(96);
@@ -932,37 +933,56 @@ function Spacer(t0) {
   return t2;
 }
 function SkeletonRows(t0) {
-  const $ = _c(7);
+  const $ = _c(9);
   const {
     count,
     selectable
   } = t0;
   const api = useDataTableContext();
+  const [shown, setShown] = useState(false);
   let t1;
-  if ($[0] !== api || $[1] !== count || $[2] !== selectable) {
-    let t2;
-    if ($[4] !== api || $[5] !== selectable) {
-      t2 = (_, index) => /*#__PURE__*/_jsxs(TableRow, {
+  let t2;
+  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    t1 = () => {
+      const timer = setTimeout(() => setShown(true), SKELETON_DELAY);
+      return () => clearTimeout(timer);
+    };
+    t2 = [];
+    $[0] = t1;
+    $[1] = t2;
+  } else {
+    t1 = $[0];
+    t2 = $[1];
+  }
+  useEffect(t1, t2);
+  if (!shown) {
+    return null;
+  }
+  let t3;
+  if ($[2] !== api || $[3] !== count || $[4] !== selectable) {
+    let t4;
+    if ($[6] !== api || $[7] !== selectable) {
+      t4 = (_, index) => /*#__PURE__*/_jsxs(TableRow, {
         className: "KyroTable-skeletonRow",
         children: [selectable && /*#__PURE__*/_jsx(TableCell, {}), api.visibleColumns.map(_temp9)]
       }, `skeleton-${index}`);
-      $[4] = api;
-      $[5] = selectable;
-      $[6] = t2;
+      $[6] = api;
+      $[7] = selectable;
+      $[8] = t4;
     } else {
-      t2 = $[6];
+      t4 = $[8];
     }
-    t1 = Array.from({
+    t3 = Array.from({
       length: count
-    }, t2);
-    $[0] = api;
-    $[1] = count;
-    $[2] = selectable;
-    $[3] = t1;
+    }, t4);
+    $[2] = api;
+    $[3] = count;
+    $[4] = selectable;
+    $[5] = t3;
   } else {
-    t1 = $[3];
+    t3 = $[5];
   }
-  return t1;
+  return t3;
 }
 
 /** An invisible last row; reaching within MUI's default 80px of it asks for the next page. Re-arms after each page, so one that still leaves it in view keeps loading. */

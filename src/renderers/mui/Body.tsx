@@ -1,4 +1,4 @@
-import { useEffect, useRef, type FocusEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FocusEvent, type ReactNode } from 'react'
 import {
   Box, Button, Checkbox, IconButton, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Typography,
@@ -95,6 +95,7 @@ function GroupPager({ groupKey, api }: { groupKey: string; api: DataTableApi<unk
 
 const SKELETON_ROWS = 10
 const ROW_INTENT_DELAY = 80
+const SKELETON_DELAY = 150
 
 export interface DataTableBodyProps<Row> {
   onRowClick?: (row: Row) => void
@@ -225,20 +226,7 @@ export function DataTableBody<Row>({
         </TableHead>
         <TableBody>
           {items.length === 0 ? (
-            Array.from({ length: Math.min(api.pagination.pageSize, SKELETON_ROWS) }, (_, index) => (
-              <TableRow key={index} className="KyroTable-skeletonRow">
-                {selectable && <TableCell padding="checkbox" />}
-                {api.visibleColumns.map((col) => (
-                  <TableCell key={col.field} align={col.align}>
-                    <Skeleton
-                      variant="rounded"
-                      animation="wave"
-                      sx={{ display: 'inline-block', width: '60%', maxWidth: 120, height: 12, borderRadius: 999 }}
-                    />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
+            <SkeletonRows count={Math.min(api.pagination.pageSize, SKELETON_ROWS)} selectable={selectable} />
           ) : (
             items.map((item) => {
               if (item.type === 'group') {
@@ -335,4 +323,30 @@ export function DataTableBody<Row>({
       </Table>
     </TableContainer>
   )
+}
+
+function SkeletonRows({ count, selectable }: { count: number; selectable: boolean }) {
+  const api = useDataTableContext()
+  const [shown, setShown] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShown(true), SKELETON_DELAY)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (!shown) return null
+  return Array.from({ length: count }, (_, index) => (
+    <TableRow key={index} className="KyroTable-skeletonRow">
+      {selectable && <TableCell padding="checkbox" />}
+      {api.visibleColumns.map((col) => (
+        <TableCell key={col.field} align={col.align}>
+          <Skeleton
+            variant="rounded"
+            animation="wave"
+            sx={{ display: 'inline-block', width: '60%', maxWidth: 120, height: 12, borderRadius: 999 }}
+          />
+        </TableCell>
+      ))}
+    </TableRow>
+  ))
 }
