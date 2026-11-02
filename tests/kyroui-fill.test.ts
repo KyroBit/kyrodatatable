@@ -1,44 +1,22 @@
-import { GlobalRegistrator } from '@happy-dom/global-registrator'
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
-import { basename } from 'node:path'
-import { chromium, type Browser, type Page } from 'playwright'
+import type { Browser, Page } from 'playwright'
+import { serveFixture, type FixtureServer } from './support/browser.js'
 
+let fixture: FixtureServer
 let browser: Browser
-let server: ReturnType<typeof Bun.serve>
 
 beforeAll(async () => {
-  await GlobalRegistrator.unregister()
-  const built = await Bun.build({
-    entrypoints: [`${import.meta.dir}/fixtures/fill.tsx`],
-    target: 'browser',
-    define: { 'process.env.NODE_ENV': '"production"' },
-  })
-  if (!built.success) throw new AggregateError(built.logs, 'the fill fixture did not build')
-  const files = new Map(built.outputs.map((output) => [`/${basename(output.path)}`, output]))
-  const script = [...files.keys()].find((path) => path.endsWith('.js'))
-  const style = [...files.keys()].find((path) => path.endsWith('.css'))
-  const page = `<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="${style}"><style>body{margin:0}</style></head><body><div id="root"></div><script type="module" src="${script}"></script></body></html>`
-  server = Bun.serve({
-    port: 0,
-    fetch: (request) => {
-      const file = files.get(new URL(request.url).pathname)
-      return file ? new Response(file) : new Response(page, { headers: { 'content-type': 'text/html' } })
-    },
-  })
-  browser = await chromium.launch()
+  fixture = await serveFixture('fill')
+  browser = fixture.browser
 }, 60_000)
 
-afterAll(async () => {
-  await browser?.close()
-  server?.stop(true)
-  GlobalRegistrator.register()
-})
+afterAll(() => fixture?.close())
 
 type Mode = 'paged' | 'infinite'
 
 async function open(height: number, mode: Mode, rows: number, pageSize = 25) {
   const page = await browser.newPage({ viewport: { width: 1000, height } })
-  await page.goto(`${server.url}?mode=${mode}&rows=${rows}&pageSize=${pageSize}`)
+  await page.goto(`${fixture.url}?mode=${mode}&rows=${rows}&pageSize=${pageSize}`)
   await page.waitForSelector('tbody tr[data-row], .KyroTable-empty')
   await page.waitForTimeout(300)
   return page
@@ -104,7 +82,7 @@ describe('a KyroUI table inside a flex column that fills the window', () => {
 
   test('in infinite mode, pages too small to fill the box keep loading until the box can scroll', async () => {
     const page = await browser.newPage({ viewport: { width: 1000, height: 1100 } })
-    await page.goto(`${server.url}?mode=infinite&rows=100&pageSize=4`)
+    await page.goto(`${fixture.url}?mode=infinite&rows=100&pageSize=4`)
 
     await page.waitForFunction(() => {
       const scroller = document.querySelector<HTMLElement>('[data-scroll-root]')

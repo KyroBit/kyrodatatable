@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { startTransition, useEffect, useMemo, useOptimistic, useState, type ReactNode } from 'react'
 import {
   Badge, Box, Button, Card, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Typography,
 } from '@kyrobit/kyroui'
@@ -119,10 +119,18 @@ export function DataTable<Row, Field extends string = string>({
     return presets?.all.find((p) => filterValuesEqual(p.filters, filters))?.id ?? null
   }, [presets, selectedPresetId, filters])
 
+  const [shownPresetId, showPreset] = useOptimistic(activePresetId)
+
   const applyFilters = (next: FilterValues, presetId?: string) => {
     setSelectedPresetId(presetId ?? null)
     api.setFilters(next)
   }
+
+  const pickPreset = (presetId: string, next: FilterValues) =>
+    startTransition(() => {
+      showPreset(presetId)
+      applyFilters(next, presetId === 'all' ? undefined : presetId)
+    })
 
   const activeGroupLabel = api.groupByColumns?.find((g) => g.field === api.groupBy)?.label
 
@@ -159,12 +167,12 @@ export function DataTable<Row, Field extends string = string>({
             {presets && presets.all.length > 0 && (
               <ToggleButtonGroup
                 exclusive
-                value={activePresetId}
+                value={shownPresetId}
                 onChange={(_, nextId: string | null) => {
                   if (!nextId) return
-                  if (nextId === 'all') { applyFilters({}); return }
+                  if (nextId === 'all') { pickPreset('all', {}); return }
                   const p = presets.all.find((preset) => preset.id === nextId)
-                  if (p) applyFilters(p.filters, p.id)
+                  if (p) pickPreset(p.id, p.filters)
                 }}
               >
                 <ToggleButton value="all" data-label="All">All</ToggleButton>

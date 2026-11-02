@@ -1,5 +1,5 @@
 import { c as _c } from "react/compiler-runtime";
-import { useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useOptimistic, useState } from 'react';
 import { Badge, Box, Button, Card, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@kyrobit/kyroui';
 import { countFilterValues, filterValuesEqual } from '@kyrobit/datatable';
 import { DataTableRoot } from './context.js';
@@ -18,7 +18,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
  * a custom layout compose the exported pieces yourself.
  */
 export function DataTable(t0) {
-  const $ = _c(121);
+  const $ = _c(124);
   const {
     api,
     presets,
@@ -166,6 +166,7 @@ export function DataTable(t0) {
     t12 = t13;
   }
   const activePresetId = t12;
+  const [shownPresetId, showPreset] = useOptimistic(activePresetId);
   let t13;
   if ($[22] !== api) {
     t13 = (next, presetId) => {
@@ -179,18 +180,31 @@ export function DataTable(t0) {
   }
   const applyFilters = t13;
   let t14;
-  if ($[24] !== api.groupBy || $[25] !== api.groupByColumns) {
-    t14 = api.groupByColumns?.find(g => g.field === api.groupBy)?.label;
-    $[24] = api.groupBy;
-    $[25] = api.groupByColumns;
+  if ($[24] !== applyFilters || $[25] !== showPreset) {
+    t14 = (presetId_0, next_0) => startTransition(() => {
+      showPreset(presetId_0);
+      applyFilters(next_0, presetId_0 === "all" ? undefined : presetId_0);
+    });
+    $[24] = applyFilters;
+    $[25] = showPreset;
     $[26] = t14;
   } else {
     t14 = $[26];
   }
-  const activeGroupLabel = t14;
+  const pickPreset = t14;
   let t15;
-  if ($[27] !== api) {
-    t15 = async action => {
+  if ($[27] !== api.groupBy || $[28] !== api.groupByColumns) {
+    t15 = api.groupByColumns?.find(g => g.field === api.groupBy)?.label;
+    $[27] = api.groupBy;
+    $[28] = api.groupByColumns;
+    $[29] = t15;
+  } else {
+    t15 = $[29];
+  }
+  const activeGroupLabel = t15;
+  let t16;
+  if ($[30] !== api) {
+    t16 = async action => {
       await action.handle(api.selectedIds);
       api.clearSelection();
       if (api.groupBy) {
@@ -198,30 +212,30 @@ export function DataTable(t0) {
       }
       api.refetch();
     };
-    $[27] = api;
-    $[28] = t15;
+    $[30] = api;
+    $[31] = t16;
   } else {
-    t15 = $[28];
+    t16 = $[31];
   }
-  const executeAction = t15;
-  let t16;
-  if ($[29] !== executeAction) {
-    t16 = action_0 => {
+  const executeAction = t16;
+  let t17;
+  if ($[32] !== executeAction) {
+    t17 = action_0 => {
       if (action_0.confirmationMessage) {
         setPendingAction(action_0);
         return;
       }
       executeAction(action_0);
     };
-    $[29] = executeAction;
-    $[30] = t16;
+    $[32] = executeAction;
+    $[33] = t17;
   } else {
-    t16 = $[30];
+    t17 = $[33];
   }
-  const runAction = t16;
-  let t17;
-  if ($[31] !== api.filters || $[32] !== api.groupBy || $[33] !== api.search || $[34] !== api.selectedIds || $[35] !== api.sort || $[36] !== onExport) {
-    t17 = format => {
+  const runAction = t17;
+  let t18;
+  if ($[34] !== api.filters || $[35] !== api.groupBy || $[36] !== api.search || $[37] !== api.selectedIds || $[38] !== api.sort || $[39] !== onExport) {
+    t18 = format => {
       onExport?.({
         format,
         search: api.search,
@@ -231,20 +245,20 @@ export function DataTable(t0) {
         selectedIds: api.selectedIds
       });
     };
-    $[31] = api.filters;
-    $[32] = api.groupBy;
-    $[33] = api.search;
-    $[34] = api.selectedIds;
-    $[35] = api.sort;
-    $[36] = onExport;
-    $[37] = t17;
+    $[34] = api.filters;
+    $[35] = api.groupBy;
+    $[36] = api.search;
+    $[37] = api.selectedIds;
+    $[38] = api.sort;
+    $[39] = onExport;
+    $[40] = t18;
   } else {
-    t17 = $[37];
+    t18 = $[40];
   }
-  const runExport = t17;
-  let t18;
-  if ($[38] !== activePresetId || $[39] !== applyFilters || $[40] !== createLabel || $[41] !== onCreate || $[42] !== presets || $[43] !== toolbarEnd) {
-    t18 = (presets || onCreate || toolbarEnd) && /*#__PURE__*/_jsxs(Stack, {
+  const runExport = t18;
+  let t19;
+  if ($[41] !== createLabel || $[42] !== onCreate || $[43] !== pickPreset || $[44] !== presets || $[45] !== shownPresetId || $[46] !== toolbarEnd) {
+    t19 = (presets || onCreate || toolbarEnd) && /*#__PURE__*/_jsxs(Stack, {
       sx: {
         flexDirection: {
           xs: "column",
@@ -267,18 +281,18 @@ export function DataTable(t0) {
         },
         children: presets && presets.all.length > 0 && /*#__PURE__*/_jsxs(ToggleButtonGroup, {
           exclusive: true,
-          value: activePresetId,
+          value: shownPresetId,
           onChange: (_, nextId) => {
             if (!nextId) {
               return;
             }
             if (nextId === "all") {
-              applyFilters({});
+              pickPreset("all", {});
               return;
             }
             const p_1 = presets.all.find(preset => preset.id === nextId);
             if (p_1) {
-              applyFilters(p_1.filters, p_1.id);
+              pickPreset(p_1.id, p_1.filters);
             }
           },
           children: [/*#__PURE__*/_jsx(ToggleButton, {
@@ -302,30 +316,30 @@ export function DataTable(t0) {
         }), toolbarEnd]
       })]
     });
-    $[38] = activePresetId;
-    $[39] = applyFilters;
-    $[40] = createLabel;
-    $[41] = onCreate;
-    $[42] = presets;
-    $[43] = toolbarEnd;
-    $[44] = t18;
+    $[41] = createLabel;
+    $[42] = onCreate;
+    $[43] = pickPreset;
+    $[44] = presets;
+    $[45] = shownPresetId;
+    $[46] = toolbarEnd;
+    $[47] = t19;
   } else {
-    t18 = $[44];
+    t19 = $[47];
   }
-  let t19;
-  if ($[45] === Symbol.for("react.memo_cache_sentinel")) {
-    t19 = {
+  let t20;
+  if ($[48] === Symbol.for("react.memo_cache_sentinel")) {
+    t20 = {
       alignItems: "center",
       flexWrap: "wrap",
       minWidth: 0
     };
-    $[45] = t19;
+    $[48] = t20;
   } else {
-    t19 = $[45];
+    t20 = $[48];
   }
-  let t20;
-  if ($[46] !== filterColumns || $[47] !== filterCount || $[48] !== filters) {
-    t20 = filterColumns && /*#__PURE__*/_jsx(Badge, {
+  let t21;
+  if ($[49] !== filterColumns || $[50] !== filterCount || $[51] !== filters) {
+    t21 = filterColumns && /*#__PURE__*/_jsx(Badge, {
       badgeContent: filterCount,
       color: "primary",
       children: /*#__PURE__*/_jsx(IconButton, {
@@ -340,31 +354,31 @@ export function DataTable(t0) {
         })
       })
     });
-    $[46] = filterColumns;
-    $[47] = filterCount;
-    $[48] = filters;
-    $[49] = t20;
+    $[49] = filterColumns;
+    $[50] = filterCount;
+    $[51] = filters;
+    $[52] = t21;
   } else {
-    t20 = $[49];
+    t21 = $[52];
   }
-  let t21;
-  if ($[50] !== searchPlaceholder || $[51] !== searchWidth || $[52] !== t20) {
-    t21 = /*#__PURE__*/_jsx(DataTableSearchField, {
+  let t22;
+  if ($[53] !== searchPlaceholder || $[54] !== searchWidth || $[55] !== t21) {
+    t22 = /*#__PURE__*/_jsx(DataTableSearchField, {
       placeholder: searchPlaceholder,
       width: searchWidth,
       alwaysOpen: true,
-      endAdornment: t20
+      endAdornment: t21
     });
-    $[50] = searchPlaceholder;
-    $[51] = searchWidth;
-    $[52] = t20;
-    $[53] = t21;
+    $[53] = searchPlaceholder;
+    $[54] = searchWidth;
+    $[55] = t21;
+    $[56] = t22;
   } else {
-    t21 = $[53];
+    t22 = $[56];
   }
-  let t22;
-  if ($[54] !== activeGroupLabel || $[55] !== api) {
-    t22 = api.groupByColumns && api.groupByColumns.length > 0 && /*#__PURE__*/_jsx(Menu, {
+  let t23;
+  if ($[57] !== activeGroupLabel || $[58] !== api) {
+    t23 = api.groupByColumns && api.groupByColumns.length > 0 && /*#__PURE__*/_jsx(Menu, {
       label: activeGroupLabel ? `Group: ${activeGroupLabel}` : "Group",
       startIcon: /*#__PURE__*/_jsx(GroupIcon, {}),
       children: [{
@@ -376,15 +390,15 @@ export function DataTable(t0) {
         children: g_0.label
       }, g_0.label))
     });
-    $[54] = activeGroupLabel;
-    $[55] = api;
-    $[56] = t22;
+    $[57] = activeGroupLabel;
+    $[58] = api;
+    $[59] = t23;
   } else {
-    t22 = $[56];
+    t23 = $[59];
   }
-  let t23;
-  if ($[57] !== actions || $[58] !== api.selectedIds || $[59] !== runAction) {
-    t23 = actions && actions.length > 0 && api.selectedIds.length > 0 && /*#__PURE__*/_jsx(Menu, {
+  let t24;
+  if ($[60] !== actions || $[61] !== api.selectedIds || $[62] !== runAction) {
+    t24 = actions && actions.length > 0 && api.selectedIds.length > 0 && /*#__PURE__*/_jsx(Menu, {
       label: `Actions (${api.selectedIds.length})`,
       startIcon: /*#__PURE__*/_jsx(ActionsIcon, {}),
       children: actions.map(action_1 => /*#__PURE__*/_jsx(MenuItem, {
@@ -392,16 +406,16 @@ export function DataTable(t0) {
         children: action_1.label
       }, action_1.label))
     });
-    $[57] = actions;
-    $[58] = api.selectedIds;
-    $[59] = runAction;
-    $[60] = t23;
+    $[60] = actions;
+    $[61] = api.selectedIds;
+    $[62] = runAction;
+    $[63] = t24;
   } else {
-    t23 = $[60];
+    t24 = $[63];
   }
-  let t24;
-  if ($[61] !== exportFormats || $[62] !== exportTooltip || $[63] !== importTooltip || $[64] !== onExport || $[65] !== onImport || $[66] !== runExport || $[67] !== settings) {
-    t24 = (onExport || onImport || settings) && /*#__PURE__*/_jsxs(Menu, {
+  let t25;
+  if ($[64] !== exportFormats || $[65] !== exportTooltip || $[66] !== importTooltip || $[67] !== onExport || $[68] !== onImport || $[69] !== runExport || $[70] !== settings) {
+    t25 = (onExport || onImport || settings) && /*#__PURE__*/_jsxs(Menu, {
       "aria-label": "More",
       variant: "outlined",
       morph: true,
@@ -431,39 +445,39 @@ export function DataTable(t0) {
         })]
       })]
     });
-    $[61] = exportFormats;
-    $[62] = exportTooltip;
-    $[63] = importTooltip;
-    $[64] = onExport;
-    $[65] = onImport;
-    $[66] = runExport;
-    $[67] = settings;
-    $[68] = t24;
+    $[64] = exportFormats;
+    $[65] = exportTooltip;
+    $[66] = importTooltip;
+    $[67] = onExport;
+    $[68] = onImport;
+    $[69] = runExport;
+    $[70] = settings;
+    $[71] = t25;
   } else {
-    t24 = $[68];
+    t25 = $[71];
   }
-  let t25;
-  if ($[69] !== t21 || $[70] !== t22 || $[71] !== t23 || $[72] !== t24) {
-    t25 = /*#__PURE__*/_jsx(Stack, {
+  let t26;
+  if ($[72] !== t22 || $[73] !== t23 || $[74] !== t24 || $[75] !== t25) {
+    t26 = /*#__PURE__*/_jsx(Stack, {
       sx: _temp2,
       children: /*#__PURE__*/_jsxs(Stack, {
         direction: "row",
         spacing: "sm",
-        sx: t19,
-        children: [t21, t22, t23, t24]
+        sx: t20,
+        children: [t22, t23, t24, t25]
       })
     });
-    $[69] = t21;
-    $[70] = t22;
-    $[71] = t23;
-    $[72] = t24;
-    $[73] = t25;
+    $[72] = t22;
+    $[73] = t23;
+    $[74] = t24;
+    $[75] = t25;
+    $[76] = t26;
   } else {
-    t25 = $[73];
+    t26 = $[76];
   }
-  let t26;
-  if ($[74] !== api.selectedIds || $[75] !== executeAction || $[76] !== pendingAction) {
-    t26 = pendingAction && /*#__PURE__*/_jsx(ConfirmDialog, {
+  let t27;
+  if ($[77] !== api.selectedIds || $[78] !== executeAction || $[79] !== pendingAction) {
+    t27 = pendingAction && /*#__PURE__*/_jsx(ConfirmDialog, {
       open: true,
       title: pendingAction.confirmationMessage(api.selectedIds.length),
       description: pendingAction.confirmationDescription?.(api.selectedIds.length),
@@ -476,16 +490,16 @@ export function DataTable(t0) {
         executeAction(action_2);
       }
     });
-    $[74] = api.selectedIds;
-    $[75] = executeAction;
-    $[76] = pendingAction;
-    $[77] = t26;
+    $[77] = api.selectedIds;
+    $[78] = executeAction;
+    $[79] = pendingAction;
+    $[80] = t27;
   } else {
-    t26 = $[77];
+    t27 = $[80];
   }
-  let t27;
-  if ($[78] !== applyFilters || $[79] !== filterAnchor || $[80] !== filterColumns || $[81] !== filterDraft || $[82] !== filterRenderers || $[83] !== presets) {
-    t27 = filterColumns && /*#__PURE__*/_jsx(DataTableFilterMenu, {
+  let t28;
+  if ($[81] !== applyFilters || $[82] !== filterAnchor || $[83] !== filterColumns || $[84] !== filterDraft || $[85] !== filterRenderers || $[86] !== presets) {
+    t28 = filterColumns && /*#__PURE__*/_jsx(DataTableFilterMenu, {
       filterRenderers: filterRenderers,
       anchorEl: filterAnchor,
       onClose: () => setFilterAnchor(null),
@@ -495,34 +509,34 @@ export function DataTable(t0) {
       onApply: applyFilters,
       presets: presets
     });
-    $[78] = applyFilters;
-    $[79] = filterAnchor;
-    $[80] = filterColumns;
-    $[81] = filterDraft;
-    $[82] = filterRenderers;
-    $[83] = presets;
-    $[84] = t27;
+    $[81] = applyFilters;
+    $[82] = filterAnchor;
+    $[83] = filterColumns;
+    $[84] = filterDraft;
+    $[85] = filterRenderers;
+    $[86] = presets;
+    $[87] = t28;
   } else {
-    t27 = $[84];
+    t28 = $[87];
   }
-  let t28;
-  if ($[85] !== filterColumns || $[86] !== manageOpen || $[87] !== presets) {
-    t28 = presets && filterColumns && /*#__PURE__*/_jsx(ManageViewsDialog, {
+  let t29;
+  if ($[88] !== filterColumns || $[89] !== manageOpen || $[90] !== presets) {
+    t29 = presets && filterColumns && /*#__PURE__*/_jsx(ManageViewsDialog, {
       open: manageOpen,
       onClose: () => setManageOpen(false),
       presets: presets,
       filterColumns: filterColumns
     });
-    $[85] = filterColumns;
-    $[86] = manageOpen;
-    $[87] = presets;
-    $[88] = t28;
+    $[88] = filterColumns;
+    $[89] = manageOpen;
+    $[90] = presets;
+    $[91] = t29;
   } else {
-    t28 = $[88];
+    t29 = $[91];
   }
-  let t29;
-  if ($[89] !== filterColumns || $[90] !== presets || $[91] !== settings || $[92] !== settingsOpen) {
-    t29 = settings && /*#__PURE__*/_jsx(DataTableSettingsDialog, {
+  let t30;
+  if ($[92] !== filterColumns || $[93] !== presets || $[94] !== settings || $[95] !== settingsOpen) {
+    t30 = settings && /*#__PURE__*/_jsx(DataTableSettingsDialog, {
       open: settingsOpen,
       onClose: () => setSettingsOpen(false),
       onManageViews: presets && filterColumns ? () => {
@@ -530,17 +544,17 @@ export function DataTable(t0) {
         setManageOpen(true);
       } : undefined
     });
-    $[89] = filterColumns;
-    $[90] = presets;
-    $[91] = settings;
-    $[92] = settingsOpen;
-    $[93] = t29;
+    $[92] = filterColumns;
+    $[93] = presets;
+    $[94] = settings;
+    $[95] = settingsOpen;
+    $[96] = t30;
   } else {
-    t29 = $[93];
+    t30 = $[96];
   }
-  let t30;
-  if ($[94] === Symbol.for("react.memo_cache_sentinel")) {
-    t30 = {
+  let t31;
+  if ($[97] === Symbol.for("react.memo_cache_sentinel")) {
+    t31 = {
       p: 0,
       overflow: "hidden",
       display: "flex",
@@ -548,14 +562,14 @@ export function DataTable(t0) {
       flex: "1 1 auto",
       minHeight: 0
     };
-    $[94] = t30;
+    $[97] = t31;
   } else {
-    t30 = $[94];
+    t31 = $[97];
   }
-  let t31;
-  if ($[95] !== emptyMessage || $[96] !== errorMessage || $[97] !== infiniteScroll || $[98] !== noResultsMessage || $[99] !== onRowClick || $[100] !== onRowIntent || $[101] !== rowClass || $[102] !== stickyHeader || $[103] !== withSelection) {
-    t31 = /*#__PURE__*/_jsx(Card, {
-      sx: t30,
+  let t32;
+  if ($[98] !== emptyMessage || $[99] !== errorMessage || $[100] !== infiniteScroll || $[101] !== noResultsMessage || $[102] !== onRowClick || $[103] !== onRowIntent || $[104] !== rowClass || $[105] !== stickyHeader || $[106] !== withSelection) {
+    t32 = /*#__PURE__*/_jsx(Card, {
+      sx: t31,
       children: /*#__PURE__*/_jsx(DataTableBody, {
         selectable: withSelection,
         emptyMessage: emptyMessage,
@@ -568,22 +582,22 @@ export function DataTable(t0) {
         infiniteScroll: infiniteScroll
       })
     });
-    $[95] = emptyMessage;
-    $[96] = errorMessage;
-    $[97] = infiniteScroll;
-    $[98] = noResultsMessage;
-    $[99] = onRowClick;
-    $[100] = onRowIntent;
-    $[101] = rowClass;
-    $[102] = stickyHeader;
-    $[103] = withSelection;
-    $[104] = t31;
+    $[98] = emptyMessage;
+    $[99] = errorMessage;
+    $[100] = infiniteScroll;
+    $[101] = noResultsMessage;
+    $[102] = onRowClick;
+    $[103] = onRowIntent;
+    $[104] = rowClass;
+    $[105] = stickyHeader;
+    $[106] = withSelection;
+    $[107] = t32;
   } else {
-    t31 = $[104];
+    t32 = $[107];
   }
-  let t32;
-  if ($[105] !== api.groupBy || $[106] !== api.groups || $[107] !== api.groupsTotal || $[108] !== infiniteScroll || $[109] !== rowsPerPageOptions) {
-    t32 = (!infiniteScroll || api.groupBy) && /*#__PURE__*/_jsxs(Box, {
+  let t33;
+  if ($[108] !== api.groupBy || $[109] !== api.groups || $[110] !== api.groupsTotal || $[111] !== infiniteScroll || $[112] !== rowsPerPageOptions) {
+    t33 = (!infiniteScroll || api.groupBy) && /*#__PURE__*/_jsxs(Box, {
       "data-table-footer": "",
       sx: _temp3,
       children: [!infiniteScroll && /*#__PURE__*/_jsx(DataTablePagination, {
@@ -598,35 +612,35 @@ export function DataTable(t0) {
         children: [api.groups.length, " groups \xB7 ", api.groupsTotal, " records"]
       })]
     });
-    $[105] = api.groupBy;
-    $[106] = api.groups;
-    $[107] = api.groupsTotal;
-    $[108] = infiniteScroll;
-    $[109] = rowsPerPageOptions;
-    $[110] = t32;
+    $[108] = api.groupBy;
+    $[109] = api.groups;
+    $[110] = api.groupsTotal;
+    $[111] = infiniteScroll;
+    $[112] = rowsPerPageOptions;
+    $[113] = t33;
   } else {
-    t32 = $[110];
+    t33 = $[113];
   }
-  let t33;
-  if ($[111] !== api || $[112] !== t18 || $[113] !== t25 || $[114] !== t26 || $[115] !== t27 || $[116] !== t28 || $[117] !== t29 || $[118] !== t31 || $[119] !== t32) {
-    t33 = /*#__PURE__*/_jsxs(DataTableRoot, {
+  let t34;
+  if ($[114] !== api || $[115] !== t19 || $[116] !== t26 || $[117] !== t27 || $[118] !== t28 || $[119] !== t29 || $[120] !== t30 || $[121] !== t32 || $[122] !== t33) {
+    t34 = /*#__PURE__*/_jsxs(DataTableRoot, {
       api: api,
-      children: [t18, t25, t26, t27, t28, t29, t31, t32]
+      children: [t19, t26, t27, t28, t29, t30, t32, t33]
     });
-    $[111] = api;
-    $[112] = t18;
-    $[113] = t25;
-    $[114] = t26;
-    $[115] = t27;
-    $[116] = t28;
-    $[117] = t29;
-    $[118] = t31;
-    $[119] = t32;
-    $[120] = t33;
+    $[114] = api;
+    $[115] = t19;
+    $[116] = t26;
+    $[117] = t27;
+    $[118] = t28;
+    $[119] = t29;
+    $[120] = t30;
+    $[121] = t32;
+    $[122] = t33;
+    $[123] = t34;
   } else {
-    t33 = $[120];
+    t34 = $[123];
   }
-  return t33;
+  return t34;
 }
 function _temp3(theme_0) {
   return {
