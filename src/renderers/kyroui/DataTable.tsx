@@ -186,7 +186,7 @@ export function DataTable<Row, Field extends string = string>({
       )}
 
       <Stack
-        sx={{ flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 'sm', minHeight: 'var(--kyro-row-height)' }}
+        sx={(theme) => ({ flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 'sm', minHeight: theme.vars.size.row })}
       >
         <Stack direction="row" spacing="sm" sx={{ alignItems: 'center', flexWrap: 'wrap', minWidth: 0 }}>
           <DataTableSearchField
@@ -318,7 +318,7 @@ export function DataTable<Row, Field extends string = string>({
         />
       </Card>
       {(!infiniteScroll || api.groupBy) && (
-      <Box data-table-footer="" sx={{ minHeight: 'var(--kyro-row-height)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+      <Box data-table-footer="" sx={(theme) => ({ minHeight: theme.vars.size.row, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' })}>
         {!infiniteScroll && <DataTablePagination rowsPerPageOptions={rowsPerPageOptions} />}
         {api.groupBy && (
           <Typography sx={{ fontSize: 'md', fontWeight: 500, color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>

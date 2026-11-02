@@ -19,12 +19,12 @@ function SortChevron({ points, active }: { points: string; active: boolean }) {
       width={11}
       height={7}
       viewBox="0 0 24 14"
-      sx={{
+      sx={(theme) => ({
         display: 'block',
         fill: 'none',
         color: active ? 'text.primary' : 'text.disabled',
-        transition: 'color var(--kyro-duration-fast)',
-      }}
+        transition: theme.transitions.create('color', { duration: theme.transitions.duration.shortest }),
+      })}
     >
       <path
         d={points}
@@ -285,7 +285,7 @@ export function DataTableBody<Row>({
     <TableContainer
       ref={containerRef}
       data-scroll-root=""
-      sx={{ flex: '1 1 0', minHeight: 'calc(var(--kyro-row-height) * 4)', overflowY: 'auto', contain: 'size' }}
+      sx={(theme) => ({ flex: '1 1 0', minHeight: `calc(${theme.vars.size.row} * 4)`, overflowY: 'auto', contain: 'size' })}
     >
       <Table size="small" stickyHeader={stickyHeader} sx={fixedWidths ? { tableLayout: 'fixed' } : undefined}>
         {hasExplicitWidths ? (

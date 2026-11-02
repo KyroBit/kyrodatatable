@@ -239,7 +239,7 @@ export function DataTableFilterMenu({
       onClose={close}
       placement="bottom-end"
       aria-label="Filters"
-      sx={{ width: 400, maxWidth: 'calc(100vw - 2 * var(--kyro-space-lg))' }}
+      sx={(theme) => ({ width: 400, maxWidth: `calc(100vw - 2 * ${theme.spacing('lg')})` })}
     >
       <Box sx={{ px: 'lg', pt: 'md', pb: 'lg' }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 'md' }}>
@@ -514,7 +514,7 @@ function SortableViewRow({ id, children, onClick }: { id: string; children: Reac
           borderRadius: 'md',
           cursor: 'pointer',
           bgcolor: isDragging ? 'background.surface' : undefined,
-          boxShadow: isDragging ? 'var(--kyro-shadow-popup)' : undefined,
+          boxShadow: isDragging ? 3 : undefined,
           '&:hover': { bgcolor: 'background.surface' },
         }}
       >

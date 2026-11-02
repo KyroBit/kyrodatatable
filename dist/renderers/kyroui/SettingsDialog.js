@@ -63,123 +63,106 @@ function Group(t0) {
   return t2;
 }
 function Row(t0) {
-  const $ = _c(20);
+  const $ = _c(16);
   const {
     title,
     description,
     control,
     onClick
   } = t0;
-  const t1 = onClick ? "pointer" : "default";
-  let t2;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = {
-      boxShadow: "inset 0 1px 0 var(--kyro-border)"
-    };
-    $[0] = t2;
-  } else {
-    t2 = $[0];
-  }
-  let t3;
-  if ($[1] !== onClick) {
-    t3 = onClick ? {
-      bgcolor: "background.surfaceHover"
-    } : undefined;
-    $[1] = onClick;
-    $[2] = t3;
-  } else {
-    t3 = $[2];
-  }
-  let t4;
-  if ($[3] !== t1 || $[4] !== t3) {
-    t4 = {
+  let t1;
+  if ($[0] !== onClick) {
+    t1 = theme => ({
       gap: "lg",
       px: "lg",
       py: "md",
-      cursor: t1,
-      "& + &": t2,
-      "&:hover": t3
+      cursor: onClick ? "pointer" : "default",
+      "& + &": {
+        boxShadow: `inset 0 1px 0 ${theme.vars.palette.divider}`
+      },
+      "&:hover": onClick ? {
+        bgcolor: "background.surfaceHover"
+      } : undefined
+    });
+    $[0] = onClick;
+    $[1] = t1;
+  } else {
+    t1 = $[1];
+  }
+  let t2;
+  if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+    t2 = {
+      flex: 1,
+      minWidth: 0
     };
-    $[3] = t1;
-    $[4] = t3;
+    $[2] = t2;
+  } else {
+    t2 = $[2];
+  }
+  let t3;
+  if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
+    t3 = {
+      fontSize: "lg"
+    };
+    $[3] = t3;
+  } else {
+    t3 = $[3];
+  }
+  let t4;
+  if ($[4] !== title) {
+    t4 = /*#__PURE__*/_jsx(Typography, {
+      sx: t3,
+      children: title
+    });
+    $[4] = title;
     $[5] = t4;
   } else {
     t4 = $[5];
   }
   let t5;
-  if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = {
-      flex: 1,
-      minWidth: 0
-    };
-    $[6] = t5;
-  } else {
-    t5 = $[6];
-  }
-  let t6;
-  if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = {
-      fontSize: "lg"
-    };
-    $[7] = t6;
-  } else {
-    t6 = $[7];
-  }
-  let t7;
-  if ($[8] !== title) {
-    t7 = /*#__PURE__*/_jsx(Typography, {
-      sx: t6,
-      children: title
-    });
-    $[8] = title;
-    $[9] = t7;
-  } else {
-    t7 = $[9];
-  }
-  let t8;
-  if ($[10] !== description) {
-    t8 = description && /*#__PURE__*/_jsx(Typography, {
+  if ($[6] !== description) {
+    t5 = description && /*#__PURE__*/_jsx(Typography, {
       sx: {
         fontSize: "md",
         color: "text.secondary"
       },
       children: description
     });
-    $[10] = description;
-    $[11] = t8;
+    $[6] = description;
+    $[7] = t5;
   } else {
-    t8 = $[11];
+    t5 = $[7];
   }
-  let t9;
-  if ($[12] !== t7 || $[13] !== t8) {
-    t9 = /*#__PURE__*/_jsxs(Box, {
-      sx: t5,
-      children: [t7, t8]
+  let t6;
+  if ($[8] !== t4 || $[9] !== t5) {
+    t6 = /*#__PURE__*/_jsxs(Box, {
+      sx: t2,
+      children: [t4, t5]
     });
-    $[12] = t7;
-    $[13] = t8;
-    $[14] = t9;
+    $[8] = t4;
+    $[9] = t5;
+    $[10] = t6;
   } else {
-    t9 = $[14];
+    t6 = $[10];
   }
-  let t10;
-  if ($[15] !== control || $[16] !== onClick || $[17] !== t4 || $[18] !== t9) {
-    t10 = /*#__PURE__*/_jsxs(Stack, {
+  let t7;
+  if ($[11] !== control || $[12] !== onClick || $[13] !== t1 || $[14] !== t6) {
+    t7 = /*#__PURE__*/_jsxs(Stack, {
       direction: "row",
       alignItems: "center",
       onClick: onClick,
-      sx: t4,
-      children: [t9, control]
+      sx: t1,
+      children: [t6, control]
     });
-    $[15] = control;
-    $[16] = onClick;
-    $[17] = t4;
-    $[18] = t9;
-    $[19] = t10;
+    $[11] = control;
+    $[12] = onClick;
+    $[13] = t1;
+    $[14] = t6;
+    $[15] = t7;
   } else {
-    t10 = $[19];
+    t7 = $[15];
   }
-  return t10;
+  return t7;
 }
 export function DataTableSettingsDialog(t0) {
   const $ = _c(20);

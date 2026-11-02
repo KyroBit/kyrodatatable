@@ -49,14 +49,14 @@ function Row({
       direction="row"
       alignItems="center"
       onClick={onClick}
-      sx={{
+      sx={(theme) => ({
         gap: 'lg',
         px: 'lg',
         py: 'md',
         cursor: onClick ? 'pointer' : 'default',
-        '& + &': { boxShadow: 'inset 0 1px 0 var(--kyro-border)' },
+        '& + &': { boxShadow: `inset 0 1px 0 ${theme.vars.palette.divider}` },
         '&:hover': onClick ? { bgcolor: 'background.surfaceHover' } : undefined,
-      }}
+      })}
     >
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography sx={{ fontSize: 'lg' }}>{title}</Typography>

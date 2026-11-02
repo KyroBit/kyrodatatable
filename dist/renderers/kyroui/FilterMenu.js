@@ -617,7 +617,7 @@ function FilterField(t0) {
   }
 }
 export function DataTableFilterMenu(t0) {
-  const $ = _c(53);
+  const $ = _c(52);
   const {
     anchorEl,
     onClose,
@@ -677,8 +677,9 @@ export function DataTableFilterMenu(t0) {
   let t5;
   if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
     t5 = {
-      width: 400,
-      maxWidth: "calc(100vw - 2 * var(--kyro-space-lg))"
+      px: "lg",
+      pt: "md",
+      pb: "lg"
     };
     $[10] = t5;
   } else {
@@ -687,26 +688,15 @@ export function DataTableFilterMenu(t0) {
   let t6;
   if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
     t6 = {
-      px: "lg",
-      pt: "md",
-      pb: "lg"
+      mb: "md"
     };
     $[11] = t6;
   } else {
     t6 = $[11];
   }
   let t7;
-  if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
-    t7 = {
-      mb: "md"
-    };
-    $[12] = t7;
-  } else {
-    t7 = $[12];
-  }
-  let t8;
-  if ($[13] !== mode) {
-    t8 = mode === "save" && /*#__PURE__*/_jsx(IconButton, {
+  if ($[12] !== mode) {
+    t7 = mode === "save" && /*#__PURE__*/_jsx(IconButton, {
       size: "small",
       onClick: () => setMode("filter"),
       "aria-label": "Back",
@@ -714,96 +704,96 @@ export function DataTableFilterMenu(t0) {
         fontSize: "small"
       })
     });
-    $[13] = mode;
-    $[14] = t8;
+    $[12] = mode;
+    $[13] = t7;
   } else {
-    t8 = $[14];
+    t7 = $[13];
   }
-  let t9;
-  if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
-    t9 = {
+  let t8;
+  if ($[14] === Symbol.for("react.memo_cache_sentinel")) {
+    t8 = {
       fontSize: "h5",
       fontWeight: 600,
       color: "text.primary"
     };
-    $[15] = t9;
+    $[14] = t8;
   } else {
-    t9 = $[15];
+    t8 = $[14];
   }
-  const t10 = mode === "save" ? "Save as view" : "Filter";
-  let t11;
-  if ($[16] !== t10) {
-    t11 = /*#__PURE__*/_jsx(Typography, {
-      sx: t9,
-      children: t10
+  const t9 = mode === "save" ? "Save as view" : "Filter";
+  let t10;
+  if ($[15] !== t9) {
+    t10 = /*#__PURE__*/_jsx(Typography, {
+      sx: t8,
+      children: t9
     });
+    $[15] = t9;
     $[16] = t10;
-    $[17] = t11;
   } else {
-    t11 = $[17];
+    t10 = $[16];
   }
-  let t12;
-  if ($[18] !== t11 || $[19] !== t8) {
-    t12 = /*#__PURE__*/_jsxs(Stack, {
+  let t11;
+  if ($[17] !== t10 || $[18] !== t7) {
+    t11 = /*#__PURE__*/_jsxs(Stack, {
       direction: "row",
       spacing: "sm",
       alignItems: "center",
-      children: [t8, t11]
+      children: [t7, t10]
     });
-    $[18] = t11;
-    $[19] = t8;
+    $[17] = t10;
+    $[18] = t7;
+    $[19] = t11;
+  } else {
+    t11 = $[19];
+  }
+  let t12;
+  if ($[20] === Symbol.for("react.memo_cache_sentinel")) {
+    t12 = /*#__PURE__*/_jsx(CloseIcon, {
+      fontSize: "small"
+    });
     $[20] = t12;
   } else {
     t12 = $[20];
   }
   let t13;
-  if ($[21] === Symbol.for("react.memo_cache_sentinel")) {
-    t13 = /*#__PURE__*/_jsx(CloseIcon, {
-      fontSize: "small"
-    });
-    $[21] = t13;
-  } else {
-    t13 = $[21];
-  }
-  let t14;
-  if ($[22] !== close) {
-    t14 = /*#__PURE__*/_jsx(IconButton, {
+  if ($[21] !== close) {
+    t13 = /*#__PURE__*/_jsx(IconButton, {
       variant: "tonal",
       size: "small",
       onClick: close,
       "aria-label": "Close filters",
-      children: t13
+      children: t12
     });
-    $[22] = close;
-    $[23] = t14;
+    $[21] = close;
+    $[22] = t13;
   } else {
-    t14 = $[23];
+    t13 = $[22];
   }
-  let t15;
-  if ($[24] !== t12 || $[25] !== t14) {
-    t15 = /*#__PURE__*/_jsxs(Stack, {
+  let t14;
+  if ($[23] !== t11 || $[24] !== t13) {
+    t14 = /*#__PURE__*/_jsxs(Stack, {
       direction: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      sx: t7,
-      children: [t12, t14]
+      sx: t6,
+      children: [t11, t13]
     });
-    $[24] = t12;
+    $[23] = t11;
+    $[24] = t13;
     $[25] = t14;
+  } else {
+    t14 = $[25];
+  }
+  let t15;
+  if ($[26] === Symbol.for("react.memo_cache_sentinel")) {
+    t15 = /*#__PURE__*/_jsx(Divider, {});
     $[26] = t15;
   } else {
     t15 = $[26];
   }
   let t16;
-  if ($[27] === Symbol.for("react.memo_cache_sentinel")) {
-    t16 = /*#__PURE__*/_jsx(Divider, {});
-    $[27] = t16;
-  } else {
-    t16 = $[27];
-  }
-  let t17;
-  if ($[28] !== close || $[29] !== draft || $[30] !== draftEmpty || $[31] !== filterColumns || $[32] !== filterRenderers || $[33] !== mode || $[34] !== onApply || $[35] !== onDraftChange || $[36] !== presets) {
-    t17 = mode === "filter" && /*#__PURE__*/_jsxs(_Fragment, {
+  if ($[27] !== close || $[28] !== draft || $[29] !== draftEmpty || $[30] !== filterColumns || $[31] !== filterRenderers || $[32] !== mode || $[33] !== onApply || $[34] !== onDraftChange || $[35] !== presets) {
+    t16 = mode === "filter" && /*#__PURE__*/_jsxs(_Fragment, {
       children: [filterColumns.map(column => /*#__PURE__*/_jsxs(Box, {
         children: [/*#__PURE__*/_jsx(Typography, {
           sx: {
@@ -869,22 +859,22 @@ export function DataTableFilterMenu(t0) {
         })]
       })]
     });
-    $[28] = close;
-    $[29] = draft;
-    $[30] = draftEmpty;
-    $[31] = filterColumns;
-    $[32] = filterRenderers;
-    $[33] = mode;
-    $[34] = onApply;
-    $[35] = onDraftChange;
-    $[36] = presets;
-    $[37] = t17;
+    $[27] = close;
+    $[28] = draft;
+    $[29] = draftEmpty;
+    $[30] = filterColumns;
+    $[31] = filterRenderers;
+    $[32] = mode;
+    $[33] = onApply;
+    $[34] = onDraftChange;
+    $[35] = presets;
+    $[36] = t16;
   } else {
-    t17 = $[37];
+    t16 = $[36];
   }
-  let t18;
-  if ($[38] !== draft || $[39] !== filterColumns || $[40] !== mode || $[41] !== name || $[42] !== saveFilter) {
-    t18 = mode === "save" && /*#__PURE__*/_jsxs(_Fragment, {
+  let t17;
+  if ($[37] !== draft || $[38] !== filterColumns || $[39] !== mode || $[40] !== name || $[41] !== saveFilter) {
+    t17 = mode === "save" && /*#__PURE__*/_jsxs(_Fragment, {
       children: [/*#__PURE__*/_jsx(TextField, {
         autoFocus: true,
         fullWidth: true,
@@ -923,48 +913,54 @@ export function DataTableFilterMenu(t0) {
         })
       })]
     });
-    $[38] = draft;
-    $[39] = filterColumns;
-    $[40] = mode;
-    $[41] = name;
-    $[42] = saveFilter;
-    $[43] = t18;
+    $[37] = draft;
+    $[38] = filterColumns;
+    $[39] = mode;
+    $[40] = name;
+    $[41] = saveFilter;
+    $[42] = t17;
   } else {
-    t18 = $[43];
+    t17 = $[42];
   }
-  let t19;
-  if ($[44] !== t15 || $[45] !== t17 || $[46] !== t18) {
-    t19 = /*#__PURE__*/_jsxs(Box, {
-      sx: t6,
-      children: [t15, t16, t17, t18]
+  let t18;
+  if ($[43] !== t14 || $[44] !== t16 || $[45] !== t17) {
+    t18 = /*#__PURE__*/_jsxs(Box, {
+      sx: t5,
+      children: [t14, t15, t16, t17]
     });
-    $[44] = t15;
+    $[43] = t14;
+    $[44] = t16;
     $[45] = t17;
     $[46] = t18;
-    $[47] = t19;
   } else {
-    t19 = $[47];
+    t18 = $[46];
   }
-  let t20;
-  if ($[48] !== anchorEl || $[49] !== close || $[50] !== t19 || $[51] !== t4) {
-    t20 = /*#__PURE__*/_jsx(Popover, {
+  let t19;
+  if ($[47] !== anchorEl || $[48] !== close || $[49] !== t18 || $[50] !== t4) {
+    t19 = /*#__PURE__*/_jsx(Popover, {
       anchorEl: anchorEl,
       open: t4,
       onClose: close,
       placement: "bottom-end",
       "aria-label": "Filters",
-      sx: t5,
-      children: t19
+      sx: _temp8,
+      children: t18
     });
-    $[48] = anchorEl;
-    $[49] = close;
-    $[50] = t19;
-    $[51] = t4;
-    $[52] = t20;
+    $[47] = anchorEl;
+    $[48] = close;
+    $[49] = t18;
+    $[50] = t4;
+    $[51] = t19;
   } else {
-    t20 = $[52];
+    t19 = $[51];
   }
-  return t20;
+  return t19;
+}
+function _temp8(theme) {
+  return {
+    width: 400,
+    maxWidth: `calc(100vw - 2 * ${theme.spacing("lg")})`
+  };
 }
 export function ManageViewsDialog(t0) {
   const $ = _c(72);
@@ -1286,7 +1282,7 @@ export function ManageViewsDialog(t0) {
           modifiers: [restrictToVerticalAxis, restrictToParentElement],
           onDragEnd: handleDragEnd,
           children: /*#__PURE__*/_jsx(SortableContext, {
-            items: presets.all.map(_temp8),
+            items: presets.all.map(_temp9),
             strategy: verticalListSortingStrategy,
             children: presets.all.map(p_4 => /*#__PURE__*/_jsxs(SortableViewRow, {
               id: p_4.id,
@@ -1315,7 +1311,7 @@ export function ManageViewsDialog(t0) {
               }), /*#__PURE__*/_jsx(Stack, {
                 direction: "row",
                 spacing: "xs",
-                onClick: _temp9,
+                onClick: _temp0,
                 children: /*#__PURE__*/_jsx(Tooltip, {
                   title: "Delete",
                   children: /*#__PURE__*/_jsx(IconButton, {
@@ -1462,10 +1458,10 @@ export function ManageViewsDialog(t0) {
   }
   return t27;
 }
-function _temp9(e_1) {
+function _temp0(e_1) {
   return e_1.stopPropagation();
 }
-function _temp8(p_3) {
+function _temp9(p_3) {
   return p_3.id;
 }
 function SortableViewRow(t0) {
@@ -1518,7 +1514,7 @@ function SortableViewRow(t0) {
     t4 = $[7];
   }
   const t5 = isDragging ? "background.surface" : undefined;
-  const t6 = isDragging ? "var(--kyro-shadow-popup)" : undefined;
+  const t6 = isDragging ? 3 : undefined;
   let t7;
   if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
     t7 = {
@@ -1591,7 +1587,7 @@ function SortableViewRow(t0) {
     t14 = /*#__PURE__*/_jsx(Box, {
       ...attributes,
       ...listeners,
-      onClick: _temp0,
+      onClick: _temp1,
       "aria-label": "Drag to reorder",
       sx: t12,
       children: t13
@@ -1636,6 +1632,6 @@ function SortableViewRow(t0) {
   }
   return t16;
 }
-function _temp0(e) {
+function _temp1(e) {
   return e.stopPropagation();
 }
