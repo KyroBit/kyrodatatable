@@ -34,6 +34,7 @@ export interface DataTableProps<Row, Field extends string = string> {
      * has one fixed column set and nothing to configure. */
     settings?: boolean;
     onRowClick?: (row: Row) => void;
+    onRowIntent?: (row: Row) => void;
     rowClass?: (row: Row) => string;
     /** Shown in place of the table when there are no records at all. */
     emptyMessage?: ReactNode;
@@ -50,7 +51,7 @@ export interface DataTableProps<Row, Field extends string = string> {
  * card, and top-right pagination. Every section is opt-in through props; for
  * a custom layout compose the exported pieces yourself.
  */
-export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, searchPlaceholder, searchWidth, createLabel, onCreate, toolbarEnd, onExport, exportFormats, filterRenderers, onImport, exportTooltip, importTooltip, actions, selectable, settings, onRowClick, rowClass, emptyMessage, noResultsMessage, errorMessage, stickyHeader, rowsPerPageOptions, }: DataTableProps<Row, Field>): import("react").JSX.Element;
+export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, searchPlaceholder, searchWidth, createLabel, onCreate, toolbarEnd, onExport, exportFormats, filterRenderers, onImport, exportTooltip, importTooltip, actions, selectable, settings, onRowClick, onRowIntent, rowClass, emptyMessage, noResultsMessage, errorMessage, stickyHeader, rowsPerPageOptions, }: DataTableProps<Row, Field>): import("react").JSX.Element;
 export declare namespace DataTable {
     var Root: typeof DataTableRoot;
     var SearchField: typeof DataTableSearchField;

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent, type MouseEvent, type ReactNode, type RefObject } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import {
   Box, Button, Checkbox, IconButton, Skeleton, SvgIcon, Table, TableBody, TableCell, TableContainer, TableHead,
@@ -96,9 +96,11 @@ const LOADING_MORE_ROWS = 3
 const SCROLL_END_THRESHOLD = 80
 const ESTIMATED_ROW_HEIGHT = 41
 const OVERSCAN = 10
+const ROW_INTENT_DELAY = 80
 
 export interface DataTableBodyProps<Row> {
   onRowClick?: (row: Row) => void
+  onRowIntent?: (row: Row) => void
   /** Shown in place of the table when there are no records at all. */
   emptyMessage?: ReactNode
   /** Shown in place of the table when a search or filter matches nothing. */
@@ -118,6 +120,7 @@ export interface DataTableBodyProps<Row> {
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
 export function DataTableBody<Row>({
   onRowClick,
+  onRowIntent,
   emptyMessage = 'No records found.',
   noResultsMessage = 'No records match your search.',
   errorMessage,
@@ -137,6 +140,9 @@ export function DataTableBody<Row>({
   const columnsKey = api.visibleColumns.map((col) => col.field).join('|')
   const [locked, setLocked] = useState<{ key: string; widths: string[] } | null>(null)
   const lockedWidths = locked?.key === columnsKey ? locked.widths : null
+  const intentTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  useEffect(() => () => clearTimeout(intentTimer.current), [])
 
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -248,6 +254,13 @@ export function DataTableBody<Row>({
         className={classes || undefined}
         style={{ cursor: onRowClick ? 'pointer' : undefined }}
         onClick={() => onRowClick?.(row)}
+        tabIndex={onRowIntent ? 0 : undefined}
+        onPointerEnter={onRowIntent && (() => {
+          clearTimeout(intentTimer.current)
+          intentTimer.current = setTimeout(() => onRowIntent(row), ROW_INTENT_DELAY)
+        })}
+        onPointerLeave={onRowIntent && (() => clearTimeout(intentTimer.current))}
+        onFocus={onRowIntent && ((event: FocusEvent<HTMLTableRowElement>) => event.target === event.currentTarget && onRowIntent(row))}
       >
         {selectable && (
           <TableCell onClick={(e: MouseEvent<HTMLTableCellElement>) => e.stopPropagation()}>

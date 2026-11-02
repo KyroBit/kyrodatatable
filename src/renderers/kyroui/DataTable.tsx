@@ -45,6 +45,7 @@ export interface DataTableProps<Row, Field extends string = string> {
    * has one fixed column set and nothing to configure. */
   settings?: boolean
   onRowClick?: (row: Row) => void
+  onRowIntent?: (row: Row) => void
   rowClass?: (row: Row) => string
   /** Shown in place of the table when there are no records at all. */
   emptyMessage?: ReactNode
@@ -83,6 +84,7 @@ export function DataTable<Row, Field extends string = string>({
   selectable,
   settings = true,
   onRowClick,
+  onRowIntent,
   rowClass,
   emptyMessage,
   noResultsMessage,
@@ -310,6 +312,7 @@ export function DataTable<Row, Field extends string = string>({
           errorMessage={errorMessage}
           stickyHeader={stickyHeader}
           onRowClick={onRowClick}
+          onRowIntent={onRowIntent}
           rowClass={rowClass}
           infiniteScroll={infiniteScroll}
         />

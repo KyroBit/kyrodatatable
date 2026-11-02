@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type FocusEvent, type ReactNode } from 'react'
 import {
   Box, Button, Checkbox, IconButton, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Typography,
@@ -94,9 +94,11 @@ function GroupPager({ groupKey, api }: { groupKey: string; api: DataTableApi<unk
 }
 
 const SKELETON_ROWS = 10
+const ROW_INTENT_DELAY = 80
 
 export interface DataTableBodyProps<Row> {
   onRowClick?: (row: Row) => void
+  onRowIntent?: (row: Row) => void
   /** Shown in place of the table when there are no records at all. */
   emptyMessage?: ReactNode
   /** Shown in place of the table when a search or filter matches nothing. */
@@ -114,6 +116,7 @@ export interface DataTableBodyProps<Row> {
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
 export function DataTableBody<Row>({
   onRowClick,
+  onRowIntent,
   emptyMessage = 'No records found.',
   noResultsMessage = 'No records match your search.',
   errorMessage,
@@ -126,6 +129,9 @@ export function DataTableBody<Row>({
   const colSpan = api.visibleColumns.length + (selectable ? 1 : 0)
   const fetching = api.loading || api.groupsLoading
   const hasExplicitWidths = api.visibleColumns.some((col) => col.width)
+  const intentTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  useEffect(() => () => clearTimeout(intentTimer.current), [])
 
   // An empty message describes a finished result, so it never stands in for one still loading:
   // a list with rows keeps them while the next page arrives, an empty one shows placeholders.
@@ -298,6 +304,13 @@ export function DataTableBody<Row>({
                   className={classes || undefined}
                   sx={{ cursor: onRowClick ? 'pointer' : undefined }}
                   onClick={() => onRowClick?.(row)}
+                  tabIndex={onRowIntent ? 0 : undefined}
+                  onPointerEnter={onRowIntent && (() => {
+                    clearTimeout(intentTimer.current)
+                    intentTimer.current = setTimeout(() => onRowIntent(row), ROW_INTENT_DELAY)
+                  })}
+                  onPointerLeave={onRowIntent && (() => clearTimeout(intentTimer.current))}
+                  onFocus={onRowIntent && ((event: FocusEvent<HTMLTableRowElement>) => event.target === event.currentTarget && onRowIntent(row))}
                 >
                   {selectable && (
                     <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>

@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 export interface DataTableBodyProps<Row> {
     onRowClick?: (row: Row) => void;
+    onRowIntent?: (row: Row) => void;
     /** Shown in place of the table when there are no records at all. */
     emptyMessage?: ReactNode;
     /** Shown in place of the table when a search or filter matches nothing. */
@@ -15,5 +16,5 @@ export interface DataTableBodyProps<Row> {
     rowClass?: (row: Row) => string;
 }
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
-export declare function DataTableBody<Row>({ onRowClick, emptyMessage, noResultsMessage, errorMessage, selectable, stickyHeader, rowClass, }: DataTableBodyProps<Row>): import("react").JSX.Element;
+export declare function DataTableBody<Row>({ onRowClick, onRowIntent, emptyMessage, noResultsMessage, errorMessage, selectable, stickyHeader, rowClass, }: DataTableBodyProps<Row>): import("react").JSX.Element;
 //# sourceMappingURL=Body.d.ts.map

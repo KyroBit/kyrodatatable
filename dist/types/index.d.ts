@@ -168,6 +168,7 @@ export interface ServerDataTableConfig<Row, Field extends string = string, Filte
     fetchRecords: (params: FetchParams<Field, Filters>) => Promise<FetchResult<Row>>;
     /** Enables grouping. Without it, `groupByColumns` has nothing to call. */
     fetchGroups?: (params: FetchParams<Field, Filters>) => Promise<FetchGroupsResult<Field>>;
+    cacheKey?: string;
     data?: undefined;
     applyFilters?: undefined;
 }
@@ -179,6 +180,7 @@ export interface ClientDataTableConfig<Row, Field extends string = string, Filte
     applyFilters?: (row: Row, filters: Filters) => boolean;
     fetchRecords?: undefined;
     fetchGroups?: undefined;
+    cacheKey?: undefined;
 }
 export type DataTableConfig<Row, Field extends string = string, Filters = FilterValues> = ServerDataTableConfig<Row, Field, Filters> | ClientDataTableConfig<Row, Field, Filters>;
 export {};

@@ -20,7 +20,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
  * a custom layout compose the exported pieces yourself.
  */
 export function DataTable(t0) {
-  const $ = _c(153);
+  const $ = _c(154);
   const {
     api,
     presets,
@@ -40,6 +40,7 @@ export function DataTable(t0) {
     selectable,
     settings: t5,
     onRowClick,
+    onRowIntent,
     rowClass,
     emptyMessage,
     noResultsMessage,
@@ -753,7 +754,7 @@ export function DataTable(t0) {
     t48 = $[132];
   }
   let t49;
-  if ($[133] !== emptyMessage || $[134] !== errorMessage || $[135] !== noResultsMessage || $[136] !== onRowClick || $[137] !== rowClass || $[138] !== stickyHeader || $[139] !== withSelection) {
+  if ($[133] !== emptyMessage || $[134] !== errorMessage || $[135] !== noResultsMessage || $[136] !== onRowClick || $[137] !== onRowIntent || $[138] !== rowClass || $[139] !== stickyHeader || $[140] !== withSelection) {
     t49 = /*#__PURE__*/_jsx(Card, {
       sx: t48,
       children: /*#__PURE__*/_jsx(DataTableBody, {
@@ -763,6 +764,7 @@ export function DataTable(t0) {
         errorMessage: errorMessage,
         stickyHeader: stickyHeader,
         onRowClick: onRowClick,
+        onRowIntent: onRowIntent,
         rowClass: rowClass
       })
     });
@@ -770,33 +772,34 @@ export function DataTable(t0) {
     $[134] = errorMessage;
     $[135] = noResultsMessage;
     $[136] = onRowClick;
-    $[137] = rowClass;
-    $[138] = stickyHeader;
-    $[139] = withSelection;
-    $[140] = t49;
+    $[137] = onRowIntent;
+    $[138] = rowClass;
+    $[139] = stickyHeader;
+    $[140] = withSelection;
+    $[141] = t49;
   } else {
-    t49 = $[140];
+    t49 = $[141];
   }
   let t50;
-  if ($[141] !== api || $[142] !== t16 || $[143] !== t34 || $[144] !== t35 || $[145] !== t36 || $[146] !== t37 || $[147] !== t44 || $[148] !== t45 || $[149] !== t46 || $[150] !== t47 || $[151] !== t49) {
+  if ($[142] !== api || $[143] !== t16 || $[144] !== t34 || $[145] !== t35 || $[146] !== t36 || $[147] !== t37 || $[148] !== t44 || $[149] !== t45 || $[150] !== t46 || $[151] !== t47 || $[152] !== t49) {
     t50 = /*#__PURE__*/_jsxs(DataTableRoot, {
       api: api,
       children: [t16, t34, t35, t36, t37, t44, t45, t46, t47, t49]
     });
-    $[141] = api;
-    $[142] = t16;
-    $[143] = t34;
-    $[144] = t35;
-    $[145] = t36;
-    $[146] = t37;
-    $[147] = t44;
-    $[148] = t45;
-    $[149] = t46;
-    $[150] = t47;
-    $[151] = t49;
-    $[152] = t50;
+    $[142] = api;
+    $[143] = t16;
+    $[144] = t34;
+    $[145] = t35;
+    $[146] = t36;
+    $[147] = t37;
+    $[148] = t44;
+    $[149] = t45;
+    $[150] = t46;
+    $[151] = t47;
+    $[152] = t49;
+    $[153] = t50;
   } else {
-    t50 = $[152];
+    t50 = $[153];
   }
   return t50;
 }

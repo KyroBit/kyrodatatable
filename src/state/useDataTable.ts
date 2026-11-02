@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { cachedResult, entryKey, firstPage, load } from './cache.js'
 import { createClientEngine } from './clientEngine.js'
 import type {
   ColumnDef, DataTableConfig, FetchParams, FilterValues, GroupByColumn, PaginationState,
@@ -84,12 +85,14 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
   refetch: () => void
 }
 
-const DEFAULT_PAGE_SIZE = 25
-
 export function useDataTable<Row, Field extends string = string, Filters = FilterValues>(
   config: DataTableConfig<Row, Field, Filters>,
 ): DataTableApi<Row, Field, Filters> {
-  const { columns, getRowId, groupByColumns, initialPageSize, initialSort, initialFilters, searchDebounceMs } = config
+  const { columns, getRowId, groupByColumns, searchDebounceMs, cacheKey } = config
+  const [initial] = useState(() => {
+    const params = firstPage(config)
+    return { params, result: cacheKey === undefined ? undefined : cachedResult<Row>(entryKey(cacheKey, params)) }
+  })
 
   const [hiddenColumns, setHiddenColumns] = useState<Field[]>(config.initialHiddenColumns ?? [])
 
@@ -103,18 +106,19 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
 
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [filters, setFiltersInternal] = useState<Filters | undefined>(initialFilters)
-  const [sort, setSortInternal] = useState<SortState<Field> | null>(initialSort ?? null)
+  const [filters, setFiltersInternal] = useState<Filters | undefined>(initial.params.filters)
+  const [sort, setSortInternal] = useState<SortState<Field> | null>(initial.params.sort)
   const [pagination, setPagination] = useState<PaginationState>({
-    page: 1,
-    pageSize: initialPageSize ?? DEFAULT_PAGE_SIZE,
+    page: initial.params.page,
+    pageSize: initial.params.pageSize,
   })
 
-  const [rows, setRows] = useState<Row[]>([])
-  const [total, setTotal] = useState(0)
+  const [rows, setRows] = useState<Row[]>(initial.result?.rows ?? [])
+  const [total, setTotal] = useState(initial.result?.total ?? 0)
   // The first fetch starts on mount, so the first render must already read as loading, or a
   // table flashes its empty state before the first page arrives.
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!initial.result)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<unknown>(null)
   const [fetchTick, setFetchTick] = useState(0)
   const [loadedPage, setLoadedPage] = useState(1)
@@ -208,11 +212,19 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   useEffect(() => {
     if (groupBy) return
     let cancelled = false
-    setLoading(true)
+    const params: FetchParams<Field, Filters> = { page: pagination.page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters }
+    const key = cacheKey === undefined ? null : entryKey(cacheKey, params)
+    const cached = key === null ? undefined : cachedResult<Row>(key)
+    if (cached) {
+      setRows(cached.rows)
+      setTotal(cached.total)
+      setLoadedPage(params.page)
+    }
+    setLoading(!cached)
+    setRefreshing(Boolean(cached))
     setError(null)
 
-    const params: FetchParams<Field, Filters> = { page: pagination.page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters }
-    const pending = fetchPage(params)
+    const pending = key === null ? fetchPage(params) : load(key, () => fetchPage(params)!)
     if (!pending) return
     generation.current += 1
     pending
@@ -226,11 +238,13 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
         if (!cancelled) setError(err)
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (cancelled) return
+        setLoading(false)
+        setRefreshing(false)
       })
 
     return () => { cancelled = true }
-  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, config.data, fetchTick])
+  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, config.data, fetchTick, cacheKey])
 
   // ─── grouped mode: fetch the group list ────────────────────────────────────
   useEffect(() => {
@@ -261,7 +275,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const hasMore = !groupBy && (pagination.page - 1) * pagination.pageSize + rows.length < total
 
   const loadMore = () => {
-    if (!fetchRecords || !hasMore || loading || loadingMore) return
+    if (!fetchRecords || !hasMore || loading || refreshing || loadingMore) return
     const page = loadedPage + 1
     const started = generation.current
     setLoadingMore(true)

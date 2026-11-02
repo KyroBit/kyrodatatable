@@ -37,6 +37,29 @@ const table = useDataTable({
 <DataTable api={table} onRowClick={(row) => navigate(row.id)} />
 ```
 
+## Instant navigation
+
+Give a server-mode table a `cacheKey` and it keeps the last result for each set of params in memory, shared by every table. A table that mounts with a cached result renders it at once, then refetches quietly in the background. Start the fetch before the click with `prefetchDataTable`, passing the same options the table mounts with:
+
+```tsx
+import { prefetchDataTable, useDataTable } from '@kyrobit/datatable'
+
+const orders = {
+  cacheKey: `orders:${organisationId}`,
+  fetchRecords: (params) => api.get('/orders', { params }),
+  initialSort: { field: 'created_at', direction: 'desc' },
+}
+
+<Link to="/orders" onPointerEnter={() => prefetchDataTable(orders)}>Orders</Link>
+
+function OrdersPage() {
+  const table = useDataTable({ ...orders, columns, getRowId: (row) => row.id })
+  return <DataTable api={table} onRowIntent={(row) => prefetchOrder(row.id)} onRowClick={(row) => navigate(row.id)} />
+}
+```
+
+The cache key must name everything the rows depend on beyond search, sort, filters and paging, such as the organisation. `onRowIntent` fires when the pointer rests on a row for about 80ms or the row takes keyboard focus, never on a pointer just passing over.
+
 ## KyroUI renderer: give the table a height
 
 The KyroUI table takes exactly the height its parent gives it, in paged and in infinite mode. With few rows it still fills that space; with many, the rows scroll inside it under a sticky header, and the page itself never grows taller. In paged mode the pager sits below the table. In infinite mode the next page loads as you near the bottom, and pages keep loading until the rows can scroll.
