@@ -87,14 +87,6 @@ const stroke = { stroke: 'currentColor', strokeWidth: 1.75, strokeLinecap: 'roun
 
 export const AddIcon = make('KyroAddIcon', '0 0 24 24', <path d="M12 5V19M5 12H19" {...stroke} />)
 
-export const MoreIcon = make('KyroMoreIcon', '0 0 24 24', (
-  <>
-    <circle cx="5" cy="12" r="1.75" fill="currentColor" />
-    <circle cx="12" cy="12" r="1.75" fill="currentColor" />
-    <circle cx="19" cy="12" r="1.75" fill="currentColor" />
-  </>
-))
-
 export const ExpandMoreIcon = make('KyroExpandMoreIcon', '0 0 24 24', <path d="M6 9L12 15L18 9" {...stroke} />)
 
 export const CloseIcon = make('KyroCloseIcon', '0 0 24 24', <path d="M6 6L18 18M18 6L6 18" {...stroke} />)

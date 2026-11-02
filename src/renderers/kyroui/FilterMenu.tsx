@@ -513,9 +513,9 @@ function SortableViewRow({ id, children, onClick }: { id: string; children: Reac
           py: 'md',
           borderRadius: 'md',
           cursor: 'pointer',
-          bgcolor: isDragging ? 'var(--kyro-surface)' : undefined,
+          bgcolor: isDragging ? 'background.surface' : undefined,
           boxShadow: isDragging ? 'var(--kyro-shadow-popup)' : undefined,
-          '&:hover': { bgcolor: 'var(--kyro-surface)' },
+          '&:hover': { bgcolor: 'background.surface' },
         }}
       >
         <Box

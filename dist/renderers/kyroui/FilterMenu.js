@@ -1517,12 +1517,12 @@ function SortableViewRow(t0) {
   } else {
     t4 = $[7];
   }
-  const t5 = isDragging ? "var(--kyro-surface)" : undefined;
+  const t5 = isDragging ? "background.surface" : undefined;
   const t6 = isDragging ? "var(--kyro-shadow-popup)" : undefined;
   let t7;
   if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
     t7 = {
-      bgcolor: "var(--kyro-surface)"
+      bgcolor: "background.surface"
     };
     $[8] = t7;
   } else {

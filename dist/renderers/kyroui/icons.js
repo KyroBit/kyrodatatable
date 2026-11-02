@@ -197,24 +197,6 @@ export const AddIcon = make('KyroAddIcon', '0 0 24 24', /*#__PURE__*/_jsx("path"
   d: "M12 5V19M5 12H19",
   ...stroke
 }));
-export const MoreIcon = make('KyroMoreIcon', '0 0 24 24', /*#__PURE__*/_jsxs(_Fragment, {
-  children: [/*#__PURE__*/_jsx("circle", {
-    cx: "5",
-    cy: "12",
-    r: "1.75",
-    fill: "currentColor"
-  }), /*#__PURE__*/_jsx("circle", {
-    cx: "12",
-    cy: "12",
-    r: "1.75",
-    fill: "currentColor"
-  }), /*#__PURE__*/_jsx("circle", {
-    cx: "19",
-    cy: "12",
-    r: "1.75",
-    fill: "currentColor"
-  })]
-}));
 export const ExpandMoreIcon = make('KyroExpandMoreIcon', '0 0 24 24', /*#__PURE__*/_jsx("path", {
   d: "M6 9L12 15L18 9",
   ...stroke

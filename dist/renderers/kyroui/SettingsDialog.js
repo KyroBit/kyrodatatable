@@ -43,7 +43,7 @@ function Group(t0) {
     t1 = {
       borderRadius: "popup",
       overflow: "hidden",
-      bgcolor: "var(--kyro-surface)"
+      bgcolor: "background.surface"
     };
     $[0] = t1;
   } else {
@@ -83,7 +83,7 @@ function Row(t0) {
   let t3;
   if ($[1] !== onClick) {
     t3 = onClick ? {
-      bgcolor: "var(--kyro-surface-hover)"
+      bgcolor: "background.surfaceHover"
     } : undefined;
     $[1] = onClick;
     $[2] = t3;

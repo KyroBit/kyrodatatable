@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   Badge, Box, Button, Card, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Typography,
 } from '@kyrobit/kyroui'
@@ -13,7 +13,7 @@ import { DataTablePagination } from './Pagination.js'
 import { DataTableFilterMenu, ManageViewsDialog } from './FilterMenu.js'
 import { DataTableSettingsDialog } from './SettingsDialog.js'
 import { ConfirmDialog } from './ConfirmDialog.js'
-import { ActionsIcon, AddIcon, ExpandMoreIcon, ExportIcon, FilterIcon, GroupIcon, ImportIcon, MoreIcon, SettingIcon } from './icons.js'
+import { ActionsIcon, AddIcon, ExportIcon, FilterIcon, GroupIcon, ImportIcon, SettingIcon } from './icons.js'
 
 export interface DataTableProps<Row, Field extends string = string> {
   api: DataTableApi<Row, Field, FilterValues>
@@ -94,12 +94,10 @@ export function DataTable<Row, Field extends string = string>({
   const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null)
   const [filterDraft, setFilterDraft] = useState<FilterValues>({})
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
-  const [groupAnchor, setGroupAnchor] = useState<HTMLElement | null>(null)
-  const [actionsAnchor, setActionsAnchor] = useState<HTMLElement | null>(null)
-  const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null)
   const [manageOpen, setManageOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [pendingAction, setPendingAction] = useState<ResourceAction | null>(null)
+  const footerRef = useRef<HTMLDivElement>(null)
 
   const { page } = api.pagination
   const { setPage } = api
@@ -135,13 +133,11 @@ export function DataTable<Row, Field extends string = string>({
   }
 
   const runAction = (action: ResourceAction) => {
-    setActionsAnchor(null)
     if (action.confirmationMessage) { setPendingAction(action); return }
     void executeAction(action)
   }
 
   const runExport = (format: string) => {
-    setMoreAnchor(null)
     void onExport?.({
       format,
       search: api.search,
@@ -211,50 +207,51 @@ export function DataTable<Row, Field extends string = string>({
               </Badge>
             )}
           />
-          <Stack
-            direction="row"
-            spacing="sm"
-            sx={{
-              alignItems: 'center',
-              flexWrap: 'nowrap',
-              overflowX: 'auto',
-              minWidth: 0,
-              scrollbarWidth: 'none',
-              '&::-webkit-scrollbar': { display: 'none' },
-            }}
-          >
-            {api.groupByColumns && api.groupByColumns.length > 0 && (
-              <ToolbarBtn
-                icon={<GroupIcon />}
-                label={activeGroupLabel ? `Group: ${activeGroupLabel}` : 'Group'}
-                onClick={(e) => setGroupAnchor(e.currentTarget)}
-              />
-            )}
-            {actions && actions.length > 0 && api.selectedIds.length > 0 && (
-              <ToolbarBtn
-                icon={<ActionsIcon />}
-                label={`Actions (${api.selectedIds.length})`}
-                onClick={(e) => setActionsAnchor(e.currentTarget)}
-              />
-            )}
-            {(onExport || onImport || settings) && (
-              <Button variant="outlined" aria-label="More" onClick={(e) => setMoreAnchor(e.currentTarget)}>
-                <MoreIcon />
-              </Button>
-            )}
-          </Stack>
+          {api.groupByColumns && api.groupByColumns.length > 0 && (
+            <Menu label={activeGroupLabel ? `Group: ${activeGroupLabel}` : 'Group'} startIcon={<GroupIcon />}>
+              {[{ field: null as Field | null, label: 'None' }, ...api.groupByColumns].map((g) => (
+                <MenuItem key={g.label} selected={api.groupBy === g.field} onClick={() => api.setGroupBy(g.field)}>
+                  {g.label}
+                </MenuItem>
+              ))}
+            </Menu>
+          )}
+          {actions && actions.length > 0 && api.selectedIds.length > 0 && (
+            <Menu label={`Actions (${api.selectedIds.length})`} startIcon={<ActionsIcon />}>
+              {actions.map((action) => (
+                <MenuItem key={action.label} onClick={() => runAction(action)}>
+                  {action.label}
+                </MenuItem>
+              ))}
+            </Menu>
+          )}
+          {(onExport || onImport || settings) && (
+            <Menu aria-label="More" variant="outlined" morph placement="bottom-start">
+              {onExport && exportFormats.map((format) => (
+                <MenuItem key={format.id} onClick={() => runExport(format.id)}>
+                  <ListItemIcon><ExportIcon /></ListItemIcon>
+                  <ListItemText
+                    primary={exportFormats.length > 1 ? `Export as ${format.label}` : 'Export'}
+                    secondary={exportFormats.length > 1 ? undefined : exportTooltip}
+                  />
+                </MenuItem>
+              ))}
+              {onImport && (
+                <MenuItem onClick={onImport}>
+                  <ListItemIcon><ImportIcon /></ListItemIcon>
+                  <ListItemText primary="Import" secondary={importTooltip} />
+                </MenuItem>
+              )}
+              {settings && (
+                <MenuItem onClick={() => setSettingsOpen(true)}>
+                  <ListItemIcon><SettingIcon /></ListItemIcon>
+                  <ListItemText primary="Settings" />
+                </MenuItem>
+              )}
+            </Menu>
+          )}
         </Stack>
       </Stack>
-
-      {actions && actions.length > 0 && (
-        <Menu anchorEl={actionsAnchor} open={Boolean(actionsAnchor)} onClose={() => setActionsAnchor(null)}>
-          {actions.map((action) => (
-            <MenuItem key={action.label} onClick={() => { void runAction(action) }}>
-              {action.label}
-            </MenuItem>
-          ))}
-        </Menu>
-      )}
 
       {pendingAction && (
         <ConfirmDialog
@@ -271,42 +268,6 @@ export function DataTable<Row, Field extends string = string>({
           }}
         />
       )}
-
-      <Menu anchorEl={moreAnchor} open={Boolean(moreAnchor)} onClose={() => setMoreAnchor(null)}>
-        {onExport && exportFormats.map((format) => (
-          <MenuItem key={format.id} onClick={() => runExport(format.id)}>
-            <ListItemIcon><ExportIcon /></ListItemIcon>
-            <ListItemText
-              primary={exportFormats.length > 1 ? `Export as ${format.label}` : 'Export'}
-              secondary={exportFormats.length > 1 ? undefined : exportTooltip}
-            />
-          </MenuItem>
-        ))}
-        {onImport && (
-          <MenuItem onClick={() => { setMoreAnchor(null); onImport() }}>
-            <ListItemIcon><ImportIcon /></ListItemIcon>
-            <ListItemText primary="Import" secondary={importTooltip} />
-          </MenuItem>
-        )}
-        {settings && (
-          <MenuItem onClick={() => { setMoreAnchor(null); setSettingsOpen(true) }}>
-            <ListItemIcon><SettingIcon /></ListItemIcon>
-            <ListItemText primary="Settings" />
-          </MenuItem>
-        )}
-      </Menu>
-
-      <Menu anchorEl={groupAnchor} open={Boolean(groupAnchor)} onClose={() => setGroupAnchor(null)}>
-        {[{ field: null as Field | null, label: 'None' }, ...(api.groupByColumns ?? [])].map((g) => (
-          <MenuItem
-            key={g.label}
-            selected={api.groupBy === g.field}
-            onClick={() => { api.setGroupBy(g.field); setGroupAnchor(null) }}
-          >
-            {g.label}
-          </MenuItem>
-        ))}
-      </Menu>
 
       {filterColumns && (
         <DataTableFilterMenu
@@ -352,10 +313,11 @@ export function DataTable<Row, Field extends string = string>({
           onRowClick={onRowClick}
           rowClass={rowClass}
           infiniteScroll={infiniteScroll}
+          footerRef={footerRef}
         />
       </Card>
       {(!infiniteScroll || api.groupBy) && (
-      <Box sx={{ minHeight: 'var(--kyro-row-height)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+      <Box ref={footerRef} data-table-footer="" sx={{ minHeight: 'var(--kyro-row-height)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
         {!infiniteScroll && <DataTablePagination rowsPerPageOptions={rowsPerPageOptions} />}
         {api.groupBy && (
           <Typography sx={{ fontSize: 'md', fontWeight: 500, color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>
@@ -365,19 +327,6 @@ export function DataTable<Row, Field extends string = string>({
       </Box>
       )}
     </DataTableRoot>
-  )
-}
-
-function ToolbarBtn({ icon, label, onClick, menu = true }: {
-  icon: ReactElement
-  label: string
-  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void
-  menu?: boolean
-}) {
-  return (
-    <Button variant="outlined" startIcon={icon} endIcon={menu ? <ExpandMoreIcon /> : undefined} onClick={onClick}>
-      {label}
-    </Button>
   )
 }
 

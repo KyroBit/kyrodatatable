@@ -39,10 +39,6 @@ export declare const AddIcon: {
     (props: SvgIconProps): import("react").JSX.Element;
     displayName: string;
 };
-export declare const MoreIcon: {
-    (props: SvgIconProps): import("react").JSX.Element;
-    displayName: string;
-};
 export declare const ExpandMoreIcon: {
     (props: SvgIconProps): import("react").JSX.Element;
     displayName: string;

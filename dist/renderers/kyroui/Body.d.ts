@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, type RefObject } from 'react';
 export interface DataTableBodyProps<Row> {
     onRowClick?: (row: Row) => void;
     /** Shown in place of the table when there are no records at all. */
@@ -15,7 +15,9 @@ export interface DataTableBodyProps<Row> {
     rowClass?: (row: Row) => string;
     /** Scrolls rows inside a bounded box and loads the next page near its end, in place of page controls. */
     infiniteScroll?: boolean;
+    /** What sits below the table and must stay on screen, such as the pager; a paged body stops above it. */
+    footerRef?: RefObject<HTMLElement | null>;
 }
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
-export declare function DataTableBody<Row>({ onRowClick, emptyMessage, noResultsMessage, errorMessage, selectable, stickyHeader, rowClass, infiniteScroll, }: DataTableBodyProps<Row>): import("react").JSX.Element;
+export declare function DataTableBody<Row>({ onRowClick, emptyMessage, noResultsMessage, errorMessage, selectable, stickyHeader, rowClass, infiniteScroll, footerRef, }: DataTableBodyProps<Row>): import("react").JSX.Element;
 //# sourceMappingURL=Body.d.ts.map
