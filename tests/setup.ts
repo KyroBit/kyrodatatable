@@ -6,7 +6,8 @@ import { readFile } from 'node:fs/promises'
 
 GlobalRegistrator.register()
 Reflect.deleteProperty(window.Element.prototype, 'animate')
-afterEach(async () => (await import('@testing-library/react')).cleanup())
+const { cleanup } = await import('@testing-library/react')
+afterEach(cleanup)
 
 plugin({
   name: 'react-compiler',

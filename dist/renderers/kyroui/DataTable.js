@@ -1,5 +1,5 @@
 import { c as _c } from "react/compiler-runtime";
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Badge, Box, Button, Card, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@kyrobit/kyroui';
 import { countFilterValues, filterValuesEqual } from '@kyrobit/datatable';
 import { DataTableRoot } from './context.js';
@@ -75,7 +75,6 @@ export function DataTable(t0) {
   const [manageOpen, setManageOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
-  const footerRef = useRef(null);
   const {
     page
   } = api.pagination;
@@ -564,6 +563,7 @@ export function DataTable(t0) {
       overflow: "hidden",
       display: "flex",
       flexDirection: "column",
+      flex: "1 1 auto",
       minHeight: 0
     };
     $[95] = t31;
@@ -582,8 +582,7 @@ export function DataTable(t0) {
         stickyHeader: stickyHeader,
         onRowClick: onRowClick,
         rowClass: rowClass,
-        infiniteScroll: infiniteScroll,
-        footerRef: footerRef
+        infiniteScroll: infiniteScroll
       })
     });
     $[96] = emptyMessage;
@@ -601,7 +600,6 @@ export function DataTable(t0) {
   let t33;
   if ($[105] !== api.groupBy || $[106] !== api.groups || $[107] !== api.groupsTotal || $[108] !== infiniteScroll || $[109] !== rowsPerPageOptions) {
     t33 = (!infiniteScroll || api.groupBy) && /*#__PURE__*/_jsxs(Box, {
-      ref: footerRef,
       "data-table-footer": "",
       sx: {
         minHeight: "var(--kyro-row-height)",

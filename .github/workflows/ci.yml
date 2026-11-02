@@ -26,6 +26,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install Chromium for the layout tests
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+
       - name: Typecheck
         run: bun run typecheck
 

@@ -95,8 +95,6 @@ const SKELETON_ROWS = 10
 const LOADING_MORE_ROWS = 3
 const SCROLL_END_THRESHOLD = 80
 const ESTIMATED_ROW_HEIGHT = 41
-const VIEWPORT_GAP = 16
-const MIN_VIEWPORT_SHARE = 0.6
 const OVERSCAN = 10
 
 export interface DataTableBodyProps<Row> {
@@ -115,8 +113,6 @@ export interface DataTableBodyProps<Row> {
   rowClass?: (row: Row) => string
   /** Scrolls rows inside a bounded box and loads the next page near its end, in place of page controls. */
   infiniteScroll?: boolean
-  /** What sits below the table and must stay on screen, such as the pager; a paged body stops above it. */
-  footerRef?: RefObject<HTMLElement | null>
 }
 
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
@@ -129,7 +125,6 @@ export function DataTableBody<Row>({
   stickyHeader = true,
   rowClass,
   infiniteScroll = false,
-  footerRef,
 }: DataTableBodyProps<Row>) {
   const api = useDataTableContext<Row>()
   const items = api.visibleItems
@@ -142,20 +137,6 @@ export function DataTableBody<Row>({
   const columnsKey = api.visibleColumns.map((col) => col.field).join('|')
   const [locked, setLocked] = useState<{ key: string; widths: string[] } | null>(null)
   const lockedWidths = locked?.key === columnsKey ? locked.widths : null
-  const [room, setRoom] = useState<number | null>(null)
-
-  useLayoutEffect(() => {
-    const container = containerRef.current
-    if (infiniteScroll || !container) return
-    const measure = () => {
-      const box = container.getBoundingClientRect()
-      const below = footerRef?.current ? footerRef.current.getBoundingClientRect().bottom - box.bottom : 0
-      setRoom(Math.max(window.innerHeight - box.top - below - VIEWPORT_GAP, window.innerHeight * MIN_VIEWPORT_SHARE - below))
-    }
-    measure()
-    window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
-  }, [infiniteScroll, footerRef, items.length])
 
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -176,9 +157,6 @@ export function DataTableBody<Row>({
 
   const fixedWidths = hasExplicitWidths || lockedWidths !== null
 
-  const pageHeight = headHeight + api.pagination.pageSize * (rowHeight || ESTIMATED_ROW_HEIGHT)
-  const reserved = api.total > api.pagination.pageSize ? Math.min(pageHeight, room ?? pageHeight) : 0
-
   // An empty message describes a finished result, so it never stands in for one still loading:
   // a list with rows keeps them while the next page arrives, an empty one shows placeholders.
   if (items.length === 0 && !fetching) {
@@ -193,7 +171,7 @@ export function DataTableBody<Row>({
       : filtered ? noResultsMessage : emptyMessage
 
     return (
-      <Box className="KyroTable-empty" sx={{ flex: '1 1 auto', py: 'xl' }} style={infiniteScroll || !reserved ? undefined : { minHeight: reserved }}>
+      <Box className="KyroTable-empty" sx={{ flex: 1, py: 'xl' }}>
         {typeof message === 'string'
           ? <Typography sx={{ color: 'text.secondary', textAlign: 'center', py: 'xl' }}>{message}</Typography>
           : message}
@@ -293,12 +271,7 @@ export function DataTableBody<Row>({
     <TableContainer
       ref={containerRef}
       data-scroll-root=""
-      sx={{ flex: '1 1 auto', minHeight: 0 }}
-      style={
-        infiniteScroll
-          ? { maxHeight: pageHeight, overflowY: 'auto' }
-          : { minHeight: reserved || undefined, maxHeight: room ?? undefined, overflowY: 'auto' }
-      }
+      sx={{ flex: '1 1 0', minHeight: 'calc(var(--kyro-row-height) * 4)', overflowY: 'auto', contain: 'size' }}
     >
       <Table size="small" stickyHeader={stickyHeader} sx={fixedWidths ? { tableLayout: 'fixed' } : undefined}>
         {hasExplicitWidths ? (

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   Badge, Box, Button, Card, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Typography,
 } from '@kyrobit/kyroui'
@@ -97,7 +97,6 @@ export function DataTable<Row, Field extends string = string>({
   const [manageOpen, setManageOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [pendingAction, setPendingAction] = useState<ResourceAction | null>(null)
-  const footerRef = useRef<HTMLDivElement>(null)
 
   const { page } = api.pagination
   const { setPage } = api
@@ -303,7 +302,7 @@ export function DataTable<Row, Field extends string = string>({
         />
       )}
 
-      <Card sx={{ p: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <Card sx={{ p: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0 }}>
         <DataTableBody<Row>
           selectable={withSelection}
           emptyMessage={emptyMessage}
@@ -313,11 +312,10 @@ export function DataTable<Row, Field extends string = string>({
           onRowClick={onRowClick}
           rowClass={rowClass}
           infiniteScroll={infiniteScroll}
-          footerRef={footerRef}
         />
       </Card>
       {(!infiniteScroll || api.groupBy) && (
-      <Box ref={footerRef} data-table-footer="" sx={{ minHeight: 'var(--kyro-row-height)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+      <Box data-table-footer="" sx={{ minHeight: 'var(--kyro-row-height)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
         {!infiniteScroll && <DataTablePagination rowsPerPageOptions={rowsPerPageOptions} />}
         {api.groupBy && (
           <Typography sx={{ fontSize: 'md', fontWeight: 500, color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>

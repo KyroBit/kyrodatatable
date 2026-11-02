@@ -1,6 +1,6 @@
 {
   "name": "@kyrobit/datatable",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Headless data-table state (pagination, sorting, search, server-side grouping) fully decoupled from rendering. Bring your own UI, or use the built-in MUI renderer.",
   "license": "MIT",
   "type": "module",
@@ -52,7 +52,7 @@
   "scripts": {
     "build": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json --emitDeclarationOnly && babel src --out-dir dist --extensions .ts,.tsx",
     "typecheck": "tsc --noEmit",
-    "test": "bun test tests/",
+    "test": "bun test --isolate tests/",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
@@ -97,6 +97,7 @@
     "@types/react-dom": "^19.2.3",
     "babel-plugin-react-compiler": "^1.0.0",
     "bun-types": "latest",
+    "playwright": "1.62.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "typescript": "^5.7.0",
