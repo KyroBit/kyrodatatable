@@ -419,7 +419,15 @@ export function DataTable(t0) {
       "aria-label": "More",
       variant: "outlined",
       placement: "bottom-start",
-      children: [onExport && exportFormats.length > 1 && /*#__PURE__*/_jsx(Submenu, {
+      children: [onImport && /*#__PURE__*/_jsxs(MenuItem, {
+        onClick: onImport,
+        children: [/*#__PURE__*/_jsx(ListItemIcon, {
+          children: /*#__PURE__*/_jsx(ImportIcon, {})
+        }), /*#__PURE__*/_jsx(ListItemText, {
+          primary: "Import",
+          secondary: importTooltip
+        })]
+      }), onExport && exportFormats.length > 1 && /*#__PURE__*/_jsx(Submenu, {
         label: "Export",
         icon: /*#__PURE__*/_jsx(ExportIcon, {}),
         children: exportFormats.map(format_0 => /*#__PURE__*/_jsx(MenuItem, {
@@ -433,14 +441,6 @@ export function DataTable(t0) {
         }), /*#__PURE__*/_jsx(ListItemText, {
           primary: "Export",
           secondary: exportTooltip
-        })]
-      }), onImport && /*#__PURE__*/_jsxs(MenuItem, {
-        onClick: onImport,
-        children: [/*#__PURE__*/_jsx(ListItemIcon, {
-          children: /*#__PURE__*/_jsx(ImportIcon, {})
-        }), /*#__PURE__*/_jsx(ListItemText, {
-          primary: "Import",
-          secondary: importTooltip
         })]
       }), settings && /*#__PURE__*/_jsxs(MenuItem, {
         onClick: () => setSettingsOpen(true),

@@ -88,3 +88,28 @@ test('a single export format is one Export item that exports at once', async () 
 
   expect(exported).toEqual(['csv'])
 })
+
+test('the More menu lists Import, then Export, then Settings', async () => {
+  function Everything() {
+    const api = useDataTable<Item, 'name' | 'id'>({
+      data: [{ id: '1', name: 'One' }],
+      columns: [{ field: 'name', headerName: 'Name' }],
+      getRowId: (row) => row.id,
+    })
+    return (
+      <DataTable
+        api={api}
+        onImport={() => {}}
+        onExport={() => {}}
+        exportFormats={[{ id: 'csv', label: 'CSV' }, { id: 'xlsx', label: 'Excel' }]}
+      />
+    )
+  }
+  render(<Everything />)
+
+  fireEvent.click(more())
+  const menu = await screen.findByRole('menu', { name: 'More' })
+  const labels = Array.from(menu.querySelectorAll('[role^=menuitem]')).map((item) => item.textContent ?? '')
+
+  expect(labels.map((label) => label.match(/^(Import|Export|Settings)/)?.[1])).toEqual(['Import', 'Export', 'Settings'])
+})

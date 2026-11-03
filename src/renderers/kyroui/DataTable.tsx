@@ -236,6 +236,12 @@ export function DataTable<Row, Field extends string = string>({
           )}
           {(onExport || onImport || settings) && (
             <Menu aria-label="More" variant="outlined" placement="bottom-start">
+              {onImport && (
+                <MenuItem onClick={onImport}>
+                  <ListItemIcon><ImportIcon /></ListItemIcon>
+                  <ListItemText primary="Import" secondary={importTooltip} />
+                </MenuItem>
+              )}
               {onExport && exportFormats.length > 1 && (
                 <Submenu label="Export" icon={<ExportIcon />}>
                   {exportFormats.map((format) => (
@@ -249,12 +255,6 @@ export function DataTable<Row, Field extends string = string>({
                 <MenuItem onClick={() => runExport(exportFormats[0]!.id)}>
                   <ListItemIcon><ExportIcon /></ListItemIcon>
                   <ListItemText primary="Export" secondary={exportTooltip} />
-                </MenuItem>
-              )}
-              {onImport && (
-                <MenuItem onClick={onImport}>
-                  <ListItemIcon><ImportIcon /></ListItemIcon>
-                  <ListItemText primary="Import" secondary={importTooltip} />
                 </MenuItem>
               )}
               {settings && (

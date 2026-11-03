@@ -391,8 +391,27 @@ export function DataTable(t0) {
     t23 = $[53];
   }
   let t24;
-  if ($[54] !== exportFormats || $[55] !== exportTooltip || $[56] !== onExport || $[57] !== runExport) {
-    t24 = onExport && /*#__PURE__*/_jsx(Tooltip, {
+  if ($[54] !== importTooltip || $[55] !== onImport) {
+    t24 = onImport && /*#__PURE__*/_jsx(Tooltip, {
+      title: importTooltip,
+      children: /*#__PURE__*/_jsx("span", {
+        children: /*#__PURE__*/_jsx(ToolbarBtn, {
+          icon: /*#__PURE__*/_jsx(ImportIcon, {}),
+          label: "Import",
+          menu: false,
+          onClick: onImport
+        })
+      })
+    });
+    $[54] = importTooltip;
+    $[55] = onImport;
+    $[56] = t24;
+  } else {
+    t24 = $[56];
+  }
+  let t25;
+  if ($[57] !== exportFormats || $[58] !== exportTooltip || $[59] !== onExport || $[60] !== runExport) {
+    t25 = onExport && /*#__PURE__*/_jsx(Tooltip, {
       title: exportTooltip,
       children: /*#__PURE__*/_jsx("span", {
         children: /*#__PURE__*/_jsx(ToolbarBtn, {
@@ -409,29 +428,10 @@ export function DataTable(t0) {
         })
       })
     });
-    $[54] = exportFormats;
-    $[55] = exportTooltip;
-    $[56] = onExport;
-    $[57] = runExport;
-    $[58] = t24;
-  } else {
-    t24 = $[58];
-  }
-  let t25;
-  if ($[59] !== importTooltip || $[60] !== onImport) {
-    t25 = onImport && /*#__PURE__*/_jsx(Tooltip, {
-      title: importTooltip,
-      children: /*#__PURE__*/_jsx("span", {
-        children: /*#__PURE__*/_jsx(ToolbarBtn, {
-          icon: /*#__PURE__*/_jsx(ImportIcon, {}),
-          label: "Import",
-          menu: false,
-          onClick: onImport
-        })
-      })
-    });
-    $[59] = importTooltip;
-    $[60] = onImport;
+    $[57] = exportFormats;
+    $[58] = exportTooltip;
+    $[59] = onExport;
+    $[60] = runExport;
     $[61] = t25;
   } else {
     t25 = $[61];

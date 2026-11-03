@@ -219,6 +219,13 @@ export function DataTable<Row, Field extends string = string>({
                 onClick={(e) => setGroupAnchor(e.currentTarget)}
               />
             )}
+            {onImport && (
+              <Tooltip title={importTooltip}>
+                <span>
+                  <ToolbarBtn icon={<ImportIcon />} label="Import" menu={false} onClick={onImport} />
+                </span>
+              </Tooltip>
+            )}
             {onExport && (
               <Tooltip title={exportTooltip}>
                 <span>
@@ -231,13 +238,6 @@ export function DataTable<Row, Field extends string = string>({
                       else runExport(exportFormats[0]?.id ?? 'csv')
                     }}
                   />
-                </span>
-              </Tooltip>
-            )}
-            {onImport && (
-              <Tooltip title={importTooltip}>
-                <span>
-                  <ToolbarBtn icon={<ImportIcon />} label="Import" menu={false} onClick={onImport} />
                 </span>
               </Tooltip>
             )}
