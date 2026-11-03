@@ -161,7 +161,7 @@ export function DataTableBody<Row>({
       <Table size="small" stickyHeader={stickyHeader} sx={hasExplicitWidths ? { tableLayout: 'fixed' } : undefined}>
         {hasExplicitWidths && (
           <colgroup>
-            {selectable && <col style={{ width: 48 }} />}
+            {selectable && <col />}
             {api.visibleColumns.map((col) => (
               <col key={col.field} style={col.width ? { width: col.width } : undefined} />
             ))}

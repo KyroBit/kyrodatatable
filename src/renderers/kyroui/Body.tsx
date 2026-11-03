@@ -155,7 +155,7 @@ export function DataTableBody<Row>({
     if (tallest > rowHeight) setRowHeight(tallest)
     if (hasExplicitWidths || lockedWidths || !rows.length) return
     const table = container.querySelector('table')!.getBoundingClientRect().width
-    const cells = Array.from(container.querySelectorAll('thead th'))
+    const cells = Array.from(container.querySelectorAll('thead th')).slice(selectable ? 1 : 0)
     setLocked({
       key: columnsKey,
       widths: cells.map((cell) => `${(cell.getBoundingClientRect().width / table) * 100}%`),
@@ -264,7 +264,7 @@ export function DataTableBody<Row>({
         onFocus={onRowIntent && ((event: FocusEvent<HTMLTableRowElement>) => event.target === event.currentTarget && onRowIntent(row))}
       >
         {selectable && (
-          <TableCell onClick={(e: MouseEvent<HTMLTableCellElement>) => e.stopPropagation()}>
+          <TableCell padding="checkbox" onClick={(e: MouseEvent<HTMLTableCellElement>) => e.stopPropagation()}>
             <Checkbox
               checked={api.isSelected(rowId)}
               onChange={() => api.toggleSelected(rowId)}
@@ -290,20 +290,21 @@ export function DataTableBody<Row>({
       <Table size="small" stickyHeader={stickyHeader} sx={fixedWidths ? { tableLayout: 'fixed' } : undefined}>
         {hasExplicitWidths ? (
           <colgroup>
-            {selectable && <col style={{ width: 48 }} />}
+            {selectable && <col />}
             {api.visibleColumns.map((col) => (
               <col key={col.field} style={col.width ? { width: col.width } : undefined} />
             ))}
           </colgroup>
         ) : lockedWidths ? (
           <colgroup>
+            {selectable && <col />}
             {lockedWidths.map((width, index) => <col key={index} style={{ width }} />)}
           </colgroup>
         ) : null}
         <TableHead>
           <TableRow>
             {selectable && (
-              <TableCell variant="head">
+              <TableCell variant="head" padding="checkbox">
                 <Checkbox
                   checked={api.allVisibleSelected}
                   indeterminate={api.someVisibleSelected && !api.allVisibleSelected}
@@ -427,7 +428,7 @@ function SkeletonRows({ count, selectable }: { count: number; selectable: boolea
   if (!shown) return null
   return Array.from({ length: count }, (_, index) => (
     <TableRow key={`skeleton-${index}`} className="KyroTable-skeletonRow">
-      {selectable && <TableCell />}
+      {selectable && <TableCell padding="checkbox" />}
       {api.visibleColumns.map((col) => (
         <TableCell key={col.field} align={col.align}>
           <Skeleton

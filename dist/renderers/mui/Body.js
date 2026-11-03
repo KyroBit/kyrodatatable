@@ -431,11 +431,7 @@ export function DataTableBody(t0) {
   let t10;
   if ($[21] !== api.visibleColumns || $[22] !== hasExplicitWidths || $[23] !== selectable) {
     t10 = hasExplicitWidths && /*#__PURE__*/_jsxs("colgroup", {
-      children: [selectable && /*#__PURE__*/_jsx("col", {
-        style: {
-          width: 48
-        }
-      }), api.visibleColumns.map(_temp3)]
+      children: [selectable && /*#__PURE__*/_jsx("col", {}), api.visibleColumns.map(_temp3)]
     });
     $[21] = api.visibleColumns;
     $[22] = hasExplicitWidths;

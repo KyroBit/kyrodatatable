@@ -74,6 +74,10 @@ The parent must be a flex column that fills the height:
 
 Inside an app shell, the page's content area plays that role: a flex column that fills the space below the shell's header. Without such a parent, the table falls back to a minimum of four rows.
 
+## Selection column
+
+The checkbox column is the theme's checkbox cell in every layout, skeleton rows included, and other columns never take its room: KyroUI's `TableCell padding="checkbox"`, sized by `size.control.lg` (48px), and MUI's own `paddingCheckbox` cell in the MUI renderer. Restyle it through the theme's `TableCell` overrides, not in the table.
+
 ## Documentation
 
 Full documentation lives in [`docs/`](./docs) (VitePress — `bun run docs:dev`): a quick start that builds a real table end to end, guides for server-side grouping, Favorites, the built-in MUI renderer, writing your own renderer, and a complete API reference.
