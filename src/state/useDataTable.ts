@@ -85,11 +85,22 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
   refetch: () => void
 }
 
-const sameRows = <Row>(previous: Row[] | undefined, next: Row[] | undefined) =>
-  previous !== undefined &&
-  next !== undefined &&
-  previous.length === next.length &&
-  previous.every((row, index) => row === next[index])
+const rowIds = new WeakMap<object, number>()
+let lastRowId = 0
+
+const idOf = (row: unknown) => {
+  if (typeof row !== 'object' || row === null) return 0
+  const known = rowIds.get(row)
+  if (known !== undefined) return known
+  lastRowId += 1
+  rowIds.set(row, lastRowId)
+  return lastRowId
+}
+
+const rowsKey = (rows: readonly unknown[] | undefined) =>
+  rows === undefined
+    ? undefined
+    : `${rows.length}:${rows.reduce<number>((hash, row) => (Math.imul(hash, 31) + idOf(row)) | 0, 7)}`
 
 export function useDataTable<Row, Field extends string = string, Filters = FilterValues>(
   config: DataTableConfig<Row, Field, Filters>,
@@ -147,12 +158,11 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     return () => clearTimeout(id)
   }, [search, searchDebounceMs])
 
-  const [data, setData] = useState(config.data)
-  if (data !== config.data && !sameRows(data, config.data)) setData(config.data)
+  const dataKey = rowsKey(config.data)
 
-  const clientEngine = data
+  const clientEngine = config.data
     ? createClientEngine<Row, Field, Filters>({
-        data,
+        data: config.data,
         columns,
         applyFilters: config.applyFilters,
         groupField: groupBy ? (row: Row) => (row as Record<string, unknown>)[groupBy] : undefined,
@@ -253,7 +263,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
       })
 
     return () => { cancelled = true }
-  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, data, fetchTick, cacheKey])
+  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, dataKey, fetchTick, cacheKey])
 
   // ─── grouped mode: fetch the group list ────────────────────────────────────
   useEffect(() => {
@@ -279,7 +289,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
       })
 
     return () => { cancelled = true }
-  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, data, fetchTick])
+  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, dataKey, fetchTick])
 
   const hasMore = !groupBy && (pagination.page - 1) * pagination.pageSize + rows.length < total
 
