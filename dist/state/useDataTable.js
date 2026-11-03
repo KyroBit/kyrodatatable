@@ -2,6 +2,7 @@ import { c as _c } from "react/compiler-runtime";
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { cachedResult, entryKey, firstPage, load } from './cache.js';
 import { createClientEngine } from './clientEngine.js';
+const sameRows = (previous, next) => previous !== undefined && next !== undefined && previous.length === next.length && previous.every((row, index) => row === next[index]);
 export function useDataTable(config) {
   const $ = _c(204);
   const {
@@ -154,17 +155,21 @@ export function useDataTable(config) {
     t11 = $[23];
   }
   useEffect(t10, t11);
+  const [data, setData] = useState(config.data);
+  if (data !== config.data && !sameRows(data, config.data)) {
+    setData(config.data);
+  }
   let t12;
-  if ($[24] !== columns || $[25] !== config.applyFilters || $[26] !== config.data || $[27] !== groupBy) {
-    t12 = config.data ? createClientEngine({
-      data: config.data,
+  if ($[24] !== columns || $[25] !== config.applyFilters || $[26] !== data || $[27] !== groupBy) {
+    t12 = data ? createClientEngine({
+      data,
       columns,
       applyFilters: config.applyFilters,
       groupField: groupBy ? row => row[groupBy] : undefined
     }) : null;
     $[24] = columns;
     $[25] = config.applyFilters;
-    $[26] = config.data;
+    $[26] = data;
     $[27] = groupBy;
     $[28] = t12;
   } else {
@@ -380,10 +385,10 @@ export function useDataTable(config) {
     t25 = $[53];
   }
   let t26;
-  if ($[54] !== cacheKey || $[55] !== config.data || $[56] !== debouncedSearch || $[57] !== fetchTick || $[58] !== filters || $[59] !== groupBy || $[60] !== pagination.page || $[61] !== pagination.pageSize || $[62] !== sort) {
-    t26 = [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, config.data, fetchTick, cacheKey];
+  if ($[54] !== cacheKey || $[55] !== data || $[56] !== debouncedSearch || $[57] !== fetchTick || $[58] !== filters || $[59] !== groupBy || $[60] !== pagination.page || $[61] !== pagination.pageSize || $[62] !== sort) {
+    t26 = [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, data, fetchTick, cacheKey];
     $[54] = cacheKey;
-    $[55] = config.data;
+    $[55] = data;
     $[56] = debouncedSearch;
     $[57] = fetchTick;
     $[58] = filters;
@@ -447,9 +452,9 @@ export function useDataTable(config) {
     t27 = $[71];
   }
   let t28;
-  if ($[72] !== config.data || $[73] !== debouncedSearch || $[74] !== fetchTick || $[75] !== filters || $[76] !== groupBy || $[77] !== pagination.page || $[78] !== pagination.pageSize || $[79] !== sort) {
-    t28 = [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, config.data, fetchTick];
-    $[72] = config.data;
+  if ($[72] !== data || $[73] !== debouncedSearch || $[74] !== fetchTick || $[75] !== filters || $[76] !== groupBy || $[77] !== pagination.page || $[78] !== pagination.pageSize || $[79] !== sort) {
+    t28 = [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, data, fetchTick];
+    $[72] = data;
     $[73] = debouncedSearch;
     $[74] = fetchTick;
     $[75] = filters;

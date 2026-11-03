@@ -85,6 +85,12 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
   refetch: () => void
 }
 
+const sameRows = <Row>(previous: Row[] | undefined, next: Row[] | undefined) =>
+  previous !== undefined &&
+  next !== undefined &&
+  previous.length === next.length &&
+  previous.every((row, index) => row === next[index])
+
 export function useDataTable<Row, Field extends string = string, Filters = FilterValues>(
   config: DataTableConfig<Row, Field, Filters>,
 ): DataTableApi<Row, Field, Filters> {
@@ -141,9 +147,12 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     return () => clearTimeout(id)
   }, [search, searchDebounceMs])
 
-  const clientEngine = config.data
+  const [data, setData] = useState(config.data)
+  if (data !== config.data && !sameRows(data, config.data)) setData(config.data)
+
+  const clientEngine = data
     ? createClientEngine<Row, Field, Filters>({
-        data: config.data,
+        data,
         columns,
         applyFilters: config.applyFilters,
         groupField: groupBy ? (row: Row) => (row as Record<string, unknown>)[groupBy] : undefined,
@@ -244,7 +253,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
       })
 
     return () => { cancelled = true }
-  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, config.data, fetchTick, cacheKey])
+  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, data, fetchTick, cacheKey])
 
   // ─── grouped mode: fetch the group list ────────────────────────────────────
   useEffect(() => {
@@ -270,7 +279,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
       })
 
     return () => { cancelled = true }
-  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, config.data, fetchTick])
+  }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, data, fetchTick])
 
   const hasMore = !groupBy && (pagination.page - 1) * pagination.pageSize + rows.length < total
 

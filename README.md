@@ -37,6 +37,10 @@ const table = useDataTable({
 <DataTable api={table} onRowClick={(row) => navigate(row.id)} />
 ```
 
+## Client data
+
+In client mode, `data` may be a new array on every render, such as `data={rows ?? []}` or `rows.filter(…)`: the table only filters again when the rows themselves change. Keep the row objects the same between renders; an array literal of new objects on every render counts as new data each time.
+
 ## Instant navigation
 
 Give a server-mode table a `cacheKey` and it keeps the last result for each set of params in memory, shared by every table. A table that mounts with a cached result renders it at once, then refetches quietly in the background. Start the fetch before the click with `prefetchDataTable`, passing the same options the table mounts with:
