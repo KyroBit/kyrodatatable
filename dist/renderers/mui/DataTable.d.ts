@@ -45,12 +45,6 @@ export interface DataTableProps<Row, Field extends string = string> {
     stickyHeader?: boolean;
     rowsPerPageOptions?: number[];
 }
-/**
- * The full list-page assembly: views pills + manage, create, search with the
- * filter popover, group-by, export/import, contextual bulk actions, the table
- * card, and top-right pagination. Every section is opt-in through props; for
- * a custom layout compose the exported pieces yourself.
- */
 export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, searchPlaceholder, searchWidth, createLabel, onCreate, toolbarEnd, onExport, exportFormats, filterRenderers, onImport, exportTooltip, importTooltip, actions, selectable, settings, onRowClick, onRowIntent, rowClass, emptyMessage, noResultsMessage, errorMessage, stickyHeader, rowsPerPageOptions, }: DataTableProps<Row, Field>): import("react").JSX.Element;
 export declare namespace DataTable {
     var Root: typeof DataTableRoot;

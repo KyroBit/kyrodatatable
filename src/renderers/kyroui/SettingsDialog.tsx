@@ -1,15 +1,7 @@
-import {
-  Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Stack,
-  Switch,
-  Typography,
-} from '@kyrobit/kyroui'
-import { ChevronRightIcon, CloseIcon } from './icons.js'
+import { Box, FormDialog, Stack, Switch, Typography } from '@kyrobit/kyroui'
+import { ChevronRightIcon } from './icons.js'
 import { useDataTableContext } from './context.js'
+import { useDialogSize } from './dialogSize.js'
 
 export interface DataTableSettingsDialogProps {
   open: boolean
@@ -76,21 +68,11 @@ export function DataTableSettingsDialog({
 }: DataTableSettingsDialogProps) {
   const api = useDataTableContext()
   const lastVisible = api.visibleColumns.length === 1
+  const size = useDialogSize()
 
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>
-        <Stack direction="row" spacing="lg" alignItems="center">
-          <Box component="span" sx={{ flex: 1 }}>
-            Settings
-          </Box>
-          <IconButton size="small" onClick={onClose} aria-label="Close">
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Stack>
-      </DialogTitle>
-
-      <DialogContent>
+    <FormDialog open={open} onClose={onClose} title="Settings" {...size}>
+      <Box>
         <SectionLabel>Columns</SectionLabel>
         <Group>
           {api.columns.map((column) => {
@@ -126,7 +108,7 @@ export function DataTableSettingsDialog({
             </Group>
           </Box>
         )}
-      </DialogContent>
-    </Dialog>
+      </Box>
+    </FormDialog>
   )
 }

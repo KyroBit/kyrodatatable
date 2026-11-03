@@ -65,6 +65,15 @@ export interface DataTableProps<Row, Field extends string = string> {
  * card, and top-right pagination. Every section is opt-in through props; for
  * a custom layout compose the exported pieces yourself.
  */
+const withTooltip = (title: string | undefined, child: ReactElement) =>
+  title ? (
+    <Tooltip title={title}>
+      <span>{child}</span>
+    </Tooltip>
+  ) : (
+    child
+  )
+
 export function DataTable<Row, Field extends string = string>({
   api,
   presets,
@@ -78,8 +87,8 @@ export function DataTable<Row, Field extends string = string>({
   exportFormats = [{ id: 'csv', label: 'CSV' }],
   filterRenderers,
   onImport,
-  exportTooltip = 'Export current results',
-  importTooltip = 'Import from CSV',
+  exportTooltip,
+  importTooltip,
   actions,
   selectable,
   settings = true,
@@ -219,27 +228,21 @@ export function DataTable<Row, Field extends string = string>({
                 onClick={(e) => setGroupAnchor(e.currentTarget)}
               />
             )}
-            {onImport && (
-              <Tooltip title={importTooltip}>
-                <span>
-                  <ToolbarBtn icon={<ImportIcon />} label="Import" menu={false} onClick={onImport} />
-                </span>
-              </Tooltip>
+            {onImport && withTooltip(
+              importTooltip,
+              <ToolbarBtn icon={<ImportIcon />} label="Import" menu={false} onClick={onImport} />,
             )}
-            {onExport && (
-              <Tooltip title={exportTooltip}>
-                <span>
-                  <ToolbarBtn
-                    icon={<ExportIcon />}
-                    label="Export"
-                    menu={exportFormats.length > 1}
-                    onClick={(e) => {
-                      if (exportFormats.length > 1) setExportAnchor(e.currentTarget)
-                      else runExport(exportFormats[0]?.id ?? 'csv')
-                    }}
-                  />
-                </span>
-              </Tooltip>
+            {onExport && withTooltip(
+              exportTooltip,
+              <ToolbarBtn
+                icon={<ExportIcon />}
+                label="Export"
+                menu={exportFormats.length > 1}
+                onClick={(e) => {
+                  if (exportFormats.length > 1) setExportAnchor(e.currentTarget)
+                  else runExport(exportFormats[0]?.id ?? 'csv')
+                }}
+              />,
             )}
             {actions && actions.length > 0 && api.selectedIds.length > 0 && (
               <ToolbarBtn

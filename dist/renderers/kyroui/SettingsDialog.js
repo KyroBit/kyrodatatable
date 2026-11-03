@@ -1,7 +1,8 @@
 import { c as _c } from "react/compiler-runtime";
-import { Box, Dialog, DialogContent, DialogTitle, IconButton, Stack, Switch, Typography } from '@kyrobit/kyroui';
-import { ChevronRightIcon, CloseIcon } from './icons.js';
+import { Box, FormDialog, Stack, Switch, Typography } from '@kyrobit/kyroui';
+import { ChevronRightIcon } from './icons.js';
 import { useDataTableContext } from './context.js';
+import { useDialogSize } from './dialogSize.js';
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 function SectionLabel(t0) {
   const $ = _c(3);
@@ -165,7 +166,7 @@ function Row(t0) {
   return t7;
 }
 export function DataTableSettingsDialog(t0) {
-  const $ = _c(20);
+  const $ = _c(16);
   const {
     open,
     onClose,
@@ -173,60 +174,19 @@ export function DataTableSettingsDialog(t0) {
   } = t0;
   const api = useDataTableContext();
   const lastVisible = api.visibleColumns.length === 1;
+  const size = useDialogSize();
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = /*#__PURE__*/_jsx(Box, {
-      component: "span",
-      sx: {
-        flex: 1
-      },
-      children: "Settings"
+    t1 = /*#__PURE__*/_jsx(SectionLabel, {
+      children: "Columns"
     });
     $[0] = t1;
   } else {
     t1 = $[0];
   }
   let t2;
-  if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = /*#__PURE__*/_jsx(CloseIcon, {
-      fontSize: "small"
-    });
-    $[1] = t2;
-  } else {
-    t2 = $[1];
-  }
-  let t3;
-  if ($[2] !== onClose) {
-    t3 = /*#__PURE__*/_jsx(DialogTitle, {
-      children: /*#__PURE__*/_jsxs(Stack, {
-        direction: "row",
-        spacing: "lg",
-        alignItems: "center",
-        children: [t1, /*#__PURE__*/_jsx(IconButton, {
-          size: "small",
-          onClick: onClose,
-          "aria-label": "Close",
-          children: t2
-        })]
-      })
-    });
-    $[2] = onClose;
-    $[3] = t3;
-  } else {
-    t3 = $[3];
-  }
-  let t4;
-  if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
-    t4 = /*#__PURE__*/_jsx(SectionLabel, {
-      children: "Columns"
-    });
-    $[4] = t4;
-  } else {
-    t4 = $[4];
-  }
-  let t5;
-  if ($[5] !== api || $[6] !== lastVisible) {
-    t5 = api.columns.map(column => {
+  if ($[1] !== api || $[2] !== lastVisible) {
+    t2 = api.columns.map(column => {
       const visible = !api.hiddenColumns.includes(column.field);
       return /*#__PURE__*/_jsx(Row, {
         title: column.headerName,
@@ -238,25 +198,25 @@ export function DataTableSettingsDialog(t0) {
         })
       }, column.field);
     });
-    $[5] = api;
-    $[6] = lastVisible;
-    $[7] = t5;
+    $[1] = api;
+    $[2] = lastVisible;
+    $[3] = t2;
   } else {
-    t5 = $[7];
+    t2 = $[3];
   }
-  let t6;
-  if ($[8] !== t5) {
-    t6 = /*#__PURE__*/_jsx(Group, {
-      children: t5
+  let t3;
+  if ($[4] !== t2) {
+    t3 = /*#__PURE__*/_jsx(Group, {
+      children: t2
     });
-    $[8] = t5;
-    $[9] = t6;
+    $[4] = t2;
+    $[5] = t3;
   } else {
-    t6 = $[9];
+    t3 = $[5];
   }
-  let t7;
-  if ($[10] !== onManageViews) {
-    t7 = onManageViews && /*#__PURE__*/_jsxs(Box, {
+  let t4;
+  if ($[6] !== onManageViews) {
+    t4 = onManageViews && /*#__PURE__*/_jsxs(Box, {
       sx: {
         mt: "xl"
       },
@@ -275,36 +235,38 @@ export function DataTableSettingsDialog(t0) {
         })
       })]
     });
-    $[10] = onManageViews;
-    $[11] = t7;
+    $[6] = onManageViews;
+    $[7] = t4;
   } else {
-    t7 = $[11];
+    t4 = $[7];
   }
-  let t8;
-  if ($[12] !== t6 || $[13] !== t7) {
-    t8 = /*#__PURE__*/_jsxs(DialogContent, {
-      children: [t4, t6, t7]
+  let t5;
+  if ($[8] !== t3 || $[9] !== t4) {
+    t5 = /*#__PURE__*/_jsxs(Box, {
+      children: [t1, t3, t4]
     });
-    $[12] = t6;
-    $[13] = t7;
-    $[14] = t8;
+    $[8] = t3;
+    $[9] = t4;
+    $[10] = t5;
   } else {
-    t8 = $[14];
+    t5 = $[10];
   }
-  let t9;
-  if ($[15] !== onClose || $[16] !== open || $[17] !== t3 || $[18] !== t8) {
-    t9 = /*#__PURE__*/_jsxs(Dialog, {
+  let t6;
+  if ($[11] !== onClose || $[12] !== open || $[13] !== size || $[14] !== t5) {
+    t6 = /*#__PURE__*/_jsx(FormDialog, {
       open: open,
       onClose: onClose,
-      children: [t3, t8]
+      title: "Settings",
+      ...size,
+      children: t5
     });
-    $[15] = onClose;
-    $[16] = open;
-    $[17] = t3;
-    $[18] = t8;
-    $[19] = t9;
+    $[11] = onClose;
+    $[12] = open;
+    $[13] = size;
+    $[14] = t5;
+    $[15] = t6;
   } else {
-    t9 = $[19];
+    t6 = $[15];
   }
-  return t9;
+  return t6;
 }

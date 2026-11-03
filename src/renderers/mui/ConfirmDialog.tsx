@@ -1,3 +1,4 @@
+import { useDialogSize } from './dialogSize.js'
 import { useState } from 'react'
 import {
   Button,
@@ -53,13 +54,15 @@ export function ConfirmDialog({
       .finally(() => setBusy(false))
   }
 
+  const size = useDialogSize()
+
   return (
     <Dialog
       open={open}
       onClose={busy ? undefined : onCancel}
       slotProps={slotProps}
-      maxWidth={maxWidth}
-      fullWidth={fullWidth}
+      maxWidth={maxWidth ?? size.maxWidth}
+      fullWidth={fullWidth ?? size.fullWidth}
     >
       <DialogTitle>
         <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>

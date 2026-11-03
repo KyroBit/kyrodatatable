@@ -1,3 +1,4 @@
+import { useDialogSize } from './dialogSize.js'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Box, Button, Dialog, Divider, IconButton, Menu, Stack, TextField, Tooltip, Typography, type DialogProps as MuiDialogProps } from '@mui/material'
 import { alpha } from '@mui/material/styles'
@@ -541,6 +542,7 @@ export interface ManageViewsDialogProps {
 }
 
 export function ManageViewsDialog({ open, onClose, presets, filterColumns, DialogProps }: ManageViewsDialogProps) {
+  const size = useDialogSize()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editFilters, setEditFilters] = useState<FilterValues>({})
@@ -591,7 +593,7 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, Dialo
   }
 
   return (
-    <Dialog open={open} onClose={close} {...DialogProps}>
+    <Dialog open={open} onClose={close} {...size} {...DialogProps}>
       <Box sx={{ px: 3, pt: 2, pb: 2.5 }}>
         <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
           <Typography sx={{ fontSize: '18px', fontWeight: 600, color: 'text.primary' }}>

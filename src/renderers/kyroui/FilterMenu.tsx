@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
-  Autocomplete, Box, Button, ChipPicker, DatePicker, Dialog, Divider, IconButton, Link, Popover, Stack, TextField, Tooltip, Typography,
+  Autocomplete, Box, Button, ChipPicker, DatePicker, Divider, FormDialog, IconButton, Link, Popover, Stack, TextField, Tooltip, Typography,
 } from '@kyrobit/kyroui'
 import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, closestCenter, type DragEndEvent } from '@dnd-kit/core'
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'
@@ -12,6 +12,7 @@ import type {
 } from '@kyrobit/datatable'
 import { ArrowBackIcon, CloseIcon, DragIcon, TrashIcon } from './icons.js'
 import { ConfirmDialog } from './ConfirmDialog.js'
+import { useDialogSize } from './dialogSize.js'
 
 function ChoiceFilterField({ column, value: raw, onChange }: FilterFieldProps<ChoiceFilterColumnDef>) {
   const value = Array.isArray(raw) ? raw : []
@@ -330,6 +331,7 @@ export interface ManageViewsDialogProps {
 }
 
 export function ManageViewsDialog({ open, onClose, presets, filterColumns }: ManageViewsDialogProps) {
+  const size = useDialogSize()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editFilters, setEditFilters] = useState<FilterValues>({})
@@ -380,21 +382,19 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
   }
 
   return (
-    <Dialog open={open} onClose={close}>
-      <Box sx={{ px: 'xl', pt: 'lg', pb: 'xl' }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 'md' }}>
-          <Typography sx={{ fontSize: 'h4', fontWeight: 600, color: 'text.primary' }}>
-            {editing ? 'Edit view' : 'Views'}
-          </Typography>
-          <IconButton variant="tonal" size="small" onClick={close} aria-label="Close views">
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Stack>
-        <Divider />
-
+    <>
+      <FormDialog
+        open={open}
+        onClose={close}
+        title={editing ? 'Edit view' : 'Views'}
+        {...size}
+        {...(editing
+          ? { onSubmit: commitEdit, submitLabel: 'Save', submitDisabled: !editName.trim(), onCancel: discardEdit, cancelLabel: 'Discard' }
+          : { actions: <Button variant="contained" onClick={close}>Done</Button> })}
+      >
         {editing ? (
-          <>
-            <Typography sx={{ fontSize: 'lg', fontWeight: 600, color: 'text.primary', mt: 'lg', mb: 'sm' }}>Name</Typography>
+          <Box>
+            <Typography sx={{ fontSize: 'lg', fontWeight: 600, color: 'text.primary', mb: 'sm' }}>Name</Typography>
             <TextField
               autoFocus
               fullWidth
@@ -413,18 +413,9 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
                 />
               </Box>
             ))}
-            <Stack direction="row" spacing="sm" justifyContent="flex-end" sx={{ mt: 'xl' }}>
-              <Button variant="outlined" onClick={discardEdit}>
-                Discard
-              </Button>
-              <Button variant="contained" disabled={!editName.trim()} onClick={commitEdit}>
-                Save
-              </Button>
-            </Stack>
-          </>
+          </Box>
         ) : (
-          <>
-            <Stack spacing="xs" sx={{ mt: 'md', maxHeight: 380, overflowY: 'auto' }}>
+          <Stack spacing="xs" sx={{ maxHeight: 380, overflowY: 'auto' }}>
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -451,16 +442,9 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
                   ))}
                 </SortableContext>
               </DndContext>
-            </Stack>
-
-            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 'lg' }}>
-              <Button variant="contained" onClick={close}>
-                Done
-              </Button>
-            </Stack>
-          </>
+          </Stack>
         )}
-      </Box>
+      </FormDialog>
 
       <ConfirmDialog
         open={Boolean(pendingDelete)}
@@ -485,7 +469,7 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
         onCancel={() => setConfirmDiscardOpen(false)}
         onConfirm={() => { setConfirmDiscardOpen(false); setEditingId(null) }}
       />
-    </Dialog>
+    </>
   )
 }
 

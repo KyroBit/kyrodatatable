@@ -1,4 +1,5 @@
 import { c as _c } from "react/compiler-runtime";
+import { useDialogSize } from './dialogSize.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Button, Dialog, Divider, IconButton, Menu, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -1555,7 +1556,7 @@ export function DataTableFilterMenu(t0) {
   return t23;
 }
 export function ManageViewsDialog(t0) {
-  const $ = _c(73);
+  const $ = _c(74);
   const {
     open,
     onClose,
@@ -1563,6 +1564,7 @@ export function ManageViewsDialog(t0) {
     filterColumns,
     DialogProps
   } = t0;
+  const size = useDialogSize();
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState("");
   let t1;
@@ -2056,22 +2058,24 @@ export function ManageViewsDialog(t0) {
     t26 = $[65];
   }
   let t27;
-  if ($[66] !== DialogProps || $[67] !== close || $[68] !== open || $[69] !== t18 || $[70] !== t23 || $[71] !== t26) {
+  if ($[66] !== DialogProps || $[67] !== close || $[68] !== open || $[69] !== size || $[70] !== t18 || $[71] !== t23 || $[72] !== t26) {
     t27 = /*#__PURE__*/_jsxs(Dialog, {
       open: open,
       onClose: close,
+      ...size,
       ...DialogProps,
       children: [t18, t23, t26]
     });
     $[66] = DialogProps;
     $[67] = close;
     $[68] = open;
-    $[69] = t18;
-    $[70] = t23;
-    $[71] = t26;
-    $[72] = t27;
+    $[69] = size;
+    $[70] = t18;
+    $[71] = t23;
+    $[72] = t26;
+    $[73] = t27;
   } else {
-    t27 = $[72];
+    t27 = $[73];
   }
   return t27;
 }

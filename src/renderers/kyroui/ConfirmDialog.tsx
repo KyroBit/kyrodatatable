@@ -1,16 +1,6 @@
 import { useState } from 'react'
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Stack,
-  Typography,
-  type DialogProps,
-} from '@kyrobit/kyroui'
-import { CloseIcon } from './icons.js'
+import { Button, FormDialog, Typography, type DialogProps } from '@kyrobit/kyroui'
+import { useDialogSize } from './dialogSize.js'
 
 export type ConfirmColor = 'primary' | 'error' | 'warning' | 'success'
 
@@ -48,37 +38,27 @@ export function ConfirmDialog({
       .finally(() => setBusy(false))
   }
 
+  const size = useDialogSize()
+
   return (
-    <Dialog
+    <FormDialog
       open={open}
-      onClose={busy ? undefined : onCancel}
-      maxWidth={maxWidth}
-      fullWidth={fullWidth}
+      onClose={busy ? () => {} : onCancel}
+      title={title}
+      maxWidth={maxWidth ?? size.maxWidth}
+      fullWidth={fullWidth ?? size.fullWidth}
+      actions={
+        <>
+          <Button variant="text" onClick={onCancel} disabled={busy}>
+            {cancelLabel}
+          </Button>
+          <Button variant="contained" color={confirmColor === 'error' ? 'error' : 'primary'} loading={busy} onClick={confirm}>
+            {confirmLabel}
+          </Button>
+        </>
+      }
     >
-      <DialogTitle>
-        <Stack direction="row" spacing="lg" alignItems="center">
-          <span style={{ flex: 1 }}>{title}</span>
-          <IconButton size="small" onClick={onCancel} disabled={busy} aria-label="Close">
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Stack>
-      </DialogTitle>
-
-      {description && (
-        <DialogContent>
-          <Typography sx={{ color: 'text.secondary' }}>{description}</Typography>
-        </DialogContent>
-      )}
-
-      <DialogActions>
-        <Button variant="text" onClick={onCancel} disabled={busy}>
-          {cancelLabel}
-        </Button>
-        {/* KyroUI's Button has only primary and error; warning and success fall back to primary. */}
-        <Button variant="contained" color={confirmColor === 'error' ? 'error' : 'primary'} loading={busy} onClick={confirm}>
-          {confirmLabel}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      {description && <Typography sx={{ color: 'text.secondary' }}>{description}</Typography>}
+    </FormDialog>
   )
 }

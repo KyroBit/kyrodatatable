@@ -1,4 +1,5 @@
 import { c as _c } from "react/compiler-runtime";
+import { useDialogSize } from './dialogSize.js';
 import { Box, Dialog, DialogContent, DialogTitle, IconButton, Stack, Switch, Typography, alpha } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
@@ -167,7 +168,7 @@ function Row(t0) {
  * and the saved views when the table has them.
  */
 export function DataTableSettingsDialog(t0) {
-  const $ = _c(22);
+  const $ = _c(23);
   const {
     open,
     onClose,
@@ -176,6 +177,7 @@ export function DataTableSettingsDialog(t0) {
   } = t0;
   const api = useDataTableContext();
   const lastVisible = api.visibleColumns.length === 1;
+  const size = useDialogSize();
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     t1 = {
@@ -309,21 +311,23 @@ export function DataTableSettingsDialog(t0) {
     t9 = $[15];
   }
   let t10;
-  if ($[16] !== DialogProps || $[17] !== onClose || $[18] !== open || $[19] !== t4 || $[20] !== t9) {
+  if ($[16] !== DialogProps || $[17] !== onClose || $[18] !== open || $[19] !== size || $[20] !== t4 || $[21] !== t9) {
     t10 = /*#__PURE__*/_jsxs(Dialog, {
       open: open,
       onClose: onClose,
+      ...size,
       ...DialogProps,
       children: [t4, t9]
     });
     $[16] = DialogProps;
     $[17] = onClose;
     $[18] = open;
-    $[19] = t4;
-    $[20] = t9;
-    $[21] = t10;
+    $[19] = size;
+    $[20] = t4;
+    $[21] = t9;
+    $[22] = t10;
   } else {
-    t10 = $[21];
+    t10 = $[22];
   }
   return t10;
 }

@@ -1,3 +1,4 @@
+import { useDialogSize } from './dialogSize.js'
 import {
   Box,
   Dialog,
@@ -93,9 +94,10 @@ export function DataTableSettingsDialog({
 }: DataTableSettingsDialogProps) {
   const api = useDataTableContext()
   const lastVisible = api.visibleColumns.length === 1
+  const size = useDialogSize()
 
   return (
-    <Dialog open={open} onClose={onClose} {...DialogProps}>
+    <Dialog open={open} onClose={onClose} {...size} {...DialogProps}>
       <DialogTitle>
         <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
           <Box component="span" sx={{ flex: 1 }}>

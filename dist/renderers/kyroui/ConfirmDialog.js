@@ -1,10 +1,10 @@
 import { c as _c } from "react/compiler-runtime";
 import { useState } from 'react';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Stack, Typography } from '@kyrobit/kyroui';
-import { CloseIcon } from './icons.js';
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Button, FormDialog, Typography } from '@kyrobit/kyroui';
+import { useDialogSize } from './dialogSize.js';
+import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
 export function ConfirmDialog(t0) {
-  const $ = _c(34);
+  const $ = _c(24);
   const {
     open,
     title,
@@ -33,145 +33,89 @@ export function ConfirmDialog(t0) {
     t4 = $[1];
   }
   const confirm = t4;
-  const t5 = busy ? undefined : onCancel;
-  let t6;
-  if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = {
-      flex: 1
-    };
-    $[2] = t6;
-  } else {
-    t6 = $[2];
-  }
-  let t7;
-  if ($[3] !== title) {
-    t7 = /*#__PURE__*/_jsx("span", {
-      style: t6,
-      children: title
-    });
-    $[3] = title;
-    $[4] = t7;
-  } else {
-    t7 = $[4];
-  }
+  const size = useDialogSize();
+  const t5 = busy ? _temp : onCancel;
+  const t6 = maxWidth ?? size.maxWidth;
+  const t7 = fullWidth ?? size.fullWidth;
   let t8;
-  if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t8 = /*#__PURE__*/_jsx(CloseIcon, {
-      fontSize: "small"
-    });
-    $[5] = t8;
-  } else {
-    t8 = $[5];
-  }
-  let t9;
-  if ($[6] !== busy || $[7] !== onCancel) {
-    t9 = /*#__PURE__*/_jsx(IconButton, {
-      size: "small",
-      onClick: onCancel,
-      disabled: busy,
-      "aria-label": "Close",
-      children: t8
-    });
-    $[6] = busy;
-    $[7] = onCancel;
-    $[8] = t9;
-  } else {
-    t9 = $[8];
-  }
-  let t10;
-  if ($[9] !== t7 || $[10] !== t9) {
-    t10 = /*#__PURE__*/_jsx(DialogTitle, {
-      children: /*#__PURE__*/_jsxs(Stack, {
-        direction: "row",
-        spacing: "lg",
-        alignItems: "center",
-        children: [t7, t9]
-      })
-    });
-    $[9] = t7;
-    $[10] = t9;
-    $[11] = t10;
-  } else {
-    t10 = $[11];
-  }
-  let t11;
-  if ($[12] !== description) {
-    t11 = description && /*#__PURE__*/_jsx(DialogContent, {
-      children: /*#__PURE__*/_jsx(Typography, {
-        sx: {
-          color: "text.secondary"
-        },
-        children: description
-      })
-    });
-    $[12] = description;
-    $[13] = t11;
-  } else {
-    t11 = $[13];
-  }
-  let t12;
-  if ($[14] !== busy || $[15] !== cancelLabel || $[16] !== onCancel) {
-    t12 = /*#__PURE__*/_jsx(Button, {
+  if ($[2] !== busy || $[3] !== cancelLabel || $[4] !== onCancel) {
+    t8 = /*#__PURE__*/_jsx(Button, {
       variant: "text",
       onClick: onCancel,
       disabled: busy,
       children: cancelLabel
     });
-    $[14] = busy;
-    $[15] = cancelLabel;
-    $[16] = onCancel;
-    $[17] = t12;
+    $[2] = busy;
+    $[3] = cancelLabel;
+    $[4] = onCancel;
+    $[5] = t8;
   } else {
-    t12 = $[17];
+    t8 = $[5];
   }
-  const t13 = confirmColor === "error" ? "error" : "primary";
-  let t14;
-  if ($[18] !== busy || $[19] !== confirm || $[20] !== confirmLabel || $[21] !== t13) {
-    t14 = /*#__PURE__*/_jsx(Button, {
+  const t9 = confirmColor === "error" ? "error" : "primary";
+  let t10;
+  if ($[6] !== busy || $[7] !== confirm || $[8] !== confirmLabel || $[9] !== t9) {
+    t10 = /*#__PURE__*/_jsx(Button, {
       variant: "contained",
-      color: t13,
+      color: t9,
       loading: busy,
       onClick: confirm,
       children: confirmLabel
     });
-    $[18] = busy;
-    $[19] = confirm;
-    $[20] = confirmLabel;
-    $[21] = t13;
-    $[22] = t14;
+    $[6] = busy;
+    $[7] = confirm;
+    $[8] = confirmLabel;
+    $[9] = t9;
+    $[10] = t10;
   } else {
-    t14 = $[22];
+    t10 = $[10];
   }
-  let t15;
-  if ($[23] !== t12 || $[24] !== t14) {
-    t15 = /*#__PURE__*/_jsxs(DialogActions, {
-      children: [t12, t14]
+  let t11;
+  if ($[11] !== t10 || $[12] !== t8) {
+    t11 = /*#__PURE__*/_jsxs(_Fragment, {
+      children: [t8, t10]
     });
-    $[23] = t12;
-    $[24] = t14;
-    $[25] = t15;
+    $[11] = t10;
+    $[12] = t8;
+    $[13] = t11;
   } else {
-    t15 = $[25];
+    t11 = $[13];
   }
-  let t16;
-  if ($[26] !== fullWidth || $[27] !== maxWidth || $[28] !== open || $[29] !== t10 || $[30] !== t11 || $[31] !== t15 || $[32] !== t5) {
-    t16 = /*#__PURE__*/_jsxs(Dialog, {
+  let t12;
+  if ($[14] !== description) {
+    t12 = description && /*#__PURE__*/_jsx(Typography, {
+      sx: {
+        color: "text.secondary"
+      },
+      children: description
+    });
+    $[14] = description;
+    $[15] = t12;
+  } else {
+    t12 = $[15];
+  }
+  let t13;
+  if ($[16] !== open || $[17] !== t11 || $[18] !== t12 || $[19] !== t5 || $[20] !== t6 || $[21] !== t7 || $[22] !== title) {
+    t13 = /*#__PURE__*/_jsx(FormDialog, {
       open: open,
       onClose: t5,
-      maxWidth: maxWidth,
-      fullWidth: fullWidth,
-      children: [t10, t11, t15]
+      title: title,
+      maxWidth: t6,
+      fullWidth: t7,
+      actions: t11,
+      children: t12
     });
-    $[26] = fullWidth;
-    $[27] = maxWidth;
-    $[28] = open;
-    $[29] = t10;
-    $[30] = t11;
-    $[31] = t15;
-    $[32] = t5;
-    $[33] = t16;
+    $[16] = open;
+    $[17] = t11;
+    $[18] = t12;
+    $[19] = t5;
+    $[20] = t6;
+    $[21] = t7;
+    $[22] = title;
+    $[23] = t13;
   } else {
-    t16 = $[33];
+    t13 = $[23];
   }
-  return t16;
+  return t13;
 }
+function _temp() {}
