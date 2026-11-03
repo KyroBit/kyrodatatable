@@ -1,6 +1,6 @@
 import { startTransition, useEffect, useMemo, useOptimistic, useState, type ReactNode } from 'react'
 import {
-  Badge, Box, Button, Card, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Typography,
+  Badge, Box, Button, Card, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Submenu, ToggleButton, ToggleButtonGroup, Typography,
 } from '@kyrobit/kyroui'
 import type {
   DataTableApi, PresetsApi, ExportFormat, ExportRequest, FilterColumnDef, FilterRenderers, FilterValues, ResourceAction,
@@ -235,16 +235,22 @@ export function DataTable<Row, Field extends string = string>({
             </Menu>
           )}
           {(onExport || onImport || settings) && (
-            <Menu aria-label="More" variant="outlined" morph placement="bottom-start">
-              {onExport && exportFormats.map((format) => (
-                <MenuItem key={format.id} onClick={() => runExport(format.id)}>
+            <Menu aria-label="More" variant="outlined" placement="bottom-start">
+              {onExport && exportFormats.length > 1 && (
+                <Submenu label="Export" icon={<ExportIcon />}>
+                  {exportFormats.map((format) => (
+                    <MenuItem key={format.id} onClick={() => runExport(format.id)}>
+                      {format.label}
+                    </MenuItem>
+                  ))}
+                </Submenu>
+              )}
+              {onExport && exportFormats.length === 1 && (
+                <MenuItem onClick={() => runExport(exportFormats[0]!.id)}>
                   <ListItemIcon><ExportIcon /></ListItemIcon>
-                  <ListItemText
-                    primary={exportFormats.length > 1 ? `Export as ${format.label}` : 'Export'}
-                    secondary={exportFormats.length > 1 ? undefined : exportTooltip}
-                  />
+                  <ListItemText primary="Export" secondary={exportTooltip} />
                 </MenuItem>
-              ))}
+              )}
               {onImport && (
                 <MenuItem onClick={onImport}>
                   <ListItemIcon><ImportIcon /></ListItemIcon>

@@ -1,6 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import { startTransition, useEffect, useMemo, useOptimistic, useState } from 'react';
-import { Badge, Box, Button, Card, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@kyrobit/kyroui';
+import { Badge, Box, Button, Card, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Submenu, ToggleButton, ToggleButtonGroup, Typography } from '@kyrobit/kyroui';
 import { countFilterValues, filterValuesEqual } from '@kyrobit/datatable';
 import { DataTableRoot } from './context.js';
 import { DataTableSearchField } from './SearchField.js';
@@ -418,17 +418,23 @@ export function DataTable(t0) {
     t25 = (onExport || onImport || settings) && /*#__PURE__*/_jsxs(Menu, {
       "aria-label": "More",
       variant: "outlined",
-      morph: true,
       placement: "bottom-start",
-      children: [onExport && exportFormats.map(format_0 => /*#__PURE__*/_jsxs(MenuItem, {
-        onClick: () => runExport(format_0.id),
+      children: [onExport && exportFormats.length > 1 && /*#__PURE__*/_jsx(Submenu, {
+        label: "Export",
+        icon: /*#__PURE__*/_jsx(ExportIcon, {}),
+        children: exportFormats.map(format_0 => /*#__PURE__*/_jsx(MenuItem, {
+          onClick: () => runExport(format_0.id),
+          children: format_0.label
+        }, format_0.id))
+      }), onExport && exportFormats.length === 1 && /*#__PURE__*/_jsxs(MenuItem, {
+        onClick: () => runExport(exportFormats[0].id),
         children: [/*#__PURE__*/_jsx(ListItemIcon, {
           children: /*#__PURE__*/_jsx(ExportIcon, {})
         }), /*#__PURE__*/_jsx(ListItemText, {
-          primary: exportFormats.length > 1 ? `Export as ${format_0.label}` : "Export",
-          secondary: exportFormats.length > 1 ? undefined : exportTooltip
+          primary: "Export",
+          secondary: exportTooltip
         })]
-      }, format_0.id)), onImport && /*#__PURE__*/_jsxs(MenuItem, {
+      }), onImport && /*#__PURE__*/_jsxs(MenuItem, {
         onClick: onImport,
         children: [/*#__PURE__*/_jsx(ListItemIcon, {
           children: /*#__PURE__*/_jsx(ImportIcon, {})
