@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
-  Autocomplete, Box, Button, ChipPicker, DatePicker, Divider, FormDialog, IconButton, Link, Popover, Stack, TextField, Tooltip, Typography,
+  Autocomplete, Box, Button, ChipPicker, DatePicker, DateRangePicker, Divider, FormDialog, IconButton, Link, Popover, Stack, TextField, Tooltip, Typography,
 } from '@kyrobit/kyroui'
 import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, closestCenter, type DragEndEvent } from '@dnd-kit/core'
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'
@@ -159,26 +159,14 @@ function DateFilterField({ column, value: raw, onChange }: {
   }
 
   return (
-    <Stack direction="row" spacing="sm">
-      <DatePicker
-        size="small"
-        fullWidth
-        clearable
-        locale="en-US"
-        label="From"
-        value={value.from ?? null}
-        onChange={(next) => onChange({ ...value, from: next || undefined })}
-      />
-      <DatePicker
-        size="small"
-        fullWidth
-        clearable
-        locale="en-US"
-        label="To"
-        value={value.to ?? null}
-        onChange={(next) => onChange({ ...value, to: next || undefined })}
-      />
-    </Stack>
+    <DateRangePicker
+      size="small"
+      fullWidth
+      clearable
+      locale="en-US"
+      value={[value.from ?? null, value.to ?? null]}
+      onChange={([from, to]) => onChange({ from: from ?? undefined, to: to ?? undefined })}
+    />
   )
 }
 

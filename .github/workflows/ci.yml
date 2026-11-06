@@ -9,7 +9,7 @@ on:
 
 jobs:
   check:
-    name: Typecheck, test & build
+    name: Typecheck, dead code, duplicates & build
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -26,17 +26,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install Chromium for the layout tests
-        run: ./node_modules/.bin/playwright install --with-deps chromium
-
-      - name: Typecheck
-        run: bun run typecheck
-
-      - name: Test
-        run: bun run test
-
-      - name: Build
-        run: bun run build
+      - name: Check
+        run: bun run check
 
   publish:
     name: Publish to GitHub Packages

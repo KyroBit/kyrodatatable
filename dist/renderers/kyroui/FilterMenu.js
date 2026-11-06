@@ -1,6 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
-import { Autocomplete, Box, Button, ChipPicker, DatePicker, Divider, FormDialog, IconButton, Link, Popover, Stack, TextField, Tooltip, Typography } from '@kyrobit/kyroui';
+import { Autocomplete, Box, Button, ChipPicker, DatePicker, DateRangePicker, Divider, FormDialog, IconButton, Link, Popover, Stack, TextField, Tooltip, Typography } from '@kyrobit/kyroui';
 import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -9,7 +9,7 @@ import { countFilterValues, filterValuesEqual, summarizeFilterValues } from '@ky
 import { ArrowBackIcon, CloseIcon, DragIcon, TrashIcon } from './icons.js';
 import { ConfirmDialog } from './ConfirmDialog.js';
 import { useDialogSize } from './dialogSize.js';
-import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
 function ChoiceFilterField(t0) {
   const $ = _c(9);
   const {
@@ -385,7 +385,7 @@ function TextFilterField(t0) {
   return t4;
 }
 function DateFilterField(t0) {
-  const $ = _c(22);
+  const $ = _c(15);
   const {
     column,
     value: raw,
@@ -431,79 +431,47 @@ function DateFilterField(t0) {
     return t4;
   }
   const t2 = value.from ?? null;
-  let t3;
-  if ($[7] !== onChange || $[8] !== value) {
-    t3 = next_0 => onChange({
-      ...value,
-      from: next_0 || undefined
-    });
-    $[7] = onChange;
-    $[8] = value;
-    $[9] = t3;
-  } else {
-    t3 = $[9];
-  }
+  const t3 = value.to ?? null;
   let t4;
-  if ($[10] !== t2 || $[11] !== t3) {
-    t4 = /*#__PURE__*/_jsx(DatePicker, {
-      size: "small",
-      fullWidth: true,
-      clearable: true,
-      locale: "en-US",
-      label: "From",
-      value: t2,
-      onChange: t3
-    });
-    $[10] = t2;
-    $[11] = t3;
-    $[12] = t4;
+  if ($[7] !== t2 || $[8] !== t3) {
+    t4 = [t2, t3];
+    $[7] = t2;
+    $[8] = t3;
+    $[9] = t4;
   } else {
-    t4 = $[12];
+    t4 = $[9];
   }
-  const t5 = value.to ?? null;
+  let t5;
+  if ($[10] !== onChange) {
+    t5 = t6 => {
+      const [from, to] = t6;
+      return onChange({
+        from: from ?? undefined,
+        to: to ?? undefined
+      });
+    };
+    $[10] = onChange;
+    $[11] = t5;
+  } else {
+    t5 = $[11];
+  }
   let t6;
-  if ($[13] !== onChange || $[14] !== value) {
-    t6 = next_1 => onChange({
-      ...value,
-      to: next_1 || undefined
-    });
-    $[13] = onChange;
-    $[14] = value;
-    $[15] = t6;
-  } else {
-    t6 = $[15];
-  }
-  let t7;
-  if ($[16] !== t5 || $[17] !== t6) {
-    t7 = /*#__PURE__*/_jsx(DatePicker, {
+  if ($[12] !== t4 || $[13] !== t5) {
+    t6 = /*#__PURE__*/_jsx(DateRangePicker, {
       size: "small",
       fullWidth: true,
       clearable: true,
       locale: "en-US",
-      label: "To",
-      value: t5,
-      onChange: t6
+      value: t4,
+      onChange: t5
     });
-    $[16] = t5;
-    $[17] = t6;
-    $[18] = t7;
+    $[12] = t4;
+    $[13] = t5;
+    $[14] = t6;
   } else {
-    t7 = $[18];
+    t6 = $[14];
   }
-  let t8;
-  if ($[19] !== t4 || $[20] !== t7) {
-    t8 = /*#__PURE__*/_jsxs(Stack, {
-      direction: "row",
-      spacing: "sm",
-      children: [t4, t7]
-    });
-    $[19] = t4;
-    $[20] = t7;
-    $[21] = t8;
-  } else {
-    t8 = $[21];
-  }
-  return t8;
+  return t6;
 }
 function FilterField(t0) {
   const $ = _c(23);

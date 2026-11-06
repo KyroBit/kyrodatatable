@@ -19,7 +19,7 @@ export function filterValuesEqual(a, b) {
   for (const key of keys) if (!fieldValuesEqual(a[key], b[key])) return false;
   return true;
 }
-export function isFilterFieldActive(value) {
+function isFilterFieldActive(value) {
   if (Array.isArray(value)) return value.length > 0;
   if (isDateRange(value)) return Boolean(value.from || value.to);
   return Boolean(value);

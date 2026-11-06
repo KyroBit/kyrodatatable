@@ -24,7 +24,7 @@ export function filterValuesEqual(a: FilterValues, b: FilterValues): boolean {
   return true
 }
 
-export function isFilterFieldActive(value: FilterValues[string] | undefined): boolean {
+function isFilterFieldActive(value: FilterValues[string] | undefined): boolean {
   if (Array.isArray(value)) return value.length > 0
   if (isDateRange(value)) return Boolean(value.from || value.to)
   return Boolean(value)

@@ -1,0 +1,17 @@
+{
+  "path": [
+    "src"
+  ],
+  "format": [
+    "typescript",
+    "tsx"
+  ],
+  "minTokens": 60,
+  "threshold": 1.4,
+  "reporters": [
+    "console"
+  ],
+  "ignore": [
+    "**/renderers/mui/**"
+  ]
+}

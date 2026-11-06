@@ -41,7 +41,7 @@ export interface DateFilterColumnDef {
   type: 'date'
   field: string
   label: string
-  /** Renders paired From/To inputs instead of a single date. */
+  /** Picks a from and to range instead of a single date. */
   range?: boolean
 }
 
@@ -195,7 +195,7 @@ export interface ServerDataTableConfig<Row, Field extends string = string, Filte
   applyFilters?: undefined
 }
 
-export interface ClientDataTableConfig<Row, Field extends string = string, Filters = FilterValues>
+interface ClientDataTableConfig<Row, Field extends string = string, Filters = FilterValues>
   extends DataTableConfigBase<Row, Field, Filters> {
   /** The whole dataset. Search, sort, pagination, and grouping all run in memory — no fetch functions needed.
    * `undefined` while the dataset is still loading, so the table shows its loading state rather than an empty one. */
