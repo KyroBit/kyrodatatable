@@ -1,5 +1,5 @@
-import { startTransition, useEffect, useEffectEvent, useRef, useState } from 'react'
-import { cachedResult, entryKey, firstPage, load } from './cache.js'
+import { startTransition, useEffect, useEffectEvent, useRef, useState, type RefObject } from 'react'
+import { cachedList, entryKey, firstPage, load, rememberLastPage, type CachedList } from './cache.js'
 import { createClientEngine } from './clientEngine.js'
 import type {
   ColumnDef, DataTableConfig, FetchParams, FilterOption, FilterValues, GroupByColumn, PaginationState,
@@ -18,6 +18,7 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
   columns: ColumnDef<Row, Field>[]
   getRowId: (row: Row) => string
   groupByColumns?: GroupByColumn<Field>[]
+  cacheKey?: string
 
   /** `columns` minus the hidden ones, in the original order. What a renderer draws. */
   visibleColumns: ColumnDef<Row, Field>[]
@@ -50,6 +51,7 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
   /** More rows exist beyond those loaded. Always false while grouped. */
   hasMore: boolean
   loadingMore: boolean
+  listKey: string
 
   groupBy: Field | null
   setGroupBy: (field: Field | null) => void
@@ -104,13 +106,19 @@ const rowsKey = (rows: readonly unknown[] | undefined) =>
     ? undefined
     : `${rows.length}:${rows.reduce<number>((hash, row) => (Math.imul(hash, 31) + idOf(row)) | 0, 7)}`
 
+const enqueue = <Result,>(queue: RefObject<Promise<unknown>>, request: () => Promise<Result>) => {
+  const next = queue.current.then(request)
+  queue.current = next.catch(() => undefined)
+  return next
+}
+
 export function useDataTable<Row, Field extends string = string, Filters = FilterValues>(
   config: DataTableConfig<Row, Field, Filters>,
 ): DataTableApi<Row, Field, Filters> {
   const { columns, getRowId, groupByColumns, searchDebounceMs, cacheKey } = config
   const [initial] = useState(() => {
     const params = firstPage(config)
-    return { params, result: cacheKey === undefined ? undefined : cachedResult<Row>(entryKey(cacheKey, params)) }
+    return { params, result: cacheKey === undefined ? undefined : cachedList<Row>(cacheKey, params) }
   })
 
   const [hiddenColumns, setHiddenColumns] = useState<Field[]>(config.initialHiddenColumns ?? [])
@@ -138,13 +146,13 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   // The first fetch starts on mount, so the first render must already read as loading, or a
   // table flashes its empty state before the first page arrives.
   const [loading, setLoading] = useState(!initial.result)
-  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<unknown>(null)
   const [fetchTick, setFetchTick] = useState(0)
-  const [loadedPage, setLoadedPage] = useState(1)
+  const [loadedPage, setLoadedPage] = useState(initial.result?.lastPage ?? 1)
   const [loadingMore, setLoadingMore] = useState(false)
-  /** Bumped by every fresh fetch, so a `loadMore` that lands after a new search is dropped instead of appended to the wrong list. */
   const generation = useRef(0)
+  const queue = useRef<Promise<unknown>>(Promise.resolve())
+  const requestedMore = useRef<string | null>(null)
 
   const [groupBy, setGroupByField] = useState<Field | null>(null)
   const [groups, setGroups] = useState<ResourceGroup<Field>[]>([])
@@ -241,42 +249,54 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     setFetchTick((t) => t + 1)
   }, [depsKey])
 
-  // ─── ungrouped mode: fetch a flat page of rows ─────────────────────────────
+  const listParams: FetchParams<Field, Filters> = {
+    page: pagination.page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters,
+  }
+  const listKey = entryKey(cacheKey ?? '', listParams)
+
   useEffect(() => {
     if (groupBy) return
     let cancelled = false
-    const params: FetchParams<Field, Filters> = { page: pagination.page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters }
-    const key = cacheKey === undefined ? null : entryKey(cacheKey, params)
-    const cached = key === null ? undefined : cachedResult<Row>(key)
-    if (cached) {
-      setRows(cached.rows)
-      setTotal(cached.total)
-      setLoadedPage(params.page)
+    const restored = cacheKey === undefined ? undefined : cachedList<Row>(cacheKey, listParams)
+    const setList = (list: CachedList<Row>) => {
+      setRows(list.rows)
+      setTotal(list.total)
+      setLoadedPage(list.lastPage)
     }
-    setLoading(!cached)
-    setRefreshing(Boolean(cached))
+    const show = (list: CachedList<Row>) => startTransition(() => setList(list))
+    if (restored) setList(restored)
+    setLoading(!restored)
+    setLoadingMore(false)
     setError(null)
+    requestedMore.current = null
 
-    const pending = key === null ? fetchPage(params) : load(key, () => fetchPage(params)!)
+    const pending = cacheKey === undefined ? fetchPage(listParams) : load(entryKey(cacheKey, listParams), () => fetchPage(listParams)!)
     if (!pending) return
     generation.current += 1
-    pending
-      .then((result) => {
+    queue.current = pending.catch(() => undefined)
+
+    const refreshFrom = (page: number): Promise<void> | undefined => {
+      if (cancelled || cacheKey === undefined || page > (restored?.lastPage ?? 0)) return
+      const pageParams = { ...listParams, page }
+      return enqueue(queue, () => load(entryKey(cacheKey, pageParams), () => fetchPage(pageParams)!)).then(() => {
         if (cancelled) return
-        startTransition(() => {
-          setRows(result.rows)
-          setTotal(result.total)
-          setLoadedPage(params.page)
-        })
+        show(cachedList<Row>(cacheKey, listParams)!)
+        return refreshFrom(page + 1)
+      })
+    }
+
+    pending
+      .then((first) => {
+        if (cancelled) return
+        show(cacheKey === undefined ? { ...first, lastPage: listParams.page } : cachedList<Row>(cacheKey, listParams)!)
+        startTransition(() => setLoading(false))
+        return refreshFrom(listParams.page + 1)
       })
       .catch((err) => {
-        if (!cancelled) startTransition(() => setError(err))
-      })
-      .finally(() => {
         if (cancelled) return
         startTransition(() => {
+          setError(err)
           setLoading(false)
-          setRefreshing(false)
         })
       })
 
@@ -314,23 +334,32 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const hasMore = !groupBy && (pagination.page - 1) * pagination.pageSize + rows.length < total
 
   const loadMore = () => {
-    if (!fetchRecords || !hasMore || loading || refreshing || loadingMore) return
     const page = loadedPage + 1
+    const params = { ...listParams, page }
+    const key = entryKey(cacheKey ?? '', params)
+    if (!fetchRecords || !hasMore || loading || requestedMore.current === key) return
+    requestedMore.current = key
     const started = generation.current
     setLoadingMore(true)
-    fetchRecords({ page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters })
+    enqueue(queue, () => (cacheKey === undefined ? fetchRecords(params) : load(key, () => fetchRecords(params))))
       .then((result) => {
         if (generation.current !== started) return
+        if (cacheKey !== undefined) rememberLastPage(listKey, page)
         startTransition(() => {
           setRows((prev) => [...prev, ...result.rows])
           setTotal(result.total)
           setLoadedPage(page)
+          setLoadingMore(false)
         })
       })
       .catch((err) => {
-        if (generation.current === started) setError(err)
+        requestedMore.current = null
+        if (generation.current !== started) return
+        startTransition(() => {
+          setError(err)
+          setLoadingMore(false)
+        })
       })
-      .finally(() => setLoadingMore(false))
   }
 
   const fetchGroupRows = (key: string, page: number) => {
@@ -459,6 +488,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     columns,
     getRowId,
     groupByColumns,
+    cacheKey,
 
     visibleColumns,
     hiddenColumns,
@@ -488,6 +518,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     loadMore,
     hasMore,
     loadingMore,
+    listKey,
 
     groupBy,
     setGroupBy,

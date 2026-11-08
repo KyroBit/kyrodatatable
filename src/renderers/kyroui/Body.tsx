@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent, type MouseEvent, type ReactNode, type RefObject } from 'react'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { useVirtualizer, type Rect, type VirtualItem } from '@tanstack/react-virtual'
 import {
   Box, Button, Checkbox, IconButton, Skeleton, SvgIcon, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Typography,
@@ -93,11 +93,18 @@ function GroupPager({ groupKey, api }: { groupKey: string; api: DataTableApi<unk
 
 const SKELETON_ROWS = 10
 const LOADING_MORE_ROWS = 3
-const SCROLL_END_THRESHOLD = 80
 const ESTIMATED_ROW_HEIGHT = 41
 const OVERSCAN = 10
 const ROW_INTENT_DELAY = 80
 const SKELETON_DELAY = 150
+
+interface View {
+  top: number
+  rect: Rect
+  rows: VirtualItem[]
+}
+
+const views = new Map<string, View>()
 
 export interface DataTableBodyProps<Row> {
   onRowClick?: (row: Row) => void
@@ -142,13 +149,22 @@ export function DataTableBody<Row>({
   const [locked, setLocked] = useState<{ key: string; widths: string[] } | null>(null)
   const lockedWidths = locked?.key === columnsKey ? locked.widths : null
   const intentTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const { page, pageSize } = api.pagination
+  const viewKey = api.cacheKey === undefined ? null : api.listKey
+  const view = viewKey === null ? undefined : views.get(viewKey)
+  const snapshot = useRef<() => VirtualItem[]>(() => [])
 
   useEffect(() => () => clearTimeout(intentTimer.current), [])
 
   useLayoutEffect(() => {
-    containerRef.current?.scrollTo({ top: 0 })
-  }, [page, pageSize, api.search, api.sort, api.filters, api.groupBy])
+    const container = containerRef.current
+    if (!container) return
+    container.scrollTop = view?.top ?? 0
+    return () => {
+      if (viewKey === null) return
+      const rect = { width: container.clientWidth, height: container.clientHeight }
+      views.set(viewKey, { top: container.scrollTop, rect, rows: snapshot.current() })
+    }
+  }, [api.listKey, api.groupBy])
 
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -365,6 +381,8 @@ export function DataTableBody<Row>({
               <VirtualRows
                 count={items.length}
                 scrollRef={containerRef}
+                view={view}
+                snapshot={snapshot}
                 rowHeight={rowHeight || ESTIMATED_ROW_HEIGHT}
                 offset={headHeight}
                 colSpan={colSpan}
@@ -374,8 +392,7 @@ export function DataTableBody<Row>({
               items.map((_, index) => renderItem(index))
             )
           )}
-          {infiniteScroll && api.loadingMore && <SkeletonRows count={LOADING_MORE_ROWS} selectable={selectable} />}
-          {infiniteScroll && api.hasMore && !api.loadingMore && <ScrollEnd colSpan={colSpan} />}
+          {infiniteScroll && api.hasMore && <ScrollEnd colSpan={colSpan} selectable={selectable} />}
         </TableBody>
       </Table>
     </TableContainer>
@@ -385,6 +402,8 @@ export function DataTableBody<Row>({
 interface VirtualRowsProps {
   count: number
   scrollRef: RefObject<HTMLDivElement | null>
+  view: View | undefined
+  snapshot: RefObject<() => VirtualItem[]>
   rowHeight: number
   offset: number
   colSpan: number
@@ -392,18 +411,22 @@ interface VirtualRowsProps {
 }
 
 /** Only the rows in view, plus a margin, are in the document; spacer rows stand in for the rest so the scrollbar stays true. */
-function VirtualRows({ count, scrollRef, rowHeight, offset, colSpan, render }: VirtualRowsProps) {
+function VirtualRows({ count, scrollRef, view, snapshot, rowHeight, offset, colSpan, render }: VirtualRowsProps) {
   'use no memo'
   const virtualizer = useVirtualizer({
     count,
     getScrollElement: () => scrollRef.current,
+    initialOffset: view?.top,
+    initialRect: view?.rect,
+    initialMeasurementsCache: view?.rows,
     estimateSize: () => rowHeight,
     overscan: OVERSCAN,
     scrollMargin: offset,
   })
+  snapshot.current = virtualizer.takeSnapshot
   const windowed = virtualizer.getVirtualItems()
   const above = windowed.length ? windowed[0]!.start - offset : 0
-  const below = windowed.length ? virtualizer.getTotalSize() - (windowed.at(-1)!.end - offset) : 0
+  const below = virtualizer.getTotalSize() - (windowed.length ? windowed.at(-1)!.end - offset : 0)
   return (
     <>
       {above > 0 && <Spacer height={above} colSpan={colSpan} />}
@@ -446,26 +469,40 @@ function SkeletonRows({ count, selectable }: { count: number; selectable: boolea
   ))
 }
 
-/** An invisible last row; reaching within MUI's default 80px of it asks for the next page. Re-arms after each page, so one that still leaves it in view keeps loading. */
-function ScrollEnd({ colSpan }: { colSpan: number }) {
+function ScrollEnd({ colSpan, selectable }: { colSpan: number; selectable: boolean }) {
   const api = useDataTableContext()
   const marker = useRef<HTMLTableRowElement>(null)
-  const { loadMore, rows } = api
+  const [reached, setReached] = useState(false)
+  const { loadMore, loadingMore, rows } = api
 
   useEffect(() => {
     const node = marker.current
-    if (!node) return
+    const root = node?.closest<HTMLElement>('[data-scroll-root]')
+    if (!node || !root) return
     const observer = new IntersectionObserver(([entry]) => entry?.isIntersecting && loadMore(), {
-      root: node.closest('[data-scroll-root]'),
-      rootMargin: `0px 0px ${SCROLL_END_THRESHOLD}px 0px`,
+      root,
+      rootMargin: `0px 0px ${root.clientHeight}px 0px`,
     })
     observer.observe(node)
     return () => observer.disconnect()
   }, [loadMore, rows.length])
 
+  useEffect(() => {
+    const node = marker.current
+    if (!node) return
+    const observer = new IntersectionObserver(([entry]) => setReached(Boolean(entry?.isIntersecting)), {
+      root: node.closest('[data-scroll-root]'),
+    })
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <tr ref={marker} aria-hidden="true">
-      <td colSpan={colSpan} style={{ padding: 0, height: 1, border: 0 }} />
-    </tr>
+    <>
+      <tr ref={marker} aria-hidden="true">
+        <td colSpan={colSpan} style={{ padding: 0, height: 1, border: 0 }} />
+      </tr>
+      {reached && loadingMore && <SkeletonRows count={LOADING_MORE_ROWS} selectable={selectable} />}
+    </>
   )
 }

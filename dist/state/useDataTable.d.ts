@@ -3,6 +3,7 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
     columns: ColumnDef<Row, Field>[];
     getRowId: (row: Row) => string;
     groupByColumns?: GroupByColumn<Field>[];
+    cacheKey?: string;
     /** `columns` minus the hidden ones, in the original order. What a renderer draws. */
     visibleColumns: ColumnDef<Row, Field>[];
     hiddenColumns: Field[];
@@ -28,6 +29,7 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
     /** More rows exist beyond those loaded. Always false while grouped. */
     hasMore: boolean;
     loadingMore: boolean;
+    listKey: string;
     groupBy: Field | null;
     setGroupBy: (field: Field | null) => void;
     groups: ResourceGroup<Field>[];

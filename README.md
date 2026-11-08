@@ -66,7 +66,7 @@ The cache key must name everything the rows depend on beyond search, sort, filte
 
 ## KyroUI renderer: give the table a height
 
-The KyroUI table takes exactly the height its parent gives it, in paged and in infinite mode. With few rows it still fills that space; with many, the rows scroll inside it under a sticky header, and the page itself never grows taller. In paged mode the pager sits below the table. In infinite mode the next page loads as you near the bottom, and pages keep loading until the rows can scroll.
+The KyroUI table takes exactly the height its parent gives it, in paged and in infinite mode. With few rows it still fills that space; with many, the rows scroll inside it under a sticky header, and the page itself never grows taller. In paged mode the pager sits below the table. In infinite mode the next page starts loading when the end of the rows is one viewport away, one request at a time, so at a normal scrolling pace it has arrived before you reach it; skeleton rows appear only if you get to the end first. With a `cacheKey`, every page loaded stays cached, so a list you return to shows all of them at the same scroll position without a request, then refreshes them one by one in the background.
 
 The parent must be a flex column that fills the height:
 

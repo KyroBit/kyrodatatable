@@ -6,6 +6,7 @@ const PREFETCH_COOLDOWN_MS = 1000
 const results = new Map<string, FetchResult<unknown>>()
 const running = new Map<string, Promise<FetchResult<unknown>>>()
 const finishedAt = new Map<string, number>()
+const lastPages = new Map<string, number>()
 
 type FirstPageOptions<Field extends string, Filters> = Pick<
   ServerDataTableConfig<unknown, Field, Filters>, 'initialPageSize' | 'initialSort' | 'initialFilters'
@@ -22,7 +23,29 @@ export const firstPage = <Field extends string, Filters>(options: FirstPageOptio
 export const entryKey = (cacheKey: string, params: FetchParams<string, unknown>) =>
   JSON.stringify([cacheKey, params.page, params.pageSize, params.search, params.sort, params.filters ?? null])
 
-export const cachedResult = <Row>(key: string) => results.get(key) as FetchResult<Row> | undefined
+const cachedResult = <Row>(key: string) => results.get(key) as FetchResult<Row> | undefined
+
+export interface CachedList<Row> extends FetchResult<Row> {
+  lastPage: number
+}
+
+export function cachedList<Row>(cacheKey: string, params: FetchParams<string, unknown>): CachedList<Row> | undefined {
+  const key = entryKey(cacheKey, params)
+  const first = cachedResult<Row>(key)
+  if (!first) return undefined
+  const list: CachedList<Row> = { rows: first.rows, total: first.total, lastPage: params.page }
+  const wanted = lastPages.get(key) ?? params.page
+  while (list.lastPage < wanted) {
+    const next = cachedResult<Row>(entryKey(cacheKey, { ...params, page: list.lastPage + 1 }))
+    if (!next) break
+    list.rows = [...list.rows, ...next.rows]
+    list.total = next.total
+    list.lastPage += 1
+  }
+  return list
+}
+
+export const rememberLastPage = (listKey: string, page: number) => lastPages.set(listKey, page)
 
 export function load<Row>(key: string, request: () => Promise<FetchResult<Row>>): Promise<FetchResult<Row>> {
   const existing = running.get(key)
