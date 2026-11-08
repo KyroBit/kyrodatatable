@@ -1,6 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, useWindowVirtualizer } from '@tanstack/react-virtual';
 import { Box, Button, Checkbox, IconButton, Skeleton, SvgIcon, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@kyrobit/kyroui';
 import { useDataTableContext } from './context.js';
 import { ChevronLeftIcon, ChevronRightIcon, ExpandMoreIcon } from './icons.js';
@@ -281,9 +281,24 @@ const OVERSCAN = 10;
 const ROW_INTENT_DELAY = 80;
 const SKELETON_DELAY = 150;
 const views = new Map();
+const scrollParentOf = node => {
+  for (let el = node.parentElement; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+    if (/auto|scroll|overlay/.test(getComputedStyle(el).overflowY)) return el;
+  }
+  return window;
+};
+const offsetOf = scroller => scroller instanceof Window ? scroller.scrollY : scroller.scrollTop;
+const rectOf = scroller => scroller instanceof Window ? {
+  width: scroller.innerWidth,
+  height: scroller.innerHeight
+} : {
+  width: scroller.clientWidth,
+  height: scroller.clientHeight
+};
+const marginOf = (node, scroller) => node.getBoundingClientRect().top + offsetOf(scroller) - (scroller instanceof Window ? 0 : scroller.getBoundingClientRect().top + scroller.clientTop);
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
 export function DataTableBody(t0) {
-  const $ = _c(100);
+  const $ = _c(114);
   const {
     onRowClick,
     onRowIntent,
@@ -293,155 +308,188 @@ export function DataTableBody(t0) {
     selectable: t3,
     stickyHeader: t4,
     rowClass,
-    infiniteScroll: t5
+    infiniteScroll: t5,
+    pageScroll: t6,
+    stickyTop
   } = t0;
   const emptyMessage = t1 === undefined ? "No records found." : t1;
   const noResultsMessage = t2 === undefined ? "No records match your search." : t2;
   const selectable = t3 === undefined ? false : t3;
   const stickyHeader = t4 === undefined ? true : t4;
   const infiniteScroll = t5 === undefined ? false : t5;
+  const pageScroll = t6 === undefined ? false : t6;
   const api = useDataTableContext();
   const items = api.visibleItems;
   const colSpan = api.visibleColumns.length + (selectable ? 1 : 0);
   const fetching = api.loading || api.groupsLoading;
-  let t6;
-  if ($[0] !== api.visibleColumns) {
-    t6 = api.visibleColumns.some(_temp2);
-    $[0] = api.visibleColumns;
-    $[1] = t6;
-  } else {
-    t6 = $[1];
-  }
-  const hasExplicitWidths = t6;
-  const containerRef = useRef(null);
-  const [rowHeight, setRowHeight] = useState(0);
-  const [headHeight, setHeadHeight] = useState(0);
   let t7;
-  if ($[2] !== api.visibleColumns) {
-    t7 = api.visibleColumns.map(_temp3).join("|");
-    $[2] = api.visibleColumns;
-    $[3] = t7;
+  if ($[0] !== api.visibleColumns) {
+    t7 = api.visibleColumns.some(_temp2);
+    $[0] = api.visibleColumns;
+    $[1] = t7;
   } else {
-    t7 = $[3];
+    t7 = $[1];
   }
-  const columnsKey = t7;
+  const hasExplicitWidths = t7;
+  const containerRef = useRef(null);
+  const [scroller, setScroller] = useState(null);
+  const [rowHeight, setRowHeight] = useState(0);
+  let t8;
+  if ($[2] !== api.visibleColumns) {
+    t8 = api.visibleColumns.map(_temp3).join("|");
+    $[2] = api.visibleColumns;
+    $[3] = t8;
+  } else {
+    t8 = $[3];
+  }
+  const columnsKey = t8;
   const [locked, setLocked] = useState(null);
   const lockedWidths = locked?.key === columnsKey ? locked.widths : null;
   const intentTimer = useRef(undefined);
   const viewKey = api.cacheKey === undefined ? null : api.listKey;
-  let t8;
+  let t9;
   if ($[4] !== viewKey) {
-    t8 = viewKey === null ? undefined : views.get(viewKey);
+    t9 = viewKey === null ? undefined : views.get(viewKey);
     $[4] = viewKey;
-    $[5] = t8;
+    $[5] = t9;
   } else {
-    t8 = $[5];
+    t9 = $[5];
   }
-  const view = t8;
+  const view = t9;
   const snapshot = useRef(_temp4);
   let t10;
-  let t9;
+  let t11;
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t9 = () => () => clearTimeout(intentTimer.current);
-    t10 = [];
+    t10 = () => () => clearTimeout(intentTimer.current);
+    t11 = [];
     $[6] = t10;
-    $[7] = t9;
+    $[7] = t11;
   } else {
     t10 = $[6];
-    t9 = $[7];
+    t11 = $[7];
   }
-  useEffect(t9, t10);
-  let t11;
-  if ($[8] !== view?.top || $[9] !== viewKey) {
-    t11 = () => {
+  useEffect(t10, t11);
+  let t12;
+  if ($[8] !== pageScroll || $[9] !== scroller) {
+    t12 = () => {
       const container = containerRef.current;
       if (!container) {
         return;
       }
-      container.scrollTop = view?.top ?? 0;
-      return () => {
-        if (viewKey === null) {
-          return;
-        }
-        const rect = {
-          width: container.clientWidth,
-          height: container.clientHeight
-        };
-        views.set(viewKey, {
-          top: container.scrollTop,
-          rect,
-          rows: snapshot.current()
-        });
-      };
+      const next = pageScroll ? scrollParentOf(container) : container;
+      if (next !== scroller) {
+        setScroller(next);
+      }
     };
-    $[8] = view?.top;
-    $[9] = viewKey;
-    $[10] = t11;
+    $[8] = pageScroll;
+    $[9] = scroller;
+    $[10] = t12;
   } else {
-    t11 = $[10];
+    t12 = $[10];
   }
-  let t12;
-  if ($[11] !== api.groupBy || $[12] !== api.listKey) {
-    t12 = [api.listKey, api.groupBy];
-    $[11] = api.groupBy;
-    $[12] = api.listKey;
-    $[13] = t12;
-  } else {
-    t12 = $[13];
-  }
-  useLayoutEffect(t11, t12);
+  useLayoutEffect(t12);
   let t13;
-  if ($[14] !== columnsKey || $[15] !== hasExplicitWidths || $[16] !== headHeight || $[17] !== lockedWidths || $[18] !== rowHeight || $[19] !== selectable) {
+  if ($[11] !== pageScroll || $[12] !== view || $[13] !== viewKey) {
     t13 = () => {
       const container_0 = containerRef.current;
       if (!container_0) {
         return;
       }
-      const head = container_0.querySelector("thead")?.getBoundingClientRect().height ?? 0;
-      const rows = Array.from(container_0.querySelectorAll("tbody tr[data-row]"));
-      const tallest = Math.max(0, ...rows.map(_temp5));
-      if (head > headHeight) {
-        setHeadHeight(head);
+      const target = pageScroll ? scrollParentOf(container_0) : container_0;
+      const head = container_0.querySelector("thead");
+      const pinned = head !== null && head.getBoundingClientRect().top > container_0.getBoundingClientRect().top + 1;
+      if (view) {
+        target.scrollTo({
+          top: view.top,
+          behavior: "instant"
+        });
+      } else {
+        if (!pageScroll) {
+          container_0.scrollTop = 0;
+        } else {
+          if (pinned) {
+            container_0.scrollIntoView({
+              block: "start",
+              behavior: "instant"
+            });
+          }
+        }
       }
+      return () => {
+        if (viewKey === null) {
+          return;
+        }
+        views.set(viewKey, {
+          top: offsetOf(target),
+          rect: rectOf(target),
+          ...snapshot.current()
+        });
+      };
+    };
+    $[11] = pageScroll;
+    $[12] = view;
+    $[13] = viewKey;
+    $[14] = t13;
+  } else {
+    t13 = $[14];
+  }
+  let t14;
+  if ($[15] !== api.groupBy || $[16] !== api.listKey) {
+    t14 = [api.listKey, api.groupBy];
+    $[15] = api.groupBy;
+    $[16] = api.listKey;
+    $[17] = t14;
+  } else {
+    t14 = $[17];
+  }
+  useLayoutEffect(t13, t14);
+  let t15;
+  if ($[18] !== columnsKey || $[19] !== hasExplicitWidths || $[20] !== lockedWidths || $[21] !== rowHeight || $[22] !== selectable) {
+    t15 = () => {
+      const container_1 = containerRef.current;
+      if (!container_1) {
+        return;
+      }
+      const rows = Array.from(container_1.querySelectorAll("tbody tr[data-row]"));
+      const tallest = Math.max(0, ...rows.map(_temp5));
       if (tallest > rowHeight) {
         setRowHeight(tallest);
       }
       if (hasExplicitWidths || lockedWidths || !rows.length) {
         return;
       }
-      const table = container_0.querySelector("table").getBoundingClientRect().width;
-      const cells = Array.from(container_0.querySelectorAll("thead th")).slice(selectable ? 1 : 0);
+      const table = container_1.querySelector("table").getBoundingClientRect().width;
+      const cells = Array.from(container_1.querySelectorAll("thead th")).slice(selectable ? 1 : 0);
       setLocked({
         key: columnsKey,
         widths: cells.map(cell => `${cell.getBoundingClientRect().width / table * 100}%`)
       });
     };
-    $[14] = columnsKey;
-    $[15] = hasExplicitWidths;
-    $[16] = headHeight;
-    $[17] = lockedWidths;
-    $[18] = rowHeight;
-    $[19] = selectable;
-    $[20] = t13;
+    $[18] = columnsKey;
+    $[19] = hasExplicitWidths;
+    $[20] = lockedWidths;
+    $[21] = rowHeight;
+    $[22] = selectable;
+    $[23] = t15;
   } else {
-    t13 = $[20];
+    t15 = $[23];
   }
-  useLayoutEffect(t13);
+  useLayoutEffect(t15);
   const fixedWidths = hasExplicitWidths || lockedWidths !== null;
   if (items.length === 0 && !fetching) {
-    let t14;
-    if ($[21] !== api.filters || $[22] !== api.search) {
-      t14 = Boolean(api.search) || countFilterValues(api.filters ?? {}) > 0;
-      $[21] = api.filters;
-      $[22] = api.search;
-      $[23] = t14;
+    let t16;
+    if ($[24] !== api.filters || $[25] !== api.search) {
+      t16 = Boolean(api.search) || countFilterValues(api.filters ?? {}) > 0;
+      $[24] = api.filters;
+      $[25] = api.search;
+      $[26] = t16;
     } else {
-      t14 = $[23];
+      t16 = $[26];
     }
-    const filtered = t14;
-    let t15;
-    if ($[24] !== api || $[25] !== emptyMessage || $[26] !== errorMessage || $[27] !== filtered || $[28] !== noResultsMessage) {
-      t15 = api.error ? errorMessage ?? /*#__PURE__*/_jsxs(Box, {
+    const filtered = t16;
+    let t17;
+    if ($[27] !== api || $[28] !== emptyMessage || $[29] !== errorMessage || $[30] !== filtered || $[31] !== noResultsMessage) {
+      t17 = api.error ? errorMessage ?? /*#__PURE__*/_jsxs(Box, {
         sx: {
           display: "flex",
           flexDirection: "column",
@@ -460,29 +508,29 @@ export function DataTableBody(t0) {
           children: "Try again"
         })]
       }) : filtered ? noResultsMessage : emptyMessage;
-      $[24] = api;
-      $[25] = emptyMessage;
-      $[26] = errorMessage;
-      $[27] = filtered;
-      $[28] = noResultsMessage;
-      $[29] = t15;
+      $[27] = api;
+      $[28] = emptyMessage;
+      $[29] = errorMessage;
+      $[30] = filtered;
+      $[31] = noResultsMessage;
+      $[32] = t17;
     } else {
-      t15 = $[29];
+      t17 = $[32];
     }
-    const message = t15;
-    let t16;
-    if ($[30] === Symbol.for("react.memo_cache_sentinel")) {
-      t16 = {
+    const message = t17;
+    let t18;
+    if ($[33] === Symbol.for("react.memo_cache_sentinel")) {
+      t18 = {
         flex: 1,
         py: "xl"
       };
-      $[30] = t16;
+      $[33] = t18;
     } else {
-      t16 = $[30];
+      t18 = $[33];
     }
-    let t17;
-    if ($[31] !== message) {
-      t17 = typeof message === "string" ? /*#__PURE__*/_jsx(Typography, {
+    let t19;
+    if ($[34] !== message) {
+      t19 = typeof message === "string" ? /*#__PURE__*/_jsx(Typography, {
         sx: {
           color: "text.secondary",
           textAlign: "center",
@@ -490,30 +538,28 @@ export function DataTableBody(t0) {
         },
         children: message
       }) : message;
-      $[31] = message;
-      $[32] = t17;
+      $[34] = message;
+      $[35] = t19;
     } else {
-      t17 = $[32];
+      t19 = $[35];
     }
-    let t18;
-    if ($[33] !== t17) {
-      t18 = /*#__PURE__*/_jsx(Box, {
+    let t20;
+    if ($[36] !== t19) {
+      t20 = /*#__PURE__*/_jsx(Box, {
         className: "KyroTable-empty",
-        sx: t16,
-        children: t17
+        sx: t18,
+        children: t19
       });
-      $[33] = t17;
-      $[34] = t18;
+      $[36] = t19;
+      $[37] = t20;
     } else {
-      t18 = $[34];
+      t20 = $[37];
     }
-    return t18;
+    return t20;
   }
   let T0;
   let T1;
   let T2;
-  let t14;
-  let t15;
   let t16;
   let t17;
   let t18;
@@ -521,7 +567,9 @@ export function DataTableBody(t0) {
   let t20;
   let t21;
   let t22;
-  if ($[35] !== api || $[36] !== colSpan || $[37] !== fixedWidths || $[38] !== hasExplicitWidths || $[39] !== headHeight || $[40] !== infiniteScroll || $[41] !== items || $[42] !== lockedWidths || $[43] !== onRowClick || $[44] !== onRowIntent || $[45] !== rowClass || $[46] !== rowHeight || $[47] !== selectable || $[48] !== stickyHeader || $[49] !== view) {
+  let t23;
+  let t24;
+  if ($[38] !== api || $[39] !== colSpan || $[40] !== fixedWidths || $[41] !== hasExplicitWidths || $[42] !== infiniteScroll || $[43] !== items || $[44] !== lockedWidths || $[45] !== onRowClick || $[46] !== onRowIntent || $[47] !== pageScroll || $[48] !== rowClass || $[49] !== rowHeight || $[50] !== scroller || $[51] !== selectable || $[52] !== stickyHeader || $[53] !== stickyTop || $[54] !== view) {
     const renderItem = (index, measure) => {
       const item = items[index];
       const measured = measure ? {
@@ -648,39 +696,87 @@ export function DataTableBody(t0) {
         }, col_1.field))]
       }, rowId);
     };
+    const rowsProps = {
+      count: items.length,
+      body: () => containerRef.current?.querySelector("tbody") ?? null,
+      view,
+      snapshot,
+      rowHeight: rowHeight || ESTIMATED_ROW_HEIGHT,
+      colSpan,
+      render: renderItem
+    };
     T2 = TableContainer;
-    t20 = containerRef;
-    t21 = "";
-    t22 = _temp8;
+    t22 = containerRef;
+    t23 = pageScroll ? undefined : "";
+    if ($[67] !== pageScroll || $[68] !== stickyTop) {
+      t24 = theme => pageScroll ? {
+        overflow: "visible",
+        scrollMarginTop: stickyTop
+      } : {
+        flex: "1 1 0",
+        minHeight: `calc(${theme.vars.size.row} * 4)`,
+        overflowY: "auto",
+        contain: "size"
+      };
+      $[67] = pageScroll;
+      $[68] = stickyTop;
+      $[69] = t24;
+    } else {
+      t24 = $[69];
+    }
     T1 = Table;
-    t15 = "small";
-    t16 = stickyHeader;
-    if ($[62] !== fixedWidths) {
-      t17 = fixedWidths ? {
+    t17 = "small";
+    t18 = stickyHeader;
+    let t25;
+    if ($[70] !== fixedWidths) {
+      t25 = fixedWidths && {
         tableLayout: "fixed"
-      } : undefined;
-      $[62] = fixedWidths;
-      $[63] = t17;
+      };
+      $[70] = fixedWidths;
+      $[71] = t25;
     } else {
-      t17 = $[63];
+      t25 = $[71];
     }
-    if ($[64] !== api.visibleColumns || $[65] !== hasExplicitWidths || $[66] !== lockedWidths || $[67] !== selectable) {
-      t18 = hasExplicitWidths ? /*#__PURE__*/_jsxs("colgroup", {
-        children: [selectable && /*#__PURE__*/_jsx("col", {}), api.visibleColumns.map(_temp9)]
+    let t26;
+    if ($[72] !== stickyTop) {
+      t26 = stickyTop && {
+        "& thead th": {
+          top: stickyTop
+        }
+      };
+      $[72] = stickyTop;
+      $[73] = t26;
+    } else {
+      t26 = $[73];
+    }
+    if ($[74] !== t25 || $[75] !== t26) {
+      t19 = {
+        ...t25,
+        ...t26
+      };
+      $[74] = t25;
+      $[75] = t26;
+      $[76] = t19;
+    } else {
+      t19 = $[76];
+    }
+    if ($[77] !== api.visibleColumns || $[78] !== hasExplicitWidths || $[79] !== lockedWidths || $[80] !== selectable) {
+      t20 = hasExplicitWidths ? /*#__PURE__*/_jsxs("colgroup", {
+        children: [selectable && /*#__PURE__*/_jsx("col", {}), api.visibleColumns.map(_temp8)]
       }) : lockedWidths ? /*#__PURE__*/_jsxs("colgroup", {
-        children: [selectable && /*#__PURE__*/_jsx("col", {}), lockedWidths.map(_temp0)]
+        children: [selectable && /*#__PURE__*/_jsx("col", {}), lockedWidths.map(_temp9)]
       }) : null;
-      $[64] = api.visibleColumns;
-      $[65] = hasExplicitWidths;
-      $[66] = lockedWidths;
-      $[67] = selectable;
-      $[68] = t18;
+      $[77] = api.visibleColumns;
+      $[78] = hasExplicitWidths;
+      $[79] = lockedWidths;
+      $[80] = selectable;
+      $[81] = t20;
     } else {
-      t18 = $[68];
+      t20 = $[81];
     }
-    let t23;
-    if ($[69] !== api || $[70] !== selectable) {
-      t23 = selectable && /*#__PURE__*/_jsx(TableCell, {
+    let t27;
+    if ($[82] !== api || $[83] !== selectable) {
+      t27 = selectable && /*#__PURE__*/_jsx(TableCell, {
         variant: "head",
         padding: "checkbox",
         children: /*#__PURE__*/_jsx(Checkbox, {
@@ -690,15 +786,15 @@ export function DataTableBody(t0) {
           "aria-label": "Select all rows"
         })
       });
-      $[69] = api;
-      $[70] = selectable;
-      $[71] = t23;
+      $[82] = api;
+      $[83] = selectable;
+      $[84] = t27;
     } else {
-      t23 = $[71];
+      t27 = $[84];
     }
-    let t24;
-    if ($[72] !== api) {
-      t24 = api.visibleColumns.map(col_3 => /*#__PURE__*/_jsx(TableCell, {
+    let t28;
+    if ($[85] !== api) {
+      t28 = api.visibleColumns.map(col_3 => /*#__PURE__*/_jsx(TableCell, {
         variant: "head",
         align: col_3.align,
         sortDirection: api.sort?.field === col_3.field ? api.sort.direction : false,
@@ -732,163 +828,155 @@ export function DataTableBody(t0) {
           })]
         })
       }, col_3.field));
-      $[72] = api;
-      $[73] = t24;
+      $[85] = api;
+      $[86] = t28;
     } else {
-      t24 = $[73];
+      t28 = $[86];
     }
-    if ($[74] !== t23 || $[75] !== t24) {
-      t19 = /*#__PURE__*/_jsx(TableHead, {
+    if ($[87] !== t27 || $[88] !== t28) {
+      t21 = /*#__PURE__*/_jsx(TableHead, {
         children: /*#__PURE__*/_jsxs(TableRow, {
-          children: [t23, t24]
+          children: [t27, t28]
         })
       });
-      $[74] = t23;
-      $[75] = t24;
-      $[76] = t19;
+      $[87] = t27;
+      $[88] = t28;
+      $[89] = t21;
     } else {
-      t19 = $[76];
+      t21 = $[89];
     }
     T0 = TableBody;
-    t14 = items.length === 0 ? /*#__PURE__*/_jsx(SkeletonRows, {
+    t16 = items.length === 0 ? /*#__PURE__*/_jsx(SkeletonRows, {
       count: Math.min(api.pagination.pageSize, SKELETON_ROWS),
       selectable: selectable
-    }) : infiniteScroll ? /*#__PURE__*/_jsx(VirtualRows, {
-      count: items.length,
-      scrollRef: containerRef,
-      view: view,
-      snapshot: snapshot,
-      rowHeight: rowHeight || ESTIMATED_ROW_HEIGHT,
-      offset: headHeight,
-      colSpan: colSpan,
-      render: renderItem
-    }) : items.map((_, index_1) => renderItem(index_1));
-    $[35] = api;
-    $[36] = colSpan;
-    $[37] = fixedWidths;
-    $[38] = hasExplicitWidths;
-    $[39] = headHeight;
-    $[40] = infiniteScroll;
-    $[41] = items;
-    $[42] = lockedWidths;
-    $[43] = onRowClick;
-    $[44] = onRowIntent;
-    $[45] = rowClass;
-    $[46] = rowHeight;
-    $[47] = selectable;
-    $[48] = stickyHeader;
-    $[49] = view;
-    $[50] = T0;
-    $[51] = T1;
-    $[52] = T2;
-    $[53] = t14;
-    $[54] = t15;
-    $[55] = t16;
-    $[56] = t17;
-    $[57] = t18;
-    $[58] = t19;
-    $[59] = t20;
-    $[60] = t21;
-    $[61] = t22;
+    }) : infiniteScroll ? scroller && (scroller instanceof Window ? /*#__PURE__*/_jsx(WindowRows, {
+      ...rowsProps
+    }) : /*#__PURE__*/_jsx(ElementRows, {
+      scroller: scroller,
+      ...rowsProps
+    })) : items.map((_, index_1) => renderItem(index_1));
+    $[38] = api;
+    $[39] = colSpan;
+    $[40] = fixedWidths;
+    $[41] = hasExplicitWidths;
+    $[42] = infiniteScroll;
+    $[43] = items;
+    $[44] = lockedWidths;
+    $[45] = onRowClick;
+    $[46] = onRowIntent;
+    $[47] = pageScroll;
+    $[48] = rowClass;
+    $[49] = rowHeight;
+    $[50] = scroller;
+    $[51] = selectable;
+    $[52] = stickyHeader;
+    $[53] = stickyTop;
+    $[54] = view;
+    $[55] = T0;
+    $[56] = T1;
+    $[57] = T2;
+    $[58] = t16;
+    $[59] = t17;
+    $[60] = t18;
+    $[61] = t19;
+    $[62] = t20;
+    $[63] = t21;
+    $[64] = t22;
+    $[65] = t23;
+    $[66] = t24;
   } else {
-    T0 = $[50];
-    T1 = $[51];
-    T2 = $[52];
-    t14 = $[53];
-    t15 = $[54];
-    t16 = $[55];
-    t17 = $[56];
-    t18 = $[57];
-    t19 = $[58];
-    t20 = $[59];
-    t21 = $[60];
-    t22 = $[61];
+    T0 = $[55];
+    T1 = $[56];
+    T2 = $[57];
+    t16 = $[58];
+    t17 = $[59];
+    t18 = $[60];
+    t19 = $[61];
+    t20 = $[62];
+    t21 = $[63];
+    t22 = $[64];
+    t23 = $[65];
+    t24 = $[66];
   }
-  let t23;
-  if ($[77] !== api.hasMore || $[78] !== colSpan || $[79] !== infiniteScroll || $[80] !== selectable) {
-    t23 = infiniteScroll && api.hasMore && /*#__PURE__*/_jsx(ScrollEnd, {
+  let t25;
+  if ($[90] !== api.hasMore || $[91] !== colSpan || $[92] !== infiniteScroll || $[93] !== scroller || $[94] !== selectable) {
+    t25 = infiniteScroll && api.hasMore && scroller && /*#__PURE__*/_jsx(ScrollEnd, {
+      scroller: scroller,
       colSpan: colSpan,
       selectable: selectable
     });
-    $[77] = api.hasMore;
-    $[78] = colSpan;
-    $[79] = infiniteScroll;
-    $[80] = selectable;
-    $[81] = t23;
+    $[90] = api.hasMore;
+    $[91] = colSpan;
+    $[92] = infiniteScroll;
+    $[93] = scroller;
+    $[94] = selectable;
+    $[95] = t25;
   } else {
-    t23 = $[81];
-  }
-  let t24;
-  if ($[82] !== T0 || $[83] !== t14 || $[84] !== t23) {
-    t24 = /*#__PURE__*/_jsxs(T0, {
-      children: [t14, t23]
-    });
-    $[82] = T0;
-    $[83] = t14;
-    $[84] = t23;
-    $[85] = t24;
-  } else {
-    t24 = $[85];
-  }
-  let t25;
-  if ($[86] !== T1 || $[87] !== t15 || $[88] !== t16 || $[89] !== t17 || $[90] !== t18 || $[91] !== t19 || $[92] !== t24) {
-    t25 = /*#__PURE__*/_jsxs(T1, {
-      size: t15,
-      stickyHeader: t16,
-      sx: t17,
-      children: [t18, t19, t24]
-    });
-    $[86] = T1;
-    $[87] = t15;
-    $[88] = t16;
-    $[89] = t17;
-    $[90] = t18;
-    $[91] = t19;
-    $[92] = t24;
-    $[93] = t25;
-  } else {
-    t25 = $[93];
+    t25 = $[95];
   }
   let t26;
-  if ($[94] !== T2 || $[95] !== t20 || $[96] !== t21 || $[97] !== t22 || $[98] !== t25) {
-    t26 = /*#__PURE__*/_jsx(T2, {
-      ref: t20,
-      "data-scroll-root": t21,
-      sx: t22,
-      children: t25
+  if ($[96] !== T0 || $[97] !== t16 || $[98] !== t25) {
+    t26 = /*#__PURE__*/_jsxs(T0, {
+      children: [t16, t25]
     });
-    $[94] = T2;
-    $[95] = t20;
-    $[96] = t21;
-    $[97] = t22;
+    $[96] = T0;
+    $[97] = t16;
     $[98] = t25;
     $[99] = t26;
   } else {
     t26 = $[99];
   }
-  return t26;
+  let t27;
+  if ($[100] !== T1 || $[101] !== t17 || $[102] !== t18 || $[103] !== t19 || $[104] !== t20 || $[105] !== t21 || $[106] !== t26) {
+    t27 = /*#__PURE__*/_jsxs(T1, {
+      size: t17,
+      stickyHeader: t18,
+      sx: t19,
+      children: [t20, t21, t26]
+    });
+    $[100] = T1;
+    $[101] = t17;
+    $[102] = t18;
+    $[103] = t19;
+    $[104] = t20;
+    $[105] = t21;
+    $[106] = t26;
+    $[107] = t27;
+  } else {
+    t27 = $[107];
+  }
+  let t28;
+  if ($[108] !== T2 || $[109] !== t22 || $[110] !== t23 || $[111] !== t24 || $[112] !== t27) {
+    t28 = /*#__PURE__*/_jsx(T2, {
+      ref: t22,
+      "data-scroll-root": t23,
+      sx: t24,
+      children: t27
+    });
+    $[108] = T2;
+    $[109] = t22;
+    $[110] = t23;
+    $[111] = t24;
+    $[112] = t27;
+    $[113] = t28;
+  } else {
+    t28 = $[113];
+  }
+  return t28;
 }
-function _temp0(width, index_0) {
+function _temp9(width, index_0) {
   return /*#__PURE__*/_jsx("col", {
     style: {
       width
     }
   }, index_0);
 }
-function _temp9(col_2) {
+function _temp8(col_2) {
   return /*#__PURE__*/_jsx("col", {
     style: col_2.width ? {
       width: col_2.width
     } : undefined
   }, col_2.field);
-}
-function _temp8(theme) {
-  return {
-    flex: "1 1 0",
-    minHeight: `calc(${theme.vars.size.row} * 4)`,
-    overflowY: "auto",
-    contain: "size"
-  };
 }
 function _temp7(e_0) {
   return e_0.stopPropagation();
@@ -900,7 +988,10 @@ function _temp5(row) {
   return row.getBoundingClientRect().height;
 }
 function _temp4() {
-  return [];
+  return {
+    rows: [],
+    margin: 0
+  };
 }
 function _temp3(col_0) {
   return col_0.field;
@@ -908,33 +999,86 @@ function _temp3(col_0) {
 function _temp2(col) {
   return col.width;
 }
+function useMargin(body, scroller, initial) {
+  const $ = _c(4);
+  const [margin, setMargin] = useState(initial);
+  let t0;
+  if ($[0] !== body || $[1] !== margin || $[2] !== scroller) {
+    t0 = () => {
+      const node = body();
+      if (!node) {
+        return;
+      }
+      const next = marginOf(node, scroller);
+      if (Math.abs(next - margin) > 0.5) {
+        setMargin(next);
+      }
+    };
+    $[0] = body;
+    $[1] = margin;
+    $[2] = scroller;
+    $[3] = t0;
+  } else {
+    t0 = $[3];
+  }
+  useLayoutEffect(t0);
+  return margin;
+}
+const virtualOptions = (props, scroller, margin) => ({
+  count: props.count,
+  initialOffset: props.view?.top ?? offsetOf(scroller),
+  initialRect: props.view?.rect ?? rectOf(scroller),
+  initialMeasurementsCache: props.view?.rows,
+  estimateSize: () => props.rowHeight,
+  overscan: OVERSCAN,
+  scrollMargin: margin
+});
+function ElementRows({
+  scroller,
+  ...props
+}) {
+  'use no memo';
+
+  const margin = useMargin(props.body, scroller, props.view?.margin ?? 0);
+  const virtualizer = useVirtualizer({
+    ...virtualOptions(props, scroller, margin),
+    getScrollElement: () => scroller
+  });
+  return /*#__PURE__*/_jsx(Windowed, {
+    virtualizer: virtualizer,
+    margin: margin,
+    ...props
+  });
+}
+function WindowRows(props) {
+  'use no memo';
+
+  const margin = useMargin(props.body, window, props.view?.margin ?? 0);
+  const virtualizer = useWindowVirtualizer(virtualOptions(props, window, margin));
+  return /*#__PURE__*/_jsx(Windowed, {
+    virtualizer: virtualizer,
+    margin: margin,
+    ...props
+  });
+}
+
 /** Only the rows in view, plus a margin, are in the document; spacer rows stand in for the rest so the scrollbar stays true. */
-function VirtualRows({
-  count,
-  scrollRef,
-  view,
+function Windowed({
+  virtualizer,
+  margin,
   snapshot,
-  rowHeight,
-  offset,
   colSpan,
   render
 }) {
   'use no memo';
 
-  const virtualizer = useVirtualizer({
-    count,
-    getScrollElement: () => scrollRef.current,
-    initialOffset: view?.top,
-    initialRect: view?.rect,
-    initialMeasurementsCache: view?.rows,
-    estimateSize: () => rowHeight,
-    overscan: OVERSCAN,
-    scrollMargin: offset
+  snapshot.current = () => ({
+    rows: virtualizer.takeSnapshot(),
+    margin
   });
-  snapshot.current = virtualizer.takeSnapshot;
   const windowed = virtualizer.getVirtualItems();
-  const above = windowed.length ? windowed[0].start - offset : 0;
-  const below = virtualizer.getTotalSize() - (windowed.length ? windowed.at(-1).end - offset : 0);
+  const above = windowed.length ? windowed[0].start - margin : 0;
+  const below = virtualizer.getTotalSize() - (windowed.length ? windowed.at(-1).end - margin : 0);
   return /*#__PURE__*/_jsxs(_Fragment, {
     children: [above > 0 && /*#__PURE__*/_jsx(Spacer, {
       height: above,
@@ -1014,7 +1158,7 @@ function SkeletonRows(t0) {
         className: "KyroTable-skeletonRow",
         children: [selectable && /*#__PURE__*/_jsx(TableCell, {
           padding: "checkbox"
-        }), api.visibleColumns.map(_temp1)]
+        }), api.visibleColumns.map(_temp0)]
       }, `skeleton-${index}`);
       $[6] = api;
       $[7] = selectable;
@@ -1034,7 +1178,7 @@ function SkeletonRows(t0) {
   }
   return t3;
 }
-function _temp1(col) {
+function _temp0(col) {
   return /*#__PURE__*/_jsx(TableCell, {
     align: col.align,
     children: /*#__PURE__*/_jsx(Skeleton, {
@@ -1050,8 +1194,9 @@ function _temp1(col) {
   }, col.field);
 }
 function ScrollEnd(t0) {
-  const $ = _c(17);
+  const $ = _c(20);
   const {
+    scroller,
     colSpan,
     selectable
   } = t0;
@@ -1064,41 +1209,42 @@ function ScrollEnd(t0) {
     rows
   } = api;
   let t1;
-  if ($[0] !== loadMore) {
+  if ($[0] !== loadMore || $[1] !== scroller) {
     t1 = () => {
       const node = marker.current;
-      const root = node?.closest("[data-scroll-root]");
-      if (!node || !root) {
+      if (!node) {
         return;
       }
       const observer = new IntersectionObserver(t2 => {
         const [entry] = t2;
         return entry?.isIntersecting && loadMore();
       }, {
-        root,
-        rootMargin: `0px 0px ${root.clientHeight}px 0px`
+        root: scroller instanceof Window ? null : scroller,
+        rootMargin: `0px 0px ${rectOf(scroller).height}px 0px`
       });
       observer.observe(node);
       return () => observer.disconnect();
     };
     $[0] = loadMore;
-    $[1] = t1;
+    $[1] = scroller;
+    $[2] = t1;
   } else {
-    t1 = $[1];
+    t1 = $[2];
   }
   let t2;
-  if ($[2] !== loadMore || $[3] !== rows.length) {
-    t2 = [loadMore, rows.length];
-    $[2] = loadMore;
-    $[3] = rows.length;
-    $[4] = t2;
+  if ($[3] !== loadMore || $[4] !== rows.length || $[5] !== scroller) {
+    t2 = [loadMore, rows.length, scroller];
+    $[3] = loadMore;
+    $[4] = rows.length;
+    $[5] = scroller;
+    $[6] = t2;
   } else {
-    t2 = $[4];
+    t2 = $[6];
   }
   useEffect(t1, t2);
   let t3;
   let t4;
-  if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[7] !== scroller) {
     t3 = () => {
       const node_0 = marker.current;
       if (!node_0) {
@@ -1108,32 +1254,33 @@ function ScrollEnd(t0) {
         const [entry_0] = t5;
         return setReached(Boolean(entry_0?.isIntersecting));
       }, {
-        root: node_0.closest("[data-scroll-root]")
+        root: scroller instanceof Window ? null : scroller
       });
       observer_0.observe(node_0);
       return () => observer_0.disconnect();
     };
-    t4 = [];
-    $[5] = t3;
-    $[6] = t4;
+    t4 = [scroller];
+    $[7] = scroller;
+    $[8] = t3;
+    $[9] = t4;
   } else {
-    t3 = $[5];
-    t4 = $[6];
+    t3 = $[8];
+    t4 = $[9];
   }
   useEffect(t3, t4);
   let t5;
-  if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
     t5 = {
       padding: 0,
       height: 1,
       border: 0
     };
-    $[7] = t5;
+    $[10] = t5;
   } else {
-    t5 = $[7];
+    t5 = $[10];
   }
   let t6;
-  if ($[8] !== colSpan) {
+  if ($[11] !== colSpan) {
     t6 = /*#__PURE__*/_jsx("tr", {
       ref: marker,
       "aria-hidden": "true",
@@ -1142,34 +1289,34 @@ function ScrollEnd(t0) {
         style: t5
       })
     });
-    $[8] = colSpan;
-    $[9] = t6;
+    $[11] = colSpan;
+    $[12] = t6;
   } else {
-    t6 = $[9];
+    t6 = $[12];
   }
   let t7;
-  if ($[10] !== loadingMore || $[11] !== reached || $[12] !== selectable) {
+  if ($[13] !== loadingMore || $[14] !== reached || $[15] !== selectable) {
     t7 = reached && loadingMore && /*#__PURE__*/_jsx(SkeletonRows, {
       count: LOADING_MORE_ROWS,
       selectable: selectable
     });
-    $[10] = loadingMore;
-    $[11] = reached;
-    $[12] = selectable;
-    $[13] = t7;
+    $[13] = loadingMore;
+    $[14] = reached;
+    $[15] = selectable;
+    $[16] = t7;
   } else {
-    t7 = $[13];
+    t7 = $[16];
   }
   let t8;
-  if ($[14] !== t6 || $[15] !== t7) {
+  if ($[17] !== t6 || $[18] !== t7) {
     t8 = /*#__PURE__*/_jsxs(_Fragment, {
       children: [t6, t7]
     });
-    $[14] = t6;
-    $[15] = t7;
-    $[16] = t8;
+    $[17] = t6;
+    $[18] = t7;
+    $[19] = t8;
   } else {
-    t8 = $[16];
+    t8 = $[19];
   }
   return t8;
 }

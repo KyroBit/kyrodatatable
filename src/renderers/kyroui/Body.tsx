@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent, type MouseEvent, type ReactNode, type RefObject } from 'react'
-import { useVirtualizer, type Rect, type VirtualItem } from '@tanstack/react-virtual'
+import { useVirtualizer, useWindowVirtualizer, type Rect, type VirtualItem, type Virtualizer } from '@tanstack/react-virtual'
 import {
   Box, Button, Checkbox, IconButton, Skeleton, SvgIcon, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Typography,
@@ -102,9 +102,37 @@ interface View {
   top: number
   rect: Rect
   rows: VirtualItem[]
+  margin: number
 }
 
+interface Snapshot {
+  rows: VirtualItem[]
+  margin: number
+}
+
+type Scroller = HTMLElement | Window
+
+type Windowing = Pick<Virtualizer<Scroller, Element>, 'takeSnapshot' | 'getVirtualItems' | 'getTotalSize' | 'measureElement'>
+
 const views = new Map<string, View>()
+
+const scrollParentOf = (node: HTMLElement): Scroller => {
+  for (let el = node.parentElement; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+    if (/auto|scroll|overlay/.test(getComputedStyle(el).overflowY)) return el
+  }
+  return window
+}
+
+const offsetOf = (scroller: Scroller) => (scroller instanceof Window ? scroller.scrollY : scroller.scrollTop)
+
+const rectOf = (scroller: Scroller): Rect =>
+  scroller instanceof Window
+    ? { width: scroller.innerWidth, height: scroller.innerHeight }
+    : { width: scroller.clientWidth, height: scroller.clientHeight }
+
+const marginOf = (node: HTMLElement, scroller: Scroller) =>
+  node.getBoundingClientRect().top + offsetOf(scroller) -
+  (scroller instanceof Window ? 0 : scroller.getBoundingClientRect().top + scroller.clientTop)
 
 export interface DataTableBodyProps<Row> {
   onRowClick?: (row: Row) => void
@@ -123,6 +151,8 @@ export interface DataTableBodyProps<Row> {
   rowClass?: (row: Row) => string
   /** Scrolls rows inside a bounded box and loads the next page near its end, in place of page controls. */
   infiniteScroll?: boolean
+  pageScroll?: boolean
+  stickyTop?: string
 }
 
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
@@ -136,6 +166,8 @@ export function DataTableBody<Row>({
   stickyHeader = true,
   rowClass,
   infiniteScroll = false,
+  pageScroll = false,
+  stickyTop,
 }: DataTableBodyProps<Row>) {
   const api = useDataTableContext<Row>()
   const items = api.visibleItems
@@ -143,36 +175,45 @@ export function DataTableBody<Row>({
   const fetching = api.loading || api.groupsLoading
   const hasExplicitWidths = api.visibleColumns.some((col) => col.width)
   const containerRef = useRef<HTMLDivElement>(null)
+  const [scroller, setScroller] = useState<Scroller | null>(null)
   const [rowHeight, setRowHeight] = useState(0)
-  const [headHeight, setHeadHeight] = useState(0)
   const columnsKey = api.visibleColumns.map((col) => col.field).join('|')
   const [locked, setLocked] = useState<{ key: string; widths: string[] } | null>(null)
   const lockedWidths = locked?.key === columnsKey ? locked.widths : null
   const intentTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const viewKey = api.cacheKey === undefined ? null : api.listKey
   const view = viewKey === null ? undefined : views.get(viewKey)
-  const snapshot = useRef<() => VirtualItem[]>(() => [])
+  const snapshot = useRef<() => Snapshot>(() => ({ rows: [], margin: 0 }))
 
   useEffect(() => () => clearTimeout(intentTimer.current), [])
 
   useLayoutEffect(() => {
     const container = containerRef.current
     if (!container) return
-    container.scrollTop = view?.top ?? 0
+    const next = pageScroll ? scrollParentOf(container) : container
+    if (next !== scroller) setScroller(next)
+  })
+
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const target = pageScroll ? scrollParentOf(container) : container
+    const head = container.querySelector('thead')
+    const pinned = head !== null && head.getBoundingClientRect().top > container.getBoundingClientRect().top + 1
+    if (view) target.scrollTo({ top: view.top, behavior: 'instant' })
+    else if (!pageScroll) container.scrollTop = 0
+    else if (pinned) container.scrollIntoView({ block: 'start', behavior: 'instant' })
     return () => {
       if (viewKey === null) return
-      const rect = { width: container.clientWidth, height: container.clientHeight }
-      views.set(viewKey, { top: container.scrollTop, rect, rows: snapshot.current() })
+      views.set(viewKey, { top: offsetOf(target), rect: rectOf(target), ...snapshot.current() })
     }
   }, [api.listKey, api.groupBy])
 
   useLayoutEffect(() => {
     const container = containerRef.current
     if (!container) return
-    const head = container.querySelector('thead')?.getBoundingClientRect().height ?? 0
     const rows = Array.from(container.querySelectorAll('tbody tr[data-row]'))
     const tallest = Math.max(0, ...rows.map((row) => row.getBoundingClientRect().height))
-    if (head > headHeight) setHeadHeight(head)
     if (tallest > rowHeight) setRowHeight(tallest)
     if (hasExplicitWidths || lockedWidths || !rows.length) return
     const table = container.querySelector('table')!.getBoundingClientRect().width
@@ -302,13 +343,29 @@ export function DataTableBody<Row>({
     )
   }
 
+  const rowsProps: RowsProps = {
+    count: items.length,
+    body: () => containerRef.current?.querySelector('tbody') ?? null,
+    view,
+    snapshot,
+    rowHeight: rowHeight || ESTIMATED_ROW_HEIGHT,
+    colSpan,
+    render: renderItem,
+  }
+
   return (
     <TableContainer
       ref={containerRef}
-      data-scroll-root=""
-      sx={(theme) => ({ flex: '1 1 0', minHeight: `calc(${theme.vars.size.row} * 4)`, overflowY: 'auto', contain: 'size' })}
+      data-scroll-root={pageScroll ? undefined : ""}
+      sx={(theme) => (pageScroll
+        ? { overflow: 'visible', scrollMarginTop: stickyTop }
+        : { flex: '1 1 0', minHeight: `calc(${theme.vars.size.row} * 4)`, overflowY: 'auto', contain: 'size' })}
     >
-      <Table size="small" stickyHeader={stickyHeader} sx={fixedWidths ? { tableLayout: 'fixed' } : undefined}>
+      <Table
+        size="small"
+        stickyHeader={stickyHeader}
+        sx={{ ...(fixedWidths && { tableLayout: 'fixed' }), ...(stickyTop && { '& thead th': { top: stickyTop } }) }}
+      >
         {hasExplicitWidths ? (
           <colgroup>
             {selectable && <col />}
@@ -378,55 +435,76 @@ export function DataTableBody<Row>({
             <SkeletonRows count={Math.min(api.pagination.pageSize, SKELETON_ROWS)} selectable={selectable} />
           ) : (
             infiniteScroll ? (
-              <VirtualRows
-                count={items.length}
-                scrollRef={containerRef}
-                view={view}
-                snapshot={snapshot}
-                rowHeight={rowHeight || ESTIMATED_ROW_HEIGHT}
-                offset={headHeight}
-                colSpan={colSpan}
-                render={renderItem}
-              />
+              scroller && (
+                scroller instanceof Window ? (
+                  <WindowRows {...rowsProps} />
+                ) : (
+                  <ElementRows scroller={scroller} {...rowsProps} />
+                )
+              )
             ) : (
               items.map((_, index) => renderItem(index))
             )
           )}
-          {infiniteScroll && api.hasMore && <ScrollEnd colSpan={colSpan} selectable={selectable} />}
+          {infiniteScroll && api.hasMore && scroller && <ScrollEnd scroller={scroller} colSpan={colSpan} selectable={selectable} />}
         </TableBody>
       </Table>
     </TableContainer>
   )
 }
 
-interface VirtualRowsProps {
+interface RowsProps {
   count: number
-  scrollRef: RefObject<HTMLDivElement | null>
+  body: () => HTMLElement | null
   view: View | undefined
-  snapshot: RefObject<() => VirtualItem[]>
+  snapshot: RefObject<() => Snapshot>
   rowHeight: number
-  offset: number
   colSpan: number
   render: (index: number, measure: (row: HTMLTableRowElement | null) => void) => ReactNode
 }
 
-/** Only the rows in view, plus a margin, are in the document; spacer rows stand in for the rest so the scrollbar stays true. */
-function VirtualRows({ count, scrollRef, view, snapshot, rowHeight, offset, colSpan, render }: VirtualRowsProps) {
-  'use no memo'
-  const virtualizer = useVirtualizer({
-    count,
-    getScrollElement: () => scrollRef.current,
-    initialOffset: view?.top,
-    initialRect: view?.rect,
-    initialMeasurementsCache: view?.rows,
-    estimateSize: () => rowHeight,
-    overscan: OVERSCAN,
-    scrollMargin: offset,
+function useMargin(body: () => HTMLElement | null, scroller: Scroller, initial: number) {
+  const [margin, setMargin] = useState(initial)
+  useLayoutEffect(() => {
+    const node = body()
+    if (!node) return
+    const next = marginOf(node, scroller)
+    if (Math.abs(next - margin) > 0.5) setMargin(next)
   })
-  snapshot.current = virtualizer.takeSnapshot
+  return margin
+}
+
+const virtualOptions = (props: RowsProps, scroller: Scroller, margin: number) => ({
+  count: props.count,
+  initialOffset: props.view?.top ?? offsetOf(scroller),
+  initialRect: props.view?.rect ?? rectOf(scroller),
+  initialMeasurementsCache: props.view?.rows,
+  estimateSize: () => props.rowHeight,
+  overscan: OVERSCAN,
+  scrollMargin: margin,
+})
+
+function ElementRows({ scroller, ...props }: RowsProps & { scroller: HTMLElement }) {
+  'use no memo'
+  const margin = useMargin(props.body, scroller, props.view?.margin ?? 0)
+  const virtualizer = useVirtualizer({ ...virtualOptions(props, scroller, margin), getScrollElement: () => scroller })
+  return <Windowed virtualizer={virtualizer} margin={margin} {...props} />
+}
+
+function WindowRows(props: RowsProps) {
+  'use no memo'
+  const margin = useMargin(props.body, window, props.view?.margin ?? 0)
+  const virtualizer = useWindowVirtualizer(virtualOptions(props, window, margin))
+  return <Windowed virtualizer={virtualizer} margin={margin} {...props} />
+}
+
+/** Only the rows in view, plus a margin, are in the document; spacer rows stand in for the rest so the scrollbar stays true. */
+function Windowed({ virtualizer, margin, snapshot, colSpan, render }: RowsProps & { virtualizer: Windowing; margin: number }) {
+  'use no memo'
+  snapshot.current = () => ({ rows: virtualizer.takeSnapshot(), margin })
   const windowed = virtualizer.getVirtualItems()
-  const above = windowed.length ? windowed[0]!.start - offset : 0
-  const below = virtualizer.getTotalSize() - (windowed.length ? windowed.at(-1)!.end - offset : 0)
+  const above = windowed.length ? windowed[0]!.start - margin : 0
+  const below = virtualizer.getTotalSize() - (windowed.length ? windowed.at(-1)!.end - margin : 0)
   return (
     <>
       {above > 0 && <Spacer height={above} colSpan={colSpan} />}
@@ -469,7 +547,7 @@ function SkeletonRows({ count, selectable }: { count: number; selectable: boolea
   ))
 }
 
-function ScrollEnd({ colSpan, selectable }: { colSpan: number; selectable: boolean }) {
+function ScrollEnd({ scroller, colSpan, selectable }: { scroller: Scroller; colSpan: number; selectable: boolean }) {
   const api = useDataTableContext()
   const marker = useRef<HTMLTableRowElement>(null)
   const [reached, setReached] = useState(false)
@@ -477,25 +555,24 @@ function ScrollEnd({ colSpan, selectable }: { colSpan: number; selectable: boole
 
   useEffect(() => {
     const node = marker.current
-    const root = node?.closest<HTMLElement>('[data-scroll-root]')
-    if (!node || !root) return
+    if (!node) return
     const observer = new IntersectionObserver(([entry]) => entry?.isIntersecting && loadMore(), {
-      root,
-      rootMargin: `0px 0px ${root.clientHeight}px 0px`,
+      root: scroller instanceof Window ? null : scroller,
+      rootMargin: `0px 0px ${rectOf(scroller).height}px 0px`,
     })
     observer.observe(node)
     return () => observer.disconnect()
-  }, [loadMore, rows.length])
+  }, [loadMore, rows.length, scroller])
 
   useEffect(() => {
     const node = marker.current
     if (!node) return
     const observer = new IntersectionObserver(([entry]) => setReached(Boolean(entry?.isIntersecting)), {
-      root: node.closest('[data-scroll-root]'),
+      root: scroller instanceof Window ? null : scroller,
     })
     observer.observe(node)
     return () => observer.disconnect()
-  }, [])
+  }, [scroller])
 
   return (
     <>

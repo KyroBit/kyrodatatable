@@ -16,7 +16,9 @@ export interface DataTableBodyProps<Row> {
     rowClass?: (row: Row) => string;
     /** Scrolls rows inside a bounded box and loads the next page near its end, in place of page controls. */
     infiniteScroll?: boolean;
+    pageScroll?: boolean;
+    stickyTop?: string;
 }
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
-export declare function DataTableBody<Row>({ onRowClick, onRowIntent, emptyMessage, noResultsMessage, errorMessage, selectable, stickyHeader, rowClass, infiniteScroll, }: DataTableBodyProps<Row>): import("react").JSX.Element;
+export declare function DataTableBody<Row>({ onRowClick, onRowIntent, emptyMessage, noResultsMessage, errorMessage, selectable, stickyHeader, rowClass, infiniteScroll, pageScroll, stickyTop, }: DataTableBodyProps<Row>): import("react").JSX.Element;
 //# sourceMappingURL=Body.d.ts.map

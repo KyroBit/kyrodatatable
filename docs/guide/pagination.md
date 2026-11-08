@@ -79,7 +79,29 @@ table.groupPagination('active')       // { page, pageSize } — this group's own
 table.setGroupPage('active', 2)       // page 2 of "Active" specifically
 ```
 
-`table.pagination`/`setPage`/`setPageSize` still exist while grouped, but `<DataTable/>`'s `Pagination` piece hides itself in that state (`api.groupBy` is not empty) — there's nothing meaningful to paginate at the top level once the view is a list of collapsible groups instead of a list of rows.
+While grouped, the table's pager pages the groups themselves, by `table.groupPageSize` (see [Many groups](/guide/grouping#many-groups)).
+
+## Scrolling with the page
+
+By default `infiniteScroll` scrolls rows inside a box of their own. To let the page, or the panel the table sits in, do the scrolling instead, compose the pieces and give the body `pageScroll`:
+
+```tsx
+<DataTable.Root api={table}>
+  <Box sx={{ position: 'sticky', top: 'var(--title-height)', height: 56 }}>
+    <DataTable.SearchField alwaysOpen />
+    <DataTableGroupMenu />
+  </Box>
+  <Card sx={{ overflow: 'clip' }}>
+    <DataTable.Body infiniteScroll pageScroll stickyTop="calc(var(--title-height) + 56px)" />
+  </Card>
+</DataTable.Root>
+```
+
+- The table scrolls with the nearest scrolling ancestor, or the window if there is none. It has no scrollbar of its own and is only as tall as its rows.
+- `stickyTop` is where the column header pins, as any CSS length. A CSS variable lets the header follow an area above it that changes height.
+- The next page still loads one screen ahead, and returning to a list with a `cacheKey` restores the same rows at the same scroll position.
+- Everything between the body and the scrolling element must leave overflow visible: use `overflow: 'clip'` to round a card's corners, because `hidden` or `auto` gives the header a different box to pin in.
+- What pins above the table, and its background, is yours to lay out.
 
 ## Next
 
