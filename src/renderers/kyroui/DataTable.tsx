@@ -130,12 +130,14 @@ export function DataTable<Row, Field extends string = string>({
       applyFilters(next, presetId === 'all' ? undefined : presetId)
     })
 
-  const activeGroupLabel = api.groupByColumns?.find((g) => g.field === api.groupBy)?.label
+  const groupLabel = api.groupBy.map((field) => api.groupByColumns?.find((g) => g.field === field)?.label ?? field).join(' › ')
+  const toggleGroupField = (field: Field) =>
+    api.setGroupBy(api.groupBy.includes(field) ? api.groupBy.filter((f) => f !== field) : [...api.groupBy, field])
 
   const executeAction = async (action: ResourceAction) => {
     await action.handle(api.selectedIds)
     api.clearSelection()
-    if (api.groupBy) api.setGroupBy(api.groupBy)
+    if (api.groupBy.length > 0) api.setGroupBy(api.groupBy)
     api.refetch()
   }
 
@@ -209,9 +211,10 @@ export function DataTable<Row, Field extends string = string>({
             )}
           />
           {api.groupByColumns && api.groupByColumns.length > 0 && (
-            <Menu label={activeGroupLabel ? `Group: ${activeGroupLabel}` : 'Group'} startIcon={<GroupIcon />}>
-              {[{ field: null as Field | null, label: 'None' }, ...api.groupByColumns].map((g) => (
-                <MenuItem key={g.label} selected={api.groupBy === g.field} onClick={() => api.setGroupBy(g.field)}>
+            <Menu label={groupLabel ? `Group: ${groupLabel}` : 'Group'} startIcon={<GroupIcon />}>
+              <MenuItem selected={api.groupBy.length === 0} onClick={() => api.setGroupBy([])}>None</MenuItem>
+              {api.groupByColumns.map((g) => (
+                <MenuItem key={g.field} selected={api.groupBy.includes(g.field)} onClick={() => toggleGroupField(g.field)}>
                   {g.label}
                 </MenuItem>
               ))}
@@ -310,10 +313,10 @@ export function DataTable<Row, Field extends string = string>({
           infiniteScroll={infiniteScroll}
         />
       </Card>
-      {(!infiniteScroll || api.groupBy) && (
+      {(!infiniteScroll || api.groupBy.length > 0) && (
       <Box data-table-footer="" sx={(theme) => ({ minHeight: theme.vars.size.row, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' })}>
         {!infiniteScroll && <DataTablePagination rowsPerPageOptions={rowsPerPageOptions} />}
-        {api.groupBy && (
+        {api.groupBy.length > 0 && (
           <Typography sx={{ fontSize: 'md', fontWeight: 500, color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>
             {api.groups.length} groups · {api.groupsTotal} records
           </Typography>

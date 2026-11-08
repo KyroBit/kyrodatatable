@@ -56,9 +56,9 @@ function SortArrows({ direction }: { direction: SortDirection | null }) {
  * Compact inline pager shown at the right edge of an expanded group's header
  * row — each group paginates independently (`api.setGroupPage`).
  */
-function GroupPager({ groupKey, api }: { groupKey: string; api: DataTableApi<unknown, string, undefined> }) {
-  const pagination = api.groupPagination(groupKey)
-  const total = api.groupTotal(groupKey)
+function GroupPager({ groupId, api }: { groupId: string; api: DataTableApi<unknown, string, undefined> }) {
+  const pagination = api.groupPagination(groupId)
+  const total = api.groupTotal(groupId)
   if (total <= 0) return null
 
   const from = (pagination.page - 1) * pagination.pageSize + 1
@@ -76,7 +76,7 @@ function GroupPager({ groupKey, api }: { groupKey: string; api: DataTableApi<unk
       <IconButton
         size="small"
         disabled={pagination.page <= 1}
-        onClick={() => api.setGroupPage(groupKey, pagination.page - 1)}
+        onClick={() => api.setGroupPage(groupId, pagination.page - 1)}
         aria-label="Previous page"
       >
         <KeyboardArrowLeftIcon sx={{ fontSize: 18 }} />
@@ -84,7 +84,7 @@ function GroupPager({ groupKey, api }: { groupKey: string; api: DataTableApi<unk
       <IconButton
         size="small"
         disabled={to >= total}
-        onClick={() => api.setGroupPage(groupKey, pagination.page + 1)}
+        onClick={() => api.setGroupPage(groupId, pagination.page + 1)}
         aria-label="Next page"
       >
         <KeyboardArrowRightIcon sx={{ fontSize: 18 }} />
@@ -238,13 +238,13 @@ export function DataTableBody<Row>({
               if (item.type === 'group') {
                 return (
                   <TableRow
-                    key={`group-${item.group.key}`}
+                    key={`group-${item.id}`}
                     className="KyroTable-groupRow"
-                    onClick={() => api.toggleGroup(item.group.key)}
+                    onClick={() => api.toggleGroup(item.id)}
                     sx={{ cursor: 'pointer' }}
                   >
                     <TableCell className="KyroTable-groupCell" colSpan={colSpan}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, pl: item.depth * 3 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
                           {item.expanded
                             ? <KeyboardArrowDownIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
@@ -254,9 +254,9 @@ export function DataTableBody<Row>({
                               size="small"
                               sx={{ p: 0.25, ml: -0.5 }}
                               onClick={(e) => e.stopPropagation()}
-                              checked={api.groupAllSelected(item.group.key)}
-                              indeterminate={api.groupSomeSelected(item.group.key) && !api.groupAllSelected(item.group.key)}
-                              onChange={() => api.toggleSelectGroup(item.group.key)}
+                              checked={api.groupAllSelected(item.id)}
+                              indeterminate={api.groupSomeSelected(item.id) && !api.groupAllSelected(item.id)}
+                              onChange={() => api.toggleSelectGroup(item.id)}
                               slotProps={{ input: { 'aria-label': `Select all rows in ${item.group.label}` } }}
                             />
                           )}
@@ -274,11 +274,11 @@ export function DataTableBody<Row>({
                           >
                             {item.group.count}
                           </Box>
-                          {api.groupLoading(item.group.key) && api.groupRows(item.group.key).length === 0 && (
+                          {api.groupLoading(item.id) && api.groupRows(item.id).length === 0 && (
                             <Box component="span" sx={{ color: 'text.secondary', fontSize: 12 }}>loading…</Box>
                           )}
                         </Box>
-                        {item.expanded && <GroupPager groupKey={item.group.key} api={api as DataTableApi<unknown, string, undefined>} />}
+                        {item.expanded && <GroupPager groupId={item.id} api={api as DataTableApi<unknown, string, undefined>} />}
                       </Box>
                     </TableCell>
                   </TableRow>

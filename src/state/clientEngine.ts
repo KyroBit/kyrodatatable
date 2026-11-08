@@ -39,29 +39,26 @@ function paginate<Row>(rows: Row[], page: number, pageSize: number): { rows: Row
   return { rows: rows.slice(start, start + pageSize), total }
 }
 
+const valueOf = (row: unknown, field: string) => String((row as Record<string, unknown>)[field])
+
 export interface ClientEngineOptions<Row, Field extends string, Filters> {
   data: Row[]
   columns: ColumnDef<Row, Field>[]
   applyFilters?: (row: Row, filters: Filters) => boolean
-  groupField?: (row: Row) => unknown
 }
 
-/** Builds fetchRecords/fetchGroups equivalents that run entirely in memory against `data` — the client-mode counterpart to the server-side functions you'd otherwise write by hand. */
 export function createClientEngine<Row, Field extends string, Filters>({
-  data, columns, applyFilters, groupField,
+  data, columns, applyFilters,
 }: ClientEngineOptions<Row, Field, Filters>) {
   const fields = searchableFields(columns)
 
   function filtered(params: FetchParams<Field, Filters>): Row[] {
-    let rows = data
-    if (params.groupKey !== undefined && groupField) {
-      rows = rows.filter((row) => String(groupField(row)) === params.groupKey)
-    }
-    rows = rows.filter((row) => matchesSearch(row, params.search, fields))
-    if (applyFilters && params.filters !== undefined) {
-      rows = rows.filter((row) => applyFilters(row, params.filters))
-    }
-    return rows
+    const path = params.groupPath ?? []
+    return data.filter((row) =>
+      path.every((entry) => valueOf(row, entry.field) === entry.key) &&
+      matchesSearch(row, params.search, fields) &&
+      (!applyFilters || params.filters === undefined || applyFilters(row, params.filters)),
+    )
   }
 
   async function fetchRecords(params: FetchParams<Field, Filters>): Promise<FetchResult<Row>> {
@@ -69,16 +66,15 @@ export function createClientEngine<Row, Field extends string, Filters>({
   }
 
   async function fetchGroups(params: FetchParams<Field, Filters>): Promise<FetchGroupsResult<Field>> {
-    if (!groupField || !params.groupBy) return { total: 0, groups: [] }
-    const rows = data.filter((row) => matchesSearch(row, params.search, fields))
+    const field = params.groupBy
+    if (!field) return { total: 0, groups: [] }
+    const rows = filtered(params)
     const buckets = new Map<string, number>()
     for (const row of rows) {
-      const key = String(groupField(row))
+      const key = valueOf(row, field)
       buckets.set(key, (buckets.get(key) ?? 0) + 1)
     }
-    const groups: ResourceGroup<Field>[] = [...buckets.entries()].map(([key, count]) => ({
-      key, field: params.groupBy!, label: key, count,
-    }))
+    const groups: ResourceGroup<Field>[] = [...buckets.entries()].map(([key, count]) => ({ key, field, label: key, count }))
     return { total: rows.length, groups }
   }
 

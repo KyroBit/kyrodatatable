@@ -25,6 +25,7 @@ export type {
   PaginationState,
   ResourceAction,
   ResourceGroup,
+  GroupPathEntry,
   ChoiceFilterColumnDef,
   FilterFieldProps,
   FilterRenderers,

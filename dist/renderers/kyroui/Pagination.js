@@ -18,7 +18,7 @@ export function DataTablePagination(t0) {
   }
   const rowsPerPageOptions = t2;
   const api = useDataTableContext();
-  if (api.groupBy) {
+  if (api.groupBy.length > 0) {
     return null;
   }
   const t3 = api.pagination.page - 1;

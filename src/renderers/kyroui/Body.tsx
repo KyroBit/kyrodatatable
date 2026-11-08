@@ -54,9 +54,9 @@ function SortArrows({ direction }: { direction: SortDirection | null }) {
  * Compact inline pager shown at the right edge of an expanded group's header
  * row — each group paginates independently (`api.setGroupPage`).
  */
-function GroupPager({ groupKey, api }: { groupKey: string; api: DataTableApi<unknown, string, undefined> }) {
-  const pagination = api.groupPagination(groupKey)
-  const total = api.groupTotal(groupKey)
+function GroupPager({ groupId, api }: { groupId: string; api: DataTableApi<unknown, string, undefined> }) {
+  const pagination = api.groupPagination(groupId)
+  const total = api.groupTotal(groupId)
   if (total <= 0) return null
 
   const from = (pagination.page - 1) * pagination.pageSize + 1
@@ -74,7 +74,7 @@ function GroupPager({ groupKey, api }: { groupKey: string; api: DataTableApi<unk
       <IconButton
         size="small"
         disabled={pagination.page <= 1}
-        onClick={() => api.setGroupPage(groupKey, pagination.page - 1)}
+        onClick={() => api.setGroupPage(groupId, pagination.page - 1)}
         aria-label="Previous page"
       >
         <ChevronLeftIcon fontSize="small" />
@@ -82,7 +82,7 @@ function GroupPager({ groupKey, api }: { groupKey: string; api: DataTableApi<unk
       <IconButton
         size="small"
         disabled={to >= total}
-        onClick={() => api.setGroupPage(groupKey, pagination.page + 1)}
+        onClick={() => api.setGroupPage(groupId, pagination.page + 1)}
         aria-label="Next page"
       >
         <ChevronRightIcon fontSize="small" />
@@ -213,15 +213,15 @@ export function DataTableBody<Row>({
     if (item.type === 'group') {
       return (
         <TableRow
-          key={`group-${item.group.key}`}
+          key={`group-${item.id}`}
           data-row=""
           {...measured}
           className="KyroTable-groupRow"
-          onClick={() => api.toggleGroup(item.group.key)}
+          onClick={() => api.toggleGroup(item.id)}
           style={{ cursor: 'pointer' }}
         >
           <TableCell className="KyroTable-groupCell" colSpan={colSpan}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'sm' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'sm', pl: item.depth * 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 'sm', minWidth: 0 }}>
                 {item.expanded
                   ? <ExpandMoreIcon fontSize="small" sx={{ color: 'text.secondary' }} />
@@ -229,9 +229,9 @@ export function DataTableBody<Row>({
                 {selectable && item.expanded && (
                   <Box component="span" sx={{ display: 'inline-flex' }} onClick={(e: MouseEvent<HTMLElement>) => e.stopPropagation()}>
                     <Checkbox
-                      checked={api.groupAllSelected(item.group.key)}
-                      indeterminate={api.groupSomeSelected(item.group.key) && !api.groupAllSelected(item.group.key)}
-                      onChange={() => api.toggleSelectGroup(item.group.key)}
+                      checked={api.groupAllSelected(item.id)}
+                      indeterminate={api.groupSomeSelected(item.id) && !api.groupAllSelected(item.id)}
+                      onChange={() => api.toggleSelectGroup(item.id)}
                       aria-label={`Select all rows in ${item.group.label}`}
                     />
                   </Box>
@@ -250,11 +250,11 @@ export function DataTableBody<Row>({
                 >
                   {item.group.count}
                 </Box>
-                {api.groupLoading(item.group.key) && api.groupRows(item.group.key).length === 0 && (
+                {api.groupLoading(item.id) && api.groupRows(item.id).length === 0 && (
                   <Box component="span" sx={{ color: 'text.secondary', fontSize: 'sm' }}>loading…</Box>
                 )}
               </Box>
-              {item.expanded && <GroupPager groupKey={item.group.key} api={api as DataTableApi<unknown, string, undefined>} />}
+              {item.expanded && <GroupPager groupId={item.id} api={api as DataTableApi<unknown, string, undefined>} />}
             </Box>
           </TableCell>
         </TableRow>

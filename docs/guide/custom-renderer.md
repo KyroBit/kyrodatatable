@@ -32,7 +32,7 @@ function TailwindDataTable<Row, Field extends string>({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-left text-slate-500">
-            {api.groupBy && <th className="w-8" />}
+            {api.groupBy.length > 0 && <th className="w-8" />}
             {api.columns.map((col) => (
               <th
                 key={col.field}
@@ -52,8 +52,8 @@ function TailwindDataTable<Row, Field extends string>({
             api.visibleItems.map((item) => {
               if (item.type === 'group') {
                 return (
-                  <tr key={`g-${item.group.key}`} className="cursor-pointer bg-slate-50 font-medium" onClick={() => api.toggleGroup(item.group.key)}>
-                    <td className="px-3 py-2" colSpan={api.columns.length + 1}>
+                  <tr key={`g-${item.id}`} className="cursor-pointer bg-slate-50 font-medium" onClick={() => api.toggleGroup(item.id)}>
+                    <td className="px-3 py-2" colSpan={api.columns.length + 1} style={{ paddingLeft: 12 + item.depth * 24 }}>
                       {item.expanded ? '▼' : '▶'} {item.group.label} ({item.group.count})
                     </td>
                   </tr>
@@ -75,7 +75,7 @@ function TailwindDataTable<Row, Field extends string>({
         </tbody>
       </table>
 
-      {!api.groupBy && (
+      {api.groupBy.length === 0 && (
         <div className="flex items-center justify-between text-sm text-slate-500">
           <span>{api.total} total</span>
           <div className="flex gap-2">

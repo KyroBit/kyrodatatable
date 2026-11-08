@@ -62,7 +62,7 @@ An empty string (`''`, the initial state) should mean "no filter" on your backen
 
 ## Combining with grouping
 
-Search applies inside groups too — `fetchCategoryGroups`/`fetchCategories` both receive `params.search` regardless of whether `params.groupBy`/`params.groupKey` are set (see [Grouping](/guide/grouping)). Typing "dev" while grouped by status narrows *both* groups' counts (Active's count of 10 becomes however many active categories match "dev"), not just the currently-expanded one's rows — because `fetchGroups` runs on every search change too, same as `fetchRecords` does in flat mode.
+Search applies inside groups too — `fetchCategoryGroups`/`fetchCategories` both receive `params.search` regardless of whether `params.groupBy`/`params.groupPath` are set (see [Grouping](/guide/grouping)). Typing "dev" while grouped by status narrows *both* groups' counts (Active's count of 10 becomes however many active categories match "dev"), not just the currently-expanded one's rows — because `fetchGroups` runs on every search change too, same as `fetchRecords` does in flat mode.
 
 ## Next
 

@@ -127,12 +127,14 @@ export function DataTable<Row, Field extends string = string>({
     api.setFilters(next)
   }
 
-  const activeGroupLabel = api.groupByColumns?.find((g) => g.field === api.groupBy)?.label
+  const groupLabel = api.groupBy.map((field) => api.groupByColumns?.find((g) => g.field === field)?.label ?? field).join(' › ')
+  const toggleGroupField = (field: Field) =>
+    api.setGroupBy(api.groupBy.includes(field) ? api.groupBy.filter((f) => f !== field) : [...api.groupBy, field])
 
   const executeAction = async (action: ResourceAction) => {
     await action.handle(api.selectedIds)
     api.clearSelection()
-    if (api.groupBy) api.setGroupBy(api.groupBy)
+    if (api.groupBy.length > 0) api.setGroupBy(api.groupBy)
     api.refetch()
   }
 
@@ -220,7 +222,7 @@ export function DataTable<Row, Field extends string = string>({
             {api.groupByColumns && api.groupByColumns.length > 0 && (
               <ToolbarBtn
                 icon={<GroupIcon />}
-                label={activeGroupLabel ? `Group: ${activeGroupLabel}` : 'Group'}
+                label={groupLabel ? `Group: ${groupLabel}` : 'Group'}
                 onClick={(e) => setGroupAnchor(e.currentTarget)}
               />
             )}
@@ -259,7 +261,7 @@ export function DataTable<Row, Field extends string = string>({
         </Stack>
         <Box sx={{ minHeight: 40, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <DataTablePagination rowsPerPageOptions={rowsPerPageOptions} />
-          {api.groupBy && (
+          {api.groupBy.length > 0 && (
             <Typography sx={{ fontSize: '13px', fontWeight: 500, color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>
               {api.groups.length} groups · {api.groupsTotal} records
             </Typography>
@@ -304,11 +306,12 @@ export function DataTable<Row, Field extends string = string>({
       )}
 
       <Menu anchorEl={groupAnchor} open={Boolean(groupAnchor)} onClose={() => setGroupAnchor(null)}>
-        {[{ field: null as Field | null, label: 'None' }, ...(api.groupByColumns ?? [])].map((g) => (
+        <MenuItem selected={api.groupBy.length === 0} onClick={() => { api.setGroupBy([]); setGroupAnchor(null) }}>None</MenuItem>
+        {(api.groupByColumns ?? []).map((g) => (
           <MenuItem
-            key={g.label}
-            selected={api.groupBy === g.field}
-            onClick={() => { api.setGroupBy(g.field); setGroupAnchor(null) }}
+            key={g.field}
+            selected={api.groupBy.includes(g.field)}
+            onClick={() => { toggleGroupField(g.field); setGroupAnchor(null) }}
           >
             {g.label}
           </MenuItem>

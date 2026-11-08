@@ -29,7 +29,7 @@ Every one of these calls resets `pagination.page` to `1`, for the same reason: t
 | `setSearch(value)` | Yes |
 | `toggleSort` / `setSort` | Yes |
 | `setFilters(next)` | Yes |
-| `setGroupBy(field)` | Yes (and clears every group's loaded state — see [Grouping](/guide/grouping)) |
+| `setGroupBy(fields)` | Yes (and clears every group's loaded state — see [Grouping](/guide/grouping)) |
 | `setPageSize(n)` | Yes |
 | `setPage(n)` | No — this *is* the page change |
 | `refetch()` | No — re-runs the exact same query |
@@ -79,7 +79,7 @@ table.groupPagination('active')       // { page, pageSize } — this group's own
 table.setGroupPage('active', 2)       // page 2 of "Active" specifically
 ```
 
-`table.pagination`/`setPage`/`setPageSize` still exist while grouped, but `<DataTable/>`'s `Pagination` piece hides itself in that state (`api.groupBy` is set) — there's nothing meaningful to paginate at the top level once the view is a list of collapsible groups instead of a list of rows.
+`table.pagination`/`setPage`/`setPageSize` still exist while grouped, but `<DataTable/>`'s `Pagination` piece hides itself in that state (`api.groupBy` is not empty) — there's nothing meaningful to paginate at the top level once the view is a list of collapsible groups instead of a list of rows.
 
 ## Next
 

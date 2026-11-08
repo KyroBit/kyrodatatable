@@ -31,42 +31,35 @@ function paginate(rows, page, pageSize) {
     total
   };
 }
-/** Builds fetchRecords/fetchGroups equivalents that run entirely in memory against `data` — the client-mode counterpart to the server-side functions you'd otherwise write by hand. */
+const valueOf = (row, field) => String(row[field]);
 export function createClientEngine({
   data,
   columns,
-  applyFilters,
-  groupField
+  applyFilters
 }) {
   const fields = searchableFields(columns);
   function filtered(params) {
-    let rows = data;
-    if (params.groupKey !== undefined && groupField) {
-      rows = rows.filter(row => String(groupField(row)) === params.groupKey);
-    }
-    rows = rows.filter(row => matchesSearch(row, params.search, fields));
-    if (applyFilters && params.filters !== undefined) {
-      rows = rows.filter(row => applyFilters(row, params.filters));
-    }
-    return rows;
+    const path = params.groupPath ?? [];
+    return data.filter(row => path.every(entry => valueOf(row, entry.field) === entry.key) && matchesSearch(row, params.search, fields) && (!applyFilters || params.filters === undefined || applyFilters(row, params.filters)));
   }
   async function fetchRecords(params) {
     return paginate(sortRows(filtered(params), params.sort), params.page, params.pageSize);
   }
   async function fetchGroups(params) {
-    if (!groupField || !params.groupBy) return {
+    const field = params.groupBy;
+    if (!field) return {
       total: 0,
       groups: []
     };
-    const rows = data.filter(row => matchesSearch(row, params.search, fields));
+    const rows = filtered(params);
     const buckets = new Map();
     for (const row of rows) {
-      const key = String(groupField(row));
+      const key = valueOf(row, field);
       buckets.set(key, (buckets.get(key) ?? 0) + 1);
     }
     const groups = [...buckets.entries()].map(([key, count]) => ({
       key,
-      field: params.groupBy,
+      field,
       label: key,
       count
     }));

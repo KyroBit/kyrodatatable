@@ -79,7 +79,7 @@ export interface ExportRequest<Field extends string = string, Filters = FilterVa
     search: string;
     sort: SortState<Field> | null;
     filters: Filters | undefined;
-    groupBy: Field | null;
+    groupBy: Field[];
     selectedIds: string[];
 }
 export interface SortState<Field extends string = string> {
@@ -117,6 +117,10 @@ export interface ResourceGroup<Field extends string = string> {
     label: string;
     count: number;
 }
+export interface GroupPathEntry<Field extends string = string> {
+    field: Field;
+    key: string;
+}
 export interface FetchParams<Field extends string = string, Filters = FilterValues> {
     page: number;
     pageSize: number;
@@ -124,7 +128,7 @@ export interface FetchParams<Field extends string = string, Filters = FilterValu
     sort: SortState<Field> | null;
     filters: Filters;
     groupBy?: Field;
-    groupKey?: string;
+    groupPath?: GroupPathEntry<Field>[];
 }
 export interface FetchResult<Row> {
     rows: Row[];
@@ -140,12 +144,15 @@ export type VisibleItem<Row, Field extends string = string> = {
     row: Row;
 } | {
     type: 'group';
+    id: string;
     group: ResourceGroup<Field>;
+    depth: number;
     expanded: boolean;
 } | {
     type: 'group-row';
     row: Row;
-    groupKey: string;
+    groupId: string;
+    depth: number;
 };
 interface DataTableConfigBase<Row, Field extends string, Filters> {
     columns: ColumnDef<Row, Field>[];
@@ -154,7 +161,7 @@ interface DataTableConfigBase<Row, Field extends string, Filters> {
     initialPageSize?: number;
     initialSort?: SortState<Field> | null;
     initialFilters?: Filters;
-    initialGroupBy?: Field;
+    initialGroupBy?: Field[];
     /** Delay, in ms, between a `setSearch` call and the query it triggers actually running. Default `0` (no debounce). */
     searchDebounceMs?: number;
     /** Columns hidden until the reader turns them on. Anything not listed starts visible. */
@@ -165,7 +172,6 @@ interface DataTableConfigBase<Row, Field extends string, Filters> {
     deps?: readonly unknown[];
 }
 export interface ServerDataTableConfig<Row, Field extends string = string, Filters = FilterValues> extends DataTableConfigBase<Row, Field, Filters> {
-    /** Called for the flat list, and again per-group (with `groupBy`/`groupKey` set) when a group is expanded. */
     fetchRecords: (params: FetchParams<Field, Filters>) => Promise<FetchResult<Row>>;
     /** Enables grouping. Without it, `groupByColumns` has nothing to call. */
     fetchGroups?: (params: FetchParams<Field, Filters>) => Promise<FetchGroupsResult<Field>>;

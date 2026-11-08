@@ -54,13 +54,14 @@ const presets = usePresets<Filters>('blog-categories', BUILT_IN)
 | `initialPageSize` | `number` | optional | Default `25`. |
 | `initialSort` | `SortState<Field> \| null` | optional | Default unsorted. |
 | `initialFilters` | `Filters` | optional | Seeds `table.filters`. |
+| `initialGroupBy` | `Field[]` | optional | Mounts grouped by these fields, outermost first. Fields missing from `groupByColumns` are dropped. Re-applied when `deps` change. |
 | `searchDebounceMs` | `number` | optional | Default `0`. Delay between a `setSearch` call and the query it triggers. `table.search` updates immediately either way. |
 
 ### Server mode — `fetchRecords`/`fetchGroups`
 
 | Field | Type | | Description |
 |---|---|---|---|
-| `fetchRecords` | `(params: FetchParams<Field, Filters>) => Promise<FetchResult<Row>>` | required | Called for the flat list, and again per-group with `groupBy`/`groupKey` set when a group is expanded. |
+| `fetchRecords` | `(params: FetchParams<Field, Filters>) => Promise<FetchResult<Row>>` | required | Called for the flat list, and again per leaf group with `groupPath` set when that group is expanded. |
 | `fetchGroups` | `(params: FetchParams<Field, Filters>) => Promise<FetchGroupsResult<Field>>` | optional | Enables grouping. Without it, `groupByColumns` has nothing to call — `groupBy` stays inert. |
 
 ### Client mode — `data`
@@ -81,8 +82,8 @@ What your `fetchRecords`/`fetchGroups` functions receive:
 | `search` | `string` | Current search text. |
 | `sort` | `SortState<Field> \| null` | |
 | `filters` | `Filters` | Whatever `table.filters` currently holds. |
-| `groupBy` | `Field \| undefined` | Set only while grouped. |
-| `groupKey` | `string \| undefined` | Set only when fetching rows for one specific expanded group. |
+| `groupBy` | `Field \| undefined` | Set only on `fetchGroups`: the field to group this level by. |
+| `groupPath` | `GroupPathEntry<Field>[] \| undefined` | The groups the request sits inside, outermost first, as `{ field, key }`. |
 
 ### `DataTableApi<Row, Field, Filters>`
 
@@ -98,9 +99,9 @@ What `useDataTable()` returns. Every renderer — built-in or your own — works
 | `sort`, `toggleSort` | `SortState<Field> \| null`, `(field: Field) => void` | `toggleSort` cycles asc → desc → unsorted on repeated calls for the *same* field; picking a new field jumps straight to asc. |
 | `setSort` | `(sort: SortState<Field> \| null) => void` | Sets sort directly — for a menu that lets someone pick field and direction independently, rather than relying on `toggleSort`'s cycling. |
 | `pagination`, `setPage`, `setPageSize` | `{ page, pageSize }`, ... | 1-indexed page. |
-| `groupBy`, `setGroupBy` | `Field \| null`, `(field: Field \| null) => void` | Switching groups clears all expanded/loaded group state. |
+| `groupBy`, `setGroupBy` | `Field[]`, `(fields: Field[]) => void` | Outermost first; empty means flat. Switching clears all expanded/loaded group state. |
 | `groups`, `groupsTotal`, `groupsLoading` | `ResourceGroup<Field>[]`, `number`, `boolean` | Top-level group list, when grouped. |
-| `isGroupExpanded`, `toggleGroup` | `(key: string) => boolean`, `(key: string) => void` | Expanding for the first time triggers that group's fetch. |
+| `isGroupExpanded`, `toggleGroup` | `(id: string) => boolean`, `(id: string) => void` | Expanding for the first time triggers that group's fetch. |
 | `groupRows`, `groupTotal`, `groupLoading`, `groupPagination`, `setGroupPage` | all keyed by group `key` | Fully independent per group. |
 | `visibleItems` | `VisibleItem<Row, Field>[]` | Flat rows, or interleaved groups + group-rows, in display order. What every built-in renderer actually iterates — see [Writing your own renderer](/guide/custom-renderer). |
 | `refetch` | `() => void` | Re-runs the current query. Call after a mutation — delete, create, edit. |
@@ -112,8 +113,8 @@ A discriminated union — `switch`/`if` on `.type`:
 ```ts
 type VisibleItem<Row, Field> =
   | { type: 'row'; row: Row }                              // flat mode
-  | { type: 'group'; group: ResourceGroup<Field>; expanded: boolean } // group header
-  | { type: 'group-row'; row: Row; groupKey: string }       // a row inside an expanded group
+  | { type: 'group'; id: string; group: ResourceGroup<Field>; depth: number; expanded: boolean } // group header
+  | { type: 'group-row'; row: Row; groupId: string; depth: number }                            // a row inside an expanded leaf group
 ```
 
 ## `useFilterLabels(api, filterColumns, filters)`

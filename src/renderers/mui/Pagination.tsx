@@ -9,7 +9,7 @@ export interface DataTablePaginationProps {
 /** Invisible while there is nothing to page through, keeping its space so the toolbar does not shift when rows arrive. Hidden while grouped — pagination happens per-group there instead (`api.setGroupPage`). */
 export function DataTablePagination({ rowsPerPageOptions = [] }: DataTablePaginationProps) {
   const api = useDataTableContext()
-  if (api.groupBy) return null
+  if (api.groupBy.length > 0) return null
 
   return (
     <TablePagination

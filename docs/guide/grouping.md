@@ -4,7 +4,7 @@ This picks up exactly where the [quick start](/guide/quick-start) left off — s
 
 Grouping works in both modes `useDataTable` supports: pass `data`, and it groups the array in memory with no extra config at all. Pass `fetchRecords`/`fetchGroups` instead, and grouping runs against your API the same way search and sort already do. Client mode first, since it's less to write — then the server-mode version, which is the one that carries over once a real backend is involved.
 
-This is the one thing MUI X DataGrid can't do without paying for it, in either mode — row grouping is a **Premium**-only feature there, not included in Community or even Pro. It's a first-class, no-license feature here, because it's just state: a list of groups, and a `Record<groupKey, { rows, total, page }>` alongside the flat list the hook already tracked.
+This is the one thing MUI X DataGrid can't do without paying for it, in either mode — row grouping is a **Premium**-only feature there, not included in Community or even Pro. It's a first-class, no-license feature here, because it's just state: a tree of groups, and a `Record<groupId, { rows, groups, total, page }>` alongside the flat list the hook already tracked.
 
 ## Client mode: nothing to write
 
@@ -23,7 +23,7 @@ const table = useDataTable({
 
 ## Server mode: why grouping needs a second fetch function
 
-Grouped mode has two different questions to answer, and they're different queries against your data: *what are the groups, and how many rows are in each* (one query, runs once) versus *what are the rows inside group X, page 2* (a different query, runs per group, only when that group is actually expanded). `fetchRecords` — the one you already wrote — answers the second question, once you pass it `groupBy`/`groupKey`. `fetchGroups` is new, and answers the first.
+Grouped mode has two different questions to answer, and they're different queries against your data: *what are the groups, and how many rows are in each* (one query, runs once) versus *what are the rows inside group X, page 2* (a different query, runs per group, only when that group is actually expanded). `fetchRecords` — the one you already wrote — answers the second question, once you pass it `groupPath` — the groups the request sits inside, outermost first. `fetchGroups` is new, and answers the first: it groups by `params.groupBy`, within `params.groupPath`.
 
 ## Extend the in-memory data
 
@@ -59,7 +59,7 @@ And update `fetchCategories` to filter by group when it's asked to — this is t
 export async function fetchCategories(params: FetchParams) {
   let rows = ALL_CATEGORIES.filter((c) => {
     const matchesSearch = c.name.toLowerCase().includes(params.search.toLowerCase())
-    const matchesGroup = !params.groupKey || (params.groupKey === 'active' ? c.is_active : !c.is_active)
+    const matchesGroup = (params.groupPath ?? []).every((entry) => (entry.key === 'active') === c.is_active)
     return matchesSearch && matchesGroup
   })
 
@@ -79,16 +79,20 @@ const table = useDataTable({
 })
 ```
 
-Two new fields from the quick start's server-mode call — `fetchGroups`, and `groupByColumns` to tell the renderer what grouping options exist. `<DataTable />` grows a "Group by" select automatically; pick "Status" in it (or call `table.setGroupBy('is_active')` yourself) and the flat, paginated view is replaced by the two collapsed groups.
+Two new fields from the quick start's server-mode call — `fetchGroups`, and `groupByColumns` to tell the renderer what grouping options exist. `<DataTable />` grows a "Group by" select automatically; pick "Status" in it (or call `table.setGroupBy(['is_active'])` yourself) and the flat, paginated view is replaced by the two collapsed groups.
 
-To open the table already grouped, pass `initialGroupBy: 'is_active'`. It mounts calling `fetchGroups` only, never a flat `fetchRecords`; choosing "None" drops to the flat list, and a change in `deps` groups it again. A field missing from `groupByColumns` is ignored.
+To open the table already grouped, pass `initialGroupBy: ['is_active']`. It mounts calling `fetchGroups` only, never a flat `fetchRecords`; choosing "None" drops to the flat list, and a change in `deps` groups it again. A field missing from `groupByColumns` is ignored.
 
 ## What happens, in order, when someone expands "Active"
 
-1. `table.toggleGroup('active')` flips it open.
-2. Because this is the first time that group has been expanded, it calls `fetchCategories` — the same function, not a different one — with `groupKey: 'active'` set on the params.
-3. Those 10 rows (page 1, whatever the page size is) land in `table.groupRows('active')`, entirely separate from `table.rows` (which is empty now — you're in grouped mode) and from whatever `table.groupRows('inactive')` holds.
-4. Collapse it, expand it again: no refetch. The rows are still there. Expand "Inactive" for the first time: *that* triggers its own fetch, with `groupKey: 'inactive'`, and its own independent page counter.
+1. `table.toggleGroup(item.id)` flips it open. A group's id comes from its `visibleItems` entry; it encodes the group's whole path.
+2. Because this is the first time that group has been expanded, it calls `fetchCategories` — the same function, not a different one — with `groupPath: [{ field: 'is_active', key: 'active' }]` set on the params.
+3. Those 10 rows (page 1, whatever the page size is) land in `table.groupRows(item.id)`, entirely separate from `table.rows` (which is empty now — you're in grouped mode) and from whatever the "Inactive" group holds.
+4. Collapse it, expand it again: no refetch. The rows are still there. Expand "Inactive" for the first time: *that* triggers its own fetch, with its own path and its own independent page counter.
+
+## Nested groups
+
+`groupBy` is a list. `table.setGroupBy(['is_active', 'country'])` groups by status, then by country inside each status. Expanding a status calls `fetchGroups` with `groupBy: 'country'` and `groupPath: [{ field: 'is_active', key: 'active' }]`; expanding a country inside it calls `fetchRecords` with both entries in `groupPath`. Every group header in `visibleItems` carries its `depth`, which the built-in renderers indent by. In `<DataTable />`'s Group menu, each field toggles in or out, appended in the order picked; "None" clears them all. Selecting a group selects every row loaded beneath it, and collapsing it clears them.
 
 Read this state without any renderer at all via `table.groupRows`/`table.groupPagination`/`table.setGroupPage`, callable from any renderer — or your own markup.
 
@@ -97,18 +101,19 @@ Read this state without any renderer at all via `table.groupRows`/`table.groupPa
 ```ts
 table.groups              // [{ key: 'active', label: 'Active', count: 10 }, { key: 'inactive', ... count: 4 }]
 table.groupsLoading       // true while fetchGroups is in flight
-table.isGroupExpanded('active')
-table.toggleGroup('active')
-table.groupRows('active') // Category[] — empty until expanded at least once
-table.groupTotal('active')
-table.groupLoading('active')
-table.groupPagination('active') // { page, pageSize } — independent of the outer table.pagination
-table.setGroupPage('active', 2)
+const id = table.visibleItems.find((item) => item.type === 'group')!.id
+table.isGroupExpanded(id)
+table.toggleGroup(id)
+table.groupRows(id)        // Category[] — empty until expanded at least once
+table.groupTotal(id)
+table.groupLoading(id)
+table.groupPagination(id)  // { page, pageSize } — independent of the outer table.pagination
+table.setGroupPage(id, 2)
 ```
 
 ## Switching away from grouping
 
-`table.setGroupBy(null)` — or "None" in the renderer's control — drops back to the flat, paginated `table.rows` view, and clears every group's loaded rows and expand state. Re-grouping later starts clean rather than showing whatever was previously expanded.
+`table.setGroupBy([])` — or "None" in the renderer's control — drops back to the flat, paginated `table.rows` view, and clears every group's loaded rows and expand state. Re-grouping later starts clean rather than showing whatever was previously expanded.
 
 ## Next
 

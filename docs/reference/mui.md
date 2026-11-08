@@ -80,7 +80,7 @@ One removable chip per applied value, read from `api.filters`. Select and choice
 
 ### `DataTable.Pagination` (`DataTablePagination`)
 
-No props. Renders `TablePagination` bound to `api.pagination`/`api.total`. Invisible, but still taking its space, while `api.total` is 0. Renders nothing while `api.groupBy` is set.
+No props. Renders `TablePagination` bound to `api.pagination`/`api.total`. Invisible, but still taking its space, while `api.total` is 0. Renders nothing while `api.groupBy` is not empty.
 
 ## `<FavoritesMenu/>`
 

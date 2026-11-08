@@ -30,18 +30,18 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
     hasMore: boolean;
     loadingMore: boolean;
     listKey: string;
-    groupBy: Field | null;
-    setGroupBy: (field: Field | null) => void;
+    groupBy: Field[];
+    setGroupBy: (fields: Field[]) => void;
     groups: ResourceGroup<Field>[];
     groupsTotal: number;
     groupsLoading: boolean;
-    isGroupExpanded: (key: string) => boolean;
-    toggleGroup: (key: string) => void;
-    groupRows: (key: string) => Row[];
-    groupTotal: (key: string) => number;
-    groupLoading: (key: string) => boolean;
-    groupPagination: (key: string) => PaginationState;
-    setGroupPage: (key: string, page: number) => void;
+    isGroupExpanded: (id: string) => boolean;
+    toggleGroup: (id: string) => void;
+    groupRows: (id: string) => Row[];
+    groupTotal: (id: string) => number;
+    groupLoading: (id: string) => boolean;
+    groupPagination: (id: string) => PaginationState;
+    setGroupPage: (id: string, page: number) => void;
     /** Flat + grouped rows in one display-ordered list — see the `VisibleItem` type. What every built-in renderer actually iterates. */
     visibleItems: VisibleItem<Row, Field>[];
     /** Row selection, keyed by row id. Persists across pages; collapsing a group drops its rows. */
@@ -56,9 +56,9 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
     allVisibleSelected: boolean;
     someVisibleSelected: boolean;
     /** Per-group selection over the group's loaded rows. */
-    groupAllSelected: (key: string) => boolean;
-    groupSomeSelected: (key: string) => boolean;
-    toggleSelectGroup: (key: string) => void;
+    groupAllSelected: (id: string) => boolean;
+    groupSomeSelected: (id: string) => boolean;
+    toggleSelectGroup: (id: string) => void;
     refetch: () => void;
 }
 export declare function useDataTable<Row, Field extends string = string, Filters = FilterValues>(config: DataTableConfig<Row, Field, Filters>): DataTableApi<Row, Field, Filters>;

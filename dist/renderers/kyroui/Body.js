@@ -127,20 +127,20 @@ function SortArrows(t0) {
 function GroupPager(t0) {
   const $ = _c(29);
   const {
-    groupKey,
+    groupId,
     api
   } = t0;
   let t1;
-  if ($[0] !== api || $[1] !== groupKey) {
-    t1 = api.groupPagination(groupKey);
+  if ($[0] !== api || $[1] !== groupId) {
+    t1 = api.groupPagination(groupId);
     $[0] = api;
-    $[1] = groupKey;
+    $[1] = groupId;
     $[2] = t1;
   } else {
     t1 = $[2];
   }
   const pagination = t1;
-  const total = api.groupTotal(groupKey);
+  const total = api.groupTotal(groupId);
   if (total <= 0) {
     return null;
   }
@@ -186,10 +186,10 @@ function GroupPager(t0) {
   }
   const t5 = pagination.page <= 1;
   let t6;
-  if ($[9] !== api || $[10] !== groupKey || $[11] !== pagination.page) {
-    t6 = () => api.setGroupPage(groupKey, pagination.page - 1);
+  if ($[9] !== api || $[10] !== groupId || $[11] !== pagination.page) {
+    t6 = () => api.setGroupPage(groupId, pagination.page - 1);
     $[9] = api;
-    $[10] = groupKey;
+    $[10] = groupId;
     $[11] = pagination.page;
     $[12] = t6;
   } else {
@@ -221,10 +221,10 @@ function GroupPager(t0) {
   }
   const t9 = to >= total;
   let t10;
-  if ($[17] !== api || $[18] !== groupKey || $[19] !== pagination.page) {
-    t10 = () => api.setGroupPage(groupKey, pagination.page + 1);
+  if ($[17] !== api || $[18] !== groupId || $[19] !== pagination.page) {
+    t10 = () => api.setGroupPage(groupId, pagination.page + 1);
     $[17] = api;
-    $[18] = groupKey;
+    $[18] = groupId;
     $[19] = pagination.page;
     $[20] = t10;
   } else {
@@ -533,7 +533,7 @@ export function DataTableBody(t0) {
           "data-row": "",
           ...measured,
           className: "KyroTable-groupRow",
-          onClick: () => api.toggleGroup(item.group.key),
+          onClick: () => api.toggleGroup(item.id),
           style: {
             cursor: "pointer"
           },
@@ -545,7 +545,8 @@ export function DataTableBody(t0) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                gap: "sm"
+                gap: "sm",
+                pl: item.depth * 3
               },
               children: [/*#__PURE__*/_jsxs(Box, {
                 sx: {
@@ -571,9 +572,9 @@ export function DataTableBody(t0) {
                   },
                   onClick: _temp6,
                   children: /*#__PURE__*/_jsx(Checkbox, {
-                    checked: api.groupAllSelected(item.group.key),
-                    indeterminate: api.groupSomeSelected(item.group.key) && !api.groupAllSelected(item.group.key),
-                    onChange: () => api.toggleSelectGroup(item.group.key),
+                    checked: api.groupAllSelected(item.id),
+                    indeterminate: api.groupSomeSelected(item.id) && !api.groupAllSelected(item.id),
+                    onChange: () => api.toggleSelectGroup(item.id),
                     "aria-label": `Select all rows in ${item.group.label}`
                   })
                 }), /*#__PURE__*/_jsx(Box, {
@@ -597,7 +598,7 @@ export function DataTableBody(t0) {
                     color: "text.secondary"
                   },
                   children: item.group.count
-                }), api.groupLoading(item.group.key) && api.groupRows(item.group.key).length === 0 && /*#__PURE__*/_jsx(Box, {
+                }), api.groupLoading(item.id) && api.groupRows(item.id).length === 0 && /*#__PURE__*/_jsx(Box, {
                   component: "span",
                   sx: {
                     color: "text.secondary",
@@ -606,12 +607,12 @@ export function DataTableBody(t0) {
                   children: "loading\u2026"
                 })]
               }), item.expanded && /*#__PURE__*/_jsx(GroupPager, {
-                groupKey: item.group.key,
+                groupId: item.id,
                 api: api
               })]
             })
           })
-        }, `group-${item.group.key}`);
+        }, `group-${item.id}`);
       }
       const row_0 = item.row;
       const rowId = api.getRowId(row_0);
