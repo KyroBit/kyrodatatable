@@ -177,6 +177,7 @@ interface DataTableConfigBase<Row, Field extends string, Filters> {
     getRowId: (row: Row) => string;
     groupByColumns?: GroupByColumn<Field>[];
     initialPageSize?: number;
+    initialGroupPageSize?: number;
     initialSort?: SortState<Field> | null;
     initialFilters?: Filters;
     initialGroupBy?: Field[];

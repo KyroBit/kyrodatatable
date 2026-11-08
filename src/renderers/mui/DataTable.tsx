@@ -59,6 +59,7 @@ export interface DataTableProps<Row, Field extends string = string> {
   errorMessage?: ReactNode
   stickyHeader?: boolean
   rowsPerPageOptions?: number[]
+  groupsPerPageOptions?: number[]
 }
 
 /**
@@ -102,6 +103,7 @@ export function DataTable<Row, Field extends string = string>({
   errorMessage,
   stickyHeader,
   rowsPerPageOptions,
+  groupsPerPageOptions,
 }: DataTableProps<Row, Field>) {
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
   const [actionsAnchor, setActionsAnchor] = useState<HTMLElement | null>(null)
@@ -253,7 +255,7 @@ export function DataTable<Row, Field extends string = string>({
           </Stack>
         </Stack>
         <Box sx={{ minHeight: 40, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-          <DataTablePagination rowsPerPageOptions={rowsPerPageOptions} />
+          <DataTablePagination rowsPerPageOptions={rowsPerPageOptions} groupsPerPageOptions={groupsPerPageOptions} />
         </Box>
       </Stack>
 

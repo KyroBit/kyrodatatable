@@ -44,6 +44,7 @@ export interface DataTableProps<Row, Field extends string = string> {
     errorMessage?: ReactNode;
     stickyHeader?: boolean;
     rowsPerPageOptions?: number[];
+    groupsPerPageOptions?: number[];
     /** Loads the next page as the end of the table scrolls into view, in place of page controls. */
     infiniteScroll?: boolean;
 }
@@ -53,7 +54,7 @@ export interface DataTableProps<Row, Field extends string = string> {
  * card, and top-right pagination. Every section is opt-in through props; for
  * a custom layout compose the exported pieces yourself.
  */
-export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, searchPlaceholder, searchWidth, createLabel, onCreate, toolbarEnd, onExport, exportFormats, filterRenderers, onImport, exportTooltip, importTooltip, actions, selectable, settings, onRowClick, onRowIntent, rowClass, emptyMessage, noResultsMessage, errorMessage, stickyHeader, rowsPerPageOptions, infiniteScroll, }: DataTableProps<Row, Field>): import("react").JSX.Element;
+export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, searchPlaceholder, searchWidth, createLabel, onCreate, toolbarEnd, onExport, exportFormats, filterRenderers, onImport, exportTooltip, importTooltip, actions, selectable, settings, onRowClick, onRowIntent, rowClass, emptyMessage, noResultsMessage, errorMessage, stickyHeader, rowsPerPageOptions, groupsPerPageOptions, infiniteScroll, }: DataTableProps<Row, Field>): import("react").JSX.Element;
 export declare namespace DataTable {
     var Root: typeof DataTableRoot;
     var SearchField: typeof DataTableSearchField;

@@ -44,8 +44,9 @@ export interface DataTableProps<Row, Field extends string = string> {
     errorMessage?: ReactNode;
     stickyHeader?: boolean;
     rowsPerPageOptions?: number[];
+    groupsPerPageOptions?: number[];
 }
-export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, searchPlaceholder, searchWidth, createLabel, onCreate, toolbarEnd, onExport, exportFormats, filterRenderers, onImport, exportTooltip, importTooltip, actions, selectable, settings, onRowClick, onRowIntent, rowClass, emptyMessage, noResultsMessage, errorMessage, stickyHeader, rowsPerPageOptions, }: DataTableProps<Row, Field>): import("react").JSX.Element;
+export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, searchPlaceholder, searchWidth, createLabel, onCreate, toolbarEnd, onExport, exportFormats, filterRenderers, onImport, exportTooltip, importTooltip, actions, selectable, settings, onRowClick, onRowIntent, rowClass, emptyMessage, noResultsMessage, errorMessage, stickyHeader, rowsPerPageOptions, groupsPerPageOptions, }: DataTableProps<Row, Field>): import("react").JSX.Element;
 export declare namespace DataTable {
     var Root: typeof DataTableRoot;
     var SearchField: typeof DataTableSearchField;

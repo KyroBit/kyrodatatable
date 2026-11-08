@@ -57,6 +57,7 @@ export interface DataTableProps<Row, Field extends string = string> {
   errorMessage?: ReactNode
   stickyHeader?: boolean
   rowsPerPageOptions?: number[]
+  groupsPerPageOptions?: number[]
   /** Loads the next page as the end of the table scrolls into view, in place of page controls. */
   infiniteScroll?: boolean
 }
@@ -93,6 +94,7 @@ export function DataTable<Row, Field extends string = string>({
   errorMessage,
   stickyHeader,
   rowsPerPageOptions,
+  groupsPerPageOptions,
   infiniteScroll,
 }: DataTableProps<Row, Field>) {
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
@@ -306,7 +308,7 @@ export function DataTable<Row, Field extends string = string>({
       </Card>
       {(!infiniteScroll || api.groupBy.length > 0) && (
       <Box data-table-footer="" sx={(theme) => ({ minHeight: theme.vars.size.row, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' })}>
-        {!infiniteScroll && <DataTablePagination rowsPerPageOptions={rowsPerPageOptions} />}
+        {!infiniteScroll && <DataTablePagination rowsPerPageOptions={rowsPerPageOptions} groupsPerPageOptions={groupsPerPageOptions} />}
         {infiniteScroll && (
           <Typography sx={{ fontSize: 'md', fontWeight: 500, color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>
             {api.groupsTotal} groups · {api.total} records

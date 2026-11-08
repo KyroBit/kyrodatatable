@@ -35,6 +35,8 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
     groups: ResourceGroup<Field>[];
     groupsTotal: number;
     groupsLoading: boolean;
+    groupPageSize: number;
+    setGroupPageSize: (size: number) => void;
     isGroupExpanded: (id: string) => boolean;
     toggleGroup: (id: string) => void;
     groupRows: (id: string) => Row[];

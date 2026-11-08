@@ -52,6 +52,7 @@ const presets = usePresets<Filters>('blog-categories', BUILT_IN)
 | `getRowId` | `(row: Row) => string` | required | Echoed back on `table.getRowId`. Stable row identity, used as the React key by the built-in renderers. |
 | `groupByColumns` | `GroupByColumn<Field>[]` | optional | Echoed back on `table.groupByColumns`. Columns offered in a renderer's "group by" control. |
 | `initialPageSize` | `number` | optional | Default `25`. |
+| `initialGroupPageSize` | `number` | optional | Groups per page at every grouping level. Defaults to `initialPageSize`. Records inside a group keep `initialPageSize`. |
 | `initialSort` | `SortState<Field> \| null` | optional | Default unsorted. |
 | `initialFilters` | `Filters` | optional | Seeds `table.filters`. |
 | `initialGroupBy` | `Field[]` | optional | Mounts grouped by these fields, outermost first. Fields missing from `groupByColumns` are dropped. Re-applied when `deps` change. |
@@ -101,6 +102,7 @@ What `useDataTable()` returns. Every renderer — built-in or your own — works
 | `pagination`, `setPage`, `setPageSize` | `{ page, pageSize }`, ... | 1-indexed page. |
 | `groupBy`, `setGroupBy` | `Field[]`, `(fields: Field[]) => void` | Outermost first; empty means flat. Switching clears all expanded/loaded group state. |
 | `groups`, `groupsTotal`, `groupsLoading` | `ResourceGroup<Field>[]`, `number`, `boolean` | The loaded top-level groups and how many exist. While grouped, `total` is the record count and the pager pages groups. |
+| `groupPageSize`, `setGroupPageSize` | `number`, `(size: number) => void` | Groups per page, at every level. Setting it returns to page 1 and collapses every group. |
 | `isGroupExpanded`, `toggleGroup` | `(id: string) => boolean`, `(id: string) => void` | Expanding for the first time triggers that group's fetch. |
 | `groupRows`, `groupTotal`, `groupLoading`, `groupPagination`, `setGroupPage` | all keyed by group `key` | Fully independent per group. |
 | `visibleItems` | `VisibleItem<Row, Field>[]` | Flat rows, or interleaved groups + group-rows, in display order. What every built-in renderer actually iterates — see [Writing your own renderer](/guide/custom-renderer). |

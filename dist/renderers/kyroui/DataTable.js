@@ -20,7 +20,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
  * a custom layout compose the exported pieces yourself.
  */
 export function DataTable(t0) {
-  const $ = _c(110);
+  const $ = _c(111);
   const {
     api,
     presets,
@@ -47,6 +47,7 @@ export function DataTable(t0) {
     errorMessage,
     stickyHeader,
     rowsPerPageOptions,
+    groupsPerPageOptions,
     infiniteScroll
   } = t0;
   const createLabel = t1 === undefined ? "Create" : t1;
@@ -537,12 +538,13 @@ export function DataTable(t0) {
     t26 = $[94];
   }
   let t27;
-  if ($[95] !== api.groupBy.length || $[96] !== api.groupsTotal || $[97] !== api.total || $[98] !== infiniteScroll || $[99] !== rowsPerPageOptions) {
+  if ($[95] !== api.groupBy.length || $[96] !== api.groupsTotal || $[97] !== api.total || $[98] !== groupsPerPageOptions || $[99] !== infiniteScroll || $[100] !== rowsPerPageOptions) {
     t27 = (!infiniteScroll || api.groupBy.length > 0) && /*#__PURE__*/_jsxs(Box, {
       "data-table-footer": "",
       sx: _temp3,
       children: [!infiniteScroll && /*#__PURE__*/_jsx(DataTablePagination, {
-        rowsPerPageOptions: rowsPerPageOptions
+        rowsPerPageOptions: rowsPerPageOptions,
+        groupsPerPageOptions: groupsPerPageOptions
       }), infiniteScroll && /*#__PURE__*/_jsxs(Typography, {
         sx: {
           fontSize: "md",
@@ -556,29 +558,30 @@ export function DataTable(t0) {
     $[95] = api.groupBy.length;
     $[96] = api.groupsTotal;
     $[97] = api.total;
-    $[98] = infiniteScroll;
-    $[99] = rowsPerPageOptions;
-    $[100] = t27;
+    $[98] = groupsPerPageOptions;
+    $[99] = infiniteScroll;
+    $[100] = rowsPerPageOptions;
+    $[101] = t27;
   } else {
-    t27 = $[100];
+    t27 = $[101];
   }
   let t28;
-  if ($[101] !== api || $[102] !== t14 || $[103] !== t21 || $[104] !== t22 || $[105] !== t23 || $[106] !== t24 || $[107] !== t26 || $[108] !== t27) {
+  if ($[102] !== api || $[103] !== t14 || $[104] !== t21 || $[105] !== t22 || $[106] !== t23 || $[107] !== t24 || $[108] !== t26 || $[109] !== t27) {
     t28 = /*#__PURE__*/_jsxs(DataTableRoot, {
       api: api,
       children: [t14, t21, t22, t23, t24, t26, t27]
     });
-    $[101] = api;
-    $[102] = t14;
-    $[103] = t21;
-    $[104] = t22;
-    $[105] = t23;
-    $[106] = t24;
-    $[107] = t26;
-    $[108] = t27;
-    $[109] = t28;
+    $[102] = api;
+    $[103] = t14;
+    $[104] = t21;
+    $[105] = t22;
+    $[106] = t23;
+    $[107] = t24;
+    $[108] = t26;
+    $[109] = t27;
+    $[110] = t28;
   } else {
-    t28 = $[109];
+    t28 = $[110];
   }
   return t28;
 }
