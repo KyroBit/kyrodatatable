@@ -1,15 +1,16 @@
 import { c as _c } from "react/compiler-runtime";
 import { startTransition, useEffect, useMemo, useOptimistic, useState } from 'react';
-import { Badge, Box, Button, Card, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Submenu, ToggleButton, ToggleButtonGroup, Typography } from '@kyrobit/kyroui';
+import { Box, Button, Card, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Submenu, ToggleButton, ToggleButtonGroup, Typography } from '@kyrobit/kyroui';
 import { countFilterValues, filterValuesEqual } from '@kyrobit/datatable';
 import { DataTableRoot } from './context.js';
 import { DataTableSearchField } from './SearchField.js';
 import { DataTableBody } from './Body.js';
 import { DataTablePagination } from './Pagination.js';
-import { DataTableFilterMenu, ManageViewsDialog } from './FilterMenu.js';
+import { ManageViewsDialog } from './FilterMenu.js';
+import { DataTableFilterButton } from './FilterButton.js';
 import { DataTableSettingsDialog } from './SettingsDialog.js';
 import { ConfirmDialog } from './ConfirmDialog.js';
-import { ActionsIcon, AddIcon, ExportIcon, FilterIcon, GroupIcon, ImportIcon, SettingIcon } from './icons.js';
+import { ActionsIcon, AddIcon, ExportIcon, GroupIcon, ImportIcon, SettingIcon } from './icons.js';
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 /**
  * The full list-page assembly: views pills + manage, create, search with the
@@ -18,7 +19,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
  * a custom layout compose the exported pieces yourself.
  */
 export function DataTable(t0) {
-  const $ = _c(124);
+  const $ = _c(114);
   const {
     api,
     presets,
@@ -61,15 +62,6 @@ export function DataTable(t0) {
   }
   const exportFormats = t4;
   const settings = t3 === undefined ? true : t3;
-  const [filterAnchor, setFilterAnchor] = useState(null);
-  let t5;
-  if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = {};
-    $[2] = t5;
-  } else {
-    t5 = $[2];
-  }
-  const [filterDraft, setFilterDraft] = useState(t5);
   const [selectedPresetId, setSelectedPresetId] = useState(null);
   const [manageOpen, setManageOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -80,129 +72,120 @@ export function DataTable(t0) {
   const {
     setPage
   } = api;
+  let t5;
   let t6;
-  let t7;
-  if ($[3] !== infiniteScroll || $[4] !== page || $[5] !== setPage) {
-    t6 = () => {
+  if ($[2] !== infiniteScroll || $[3] !== page || $[4] !== setPage) {
+    t5 = () => {
       if (infiniteScroll && page !== 1) {
         setPage(1);
       }
     };
-    t7 = [infiniteScroll, page, setPage];
-    $[3] = infiniteScroll;
-    $[4] = page;
-    $[5] = setPage;
+    t6 = [infiniteScroll, page, setPage];
+    $[2] = infiniteScroll;
+    $[3] = page;
+    $[4] = setPage;
+    $[5] = t5;
     $[6] = t6;
-    $[7] = t7;
   } else {
+    t5 = $[5];
     t6 = $[6];
-    t7 = $[7];
   }
-  useEffect(t6, t7);
-  let t8;
-  if ($[8] !== api.filters) {
-    t8 = api.filters ?? {};
-    $[8] = api.filters;
-    $[9] = t8;
+  useEffect(t5, t6);
+  let t7;
+  if ($[7] !== api.filters) {
+    t7 = api.filters ?? {};
+    $[7] = api.filters;
+    $[8] = t7;
   } else {
-    t8 = $[9];
+    t7 = $[8];
   }
-  const filters = t8;
-  let t9;
-  if ($[10] !== filters) {
-    t9 = countFilterValues(filters);
-    $[10] = filters;
-    $[11] = t9;
-  } else {
-    t9 = $[11];
-  }
-  const filterCount = t9;
+  const filters = t7;
   const withSelection = Boolean(selectable || actions && actions.length > 0);
-  let t10;
+  let t8;
   bb0: {
     if (selectedPresetId && presets) {
       let selected;
-      let t11;
-      if ($[12] !== filters || $[13] !== presets.all || $[14] !== selectedPresetId) {
-        let t12;
-        if ($[17] !== selectedPresetId) {
-          t12 = p => p.id === selectedPresetId;
-          $[17] = selectedPresetId;
-          $[18] = t12;
+      let t9;
+      if ($[9] !== filters || $[10] !== presets.all || $[11] !== selectedPresetId) {
+        let t10;
+        if ($[14] !== selectedPresetId) {
+          t10 = p => p.id === selectedPresetId;
+          $[14] = selectedPresetId;
+          $[15] = t10;
         } else {
-          t12 = $[18];
+          t10 = $[15];
         }
-        selected = presets.all.find(t12);
-        t11 = selected && filterValuesEqual(selected.filters, filters);
-        $[12] = filters;
-        $[13] = presets.all;
-        $[14] = selectedPresetId;
-        $[15] = selected;
-        $[16] = t11;
+        selected = presets.all.find(t10);
+        t9 = selected && filterValuesEqual(selected.filters, filters);
+        $[9] = filters;
+        $[10] = presets.all;
+        $[11] = selectedPresetId;
+        $[12] = selected;
+        $[13] = t9;
       } else {
-        selected = $[15];
-        t11 = $[16];
+        selected = $[12];
+        t9 = $[13];
       }
-      if (t11) {
-        t10 = selected.id;
+      if (t9) {
+        t8 = selected.id;
         break bb0;
       }
     }
     if (countFilterValues(filters) === 0) {
-      t10 = "all";
+      t8 = "all";
       break bb0;
     }
-    let t11;
-    if ($[19] !== filters || $[20] !== presets?.all) {
-      t11 = presets?.all.find(p_0 => filterValuesEqual(p_0.filters, filters))?.id ?? null;
-      $[19] = filters;
-      $[20] = presets?.all;
-      $[21] = t11;
+    let t9;
+    if ($[16] !== filters || $[17] !== presets?.all) {
+      t9 = presets?.all.find(p_0 => filterValuesEqual(p_0.filters, filters))?.id ?? null;
+      $[16] = filters;
+      $[17] = presets?.all;
+      $[18] = t9;
     } else {
-      t11 = $[21];
+      t9 = $[18];
     }
-    t10 = t11;
+    t8 = t9;
   }
-  const activePresetId = t10;
+  const activePresetId = t8;
   const [shownPresetId, showPreset] = useOptimistic(activePresetId);
-  let t11;
-  if ($[22] !== api) {
-    t11 = (next, presetId) => {
+  let t9;
+  if ($[19] !== api) {
+    t9 = (next, presetId) => {
       setSelectedPresetId(presetId ?? null);
       api.setFilters(next);
     };
-    $[22] = api;
-    $[23] = t11;
+    $[19] = api;
+    $[20] = t9;
   } else {
-    t11 = $[23];
+    t9 = $[20];
   }
-  const applyFilters = t11;
-  let t12;
-  if ($[24] !== applyFilters || $[25] !== showPreset) {
-    t12 = (presetId_0, next_0) => startTransition(() => {
+  const applyFilters = t9;
+  let t10;
+  if ($[21] !== applyFilters || $[22] !== showPreset) {
+    t10 = (presetId_0, next_0) => startTransition(() => {
       showPreset(presetId_0);
       applyFilters(next_0, presetId_0 === "all" ? undefined : presetId_0);
     });
-    $[24] = applyFilters;
-    $[25] = showPreset;
-    $[26] = t12;
+    $[21] = applyFilters;
+    $[22] = showPreset;
+    $[23] = t10;
   } else {
-    t12 = $[26];
+    t10 = $[23];
   }
-  const pickPreset = t12;
-  let t13;
-  if ($[27] !== api.groupBy || $[28] !== api.groupByColumns) {
-    t13 = api.groupByColumns?.find(g => g.field === api.groupBy)?.label;
-    $[27] = api.groupBy;
-    $[28] = api.groupByColumns;
-    $[29] = t13;
+  const pickPreset = t10;
+  let t11;
+  if ($[24] !== api.groupBy || $[25] !== api.groupByColumns) {
+    t11 = api.groupByColumns?.find(g => g.field === api.groupBy)?.label;
+    $[24] = api.groupBy;
+    $[25] = api.groupByColumns;
+    $[26] = t11;
   } else {
-    t13 = $[29];
+    t11 = $[26];
   }
-  const activeGroupLabel = t13;
-  let t14;
-  if ($[30] !== api) {
-    t14 = async action => {
+  const activeGroupLabel = t11;
+  let t12;
+  if ($[27] !== api) {
+    t12 = async action => {
       await action.handle(api.selectedIds);
       api.clearSelection();
       if (api.groupBy) {
@@ -210,30 +193,30 @@ export function DataTable(t0) {
       }
       api.refetch();
     };
-    $[30] = api;
-    $[31] = t14;
+    $[27] = api;
+    $[28] = t12;
   } else {
-    t14 = $[31];
+    t12 = $[28];
   }
-  const executeAction = t14;
-  let t15;
-  if ($[32] !== executeAction) {
-    t15 = action_0 => {
+  const executeAction = t12;
+  let t13;
+  if ($[29] !== executeAction) {
+    t13 = action_0 => {
       if (action_0.confirmationMessage) {
         setPendingAction(action_0);
         return;
       }
       executeAction(action_0);
     };
-    $[32] = executeAction;
-    $[33] = t15;
+    $[29] = executeAction;
+    $[30] = t13;
   } else {
-    t15 = $[33];
+    t13 = $[30];
   }
-  const runAction = t15;
-  let t16;
-  if ($[34] !== api.filters || $[35] !== api.groupBy || $[36] !== api.search || $[37] !== api.selectedIds || $[38] !== api.sort || $[39] !== onExport) {
-    t16 = format => {
+  const runAction = t13;
+  let t14;
+  if ($[31] !== api.filters || $[32] !== api.groupBy || $[33] !== api.search || $[34] !== api.selectedIds || $[35] !== api.sort || $[36] !== onExport) {
+    t14 = format => {
       onExport?.({
         format,
         search: api.search,
@@ -243,20 +226,20 @@ export function DataTable(t0) {
         selectedIds: api.selectedIds
       });
     };
-    $[34] = api.filters;
-    $[35] = api.groupBy;
-    $[36] = api.search;
-    $[37] = api.selectedIds;
-    $[38] = api.sort;
-    $[39] = onExport;
-    $[40] = t16;
+    $[31] = api.filters;
+    $[32] = api.groupBy;
+    $[33] = api.search;
+    $[34] = api.selectedIds;
+    $[35] = api.sort;
+    $[36] = onExport;
+    $[37] = t14;
   } else {
-    t16 = $[40];
+    t14 = $[37];
   }
-  const runExport = t16;
-  let t17;
-  if ($[41] !== createLabel || $[42] !== onCreate || $[43] !== pickPreset || $[44] !== presets || $[45] !== shownPresetId || $[46] !== toolbarEnd) {
-    t17 = (presets || onCreate || toolbarEnd) && /*#__PURE__*/_jsxs(Stack, {
+  const runExport = t14;
+  let t15;
+  if ($[38] !== createLabel || $[39] !== onCreate || $[40] !== pickPreset || $[41] !== presets || $[42] !== shownPresetId || $[43] !== toolbarEnd) {
+    t15 = (presets || onCreate || toolbarEnd) && /*#__PURE__*/_jsxs(Stack, {
       sx: {
         flexDirection: {
           xs: "column",
@@ -314,69 +297,61 @@ export function DataTable(t0) {
         }), toolbarEnd]
       })]
     });
-    $[41] = createLabel;
-    $[42] = onCreate;
-    $[43] = pickPreset;
-    $[44] = presets;
-    $[45] = shownPresetId;
-    $[46] = toolbarEnd;
-    $[47] = t17;
+    $[38] = createLabel;
+    $[39] = onCreate;
+    $[40] = pickPreset;
+    $[41] = presets;
+    $[42] = shownPresetId;
+    $[43] = toolbarEnd;
+    $[44] = t15;
   } else {
-    t17 = $[47];
+    t15 = $[44];
   }
-  let t18;
-  if ($[48] === Symbol.for("react.memo_cache_sentinel")) {
-    t18 = {
+  let t16;
+  if ($[45] === Symbol.for("react.memo_cache_sentinel")) {
+    t16 = {
       alignItems: "center",
       flexWrap: "wrap",
       minWidth: 0
     };
-    $[48] = t18;
+    $[45] = t16;
   } else {
-    t18 = $[48];
+    t16 = $[45];
   }
-  let t19;
-  if ($[49] !== filterColumns || $[50] !== filterCount || $[51] !== filters) {
-    t19 = filterColumns && /*#__PURE__*/_jsx(Badge, {
-      badgeContent: filterCount,
-      color: "primary",
-      children: /*#__PURE__*/_jsx(IconButton, {
-        size: "small",
-        "aria-label": "Filters",
-        onClick: e => {
-          setFilterDraft(filters);
-          setFilterAnchor(e.currentTarget.closest(".search-field") ?? e.currentTarget);
-        },
-        children: /*#__PURE__*/_jsx(FilterIcon, {
-          fontSize: "small"
-        })
-      })
+  let t17;
+  if ($[46] !== applyFilters || $[47] !== filterColumns || $[48] !== filterRenderers || $[49] !== presets) {
+    t17 = filterColumns && /*#__PURE__*/_jsx(DataTableFilterButton, {
+      filterColumns: filterColumns,
+      presets: presets,
+      filterRenderers: filterRenderers,
+      onApply: applyFilters
     });
-    $[49] = filterColumns;
-    $[50] = filterCount;
-    $[51] = filters;
-    $[52] = t19;
+    $[46] = applyFilters;
+    $[47] = filterColumns;
+    $[48] = filterRenderers;
+    $[49] = presets;
+    $[50] = t17;
   } else {
-    t19 = $[52];
+    t17 = $[50];
   }
-  let t20;
-  if ($[53] !== searchPlaceholder || $[54] !== searchWidth || $[55] !== t19) {
-    t20 = /*#__PURE__*/_jsx(DataTableSearchField, {
+  let t18;
+  if ($[51] !== searchPlaceholder || $[52] !== searchWidth || $[53] !== t17) {
+    t18 = /*#__PURE__*/_jsx(DataTableSearchField, {
       placeholder: searchPlaceholder,
       width: searchWidth,
       alwaysOpen: true,
-      endAdornment: t19
+      endAdornment: t17
     });
-    $[53] = searchPlaceholder;
-    $[54] = searchWidth;
-    $[55] = t19;
-    $[56] = t20;
+    $[51] = searchPlaceholder;
+    $[52] = searchWidth;
+    $[53] = t17;
+    $[54] = t18;
   } else {
-    t20 = $[56];
+    t18 = $[54];
   }
-  let t21;
-  if ($[57] !== activeGroupLabel || $[58] !== api) {
-    t21 = api.groupByColumns && api.groupByColumns.length > 0 && /*#__PURE__*/_jsx(Menu, {
+  let t19;
+  if ($[55] !== activeGroupLabel || $[56] !== api) {
+    t19 = api.groupByColumns && api.groupByColumns.length > 0 && /*#__PURE__*/_jsx(Menu, {
       label: activeGroupLabel ? `Group: ${activeGroupLabel}` : "Group",
       startIcon: /*#__PURE__*/_jsx(GroupIcon, {}),
       children: [{
@@ -388,15 +363,15 @@ export function DataTable(t0) {
         children: g_0.label
       }, g_0.label))
     });
-    $[57] = activeGroupLabel;
-    $[58] = api;
-    $[59] = t21;
+    $[55] = activeGroupLabel;
+    $[56] = api;
+    $[57] = t19;
   } else {
-    t21 = $[59];
+    t19 = $[57];
   }
-  let t22;
-  if ($[60] !== actions || $[61] !== api.selectedIds || $[62] !== runAction) {
-    t22 = actions && actions.length > 0 && api.selectedIds.length > 0 && /*#__PURE__*/_jsx(Menu, {
+  let t20;
+  if ($[58] !== actions || $[59] !== api.selectedIds || $[60] !== runAction) {
+    t20 = actions && actions.length > 0 && api.selectedIds.length > 0 && /*#__PURE__*/_jsx(Menu, {
       label: `Actions (${api.selectedIds.length})`,
       startIcon: /*#__PURE__*/_jsx(ActionsIcon, {}),
       children: actions.map(action_1 => /*#__PURE__*/_jsx(MenuItem, {
@@ -404,16 +379,16 @@ export function DataTable(t0) {
         children: action_1.label
       }, action_1.label))
     });
-    $[60] = actions;
-    $[61] = api.selectedIds;
-    $[62] = runAction;
-    $[63] = t22;
+    $[58] = actions;
+    $[59] = api.selectedIds;
+    $[60] = runAction;
+    $[61] = t20;
   } else {
-    t22 = $[63];
+    t20 = $[61];
   }
-  let t23;
-  if ($[64] !== exportFormats || $[65] !== exportTooltip || $[66] !== importTooltip || $[67] !== onExport || $[68] !== onImport || $[69] !== runExport || $[70] !== settings) {
-    t23 = (onExport || onImport || settings) && /*#__PURE__*/_jsxs(Menu, {
+  let t21;
+  if ($[62] !== exportFormats || $[63] !== exportTooltip || $[64] !== importTooltip || $[65] !== onExport || $[66] !== onImport || $[67] !== runExport || $[68] !== settings) {
+    t21 = (onExport || onImport || settings) && /*#__PURE__*/_jsxs(Menu, {
       "aria-label": "More",
       variant: "outlined",
       placement: "bottom-start",
@@ -449,39 +424,39 @@ export function DataTable(t0) {
         })]
       })]
     });
-    $[64] = exportFormats;
-    $[65] = exportTooltip;
-    $[66] = importTooltip;
-    $[67] = onExport;
-    $[68] = onImport;
-    $[69] = runExport;
-    $[70] = settings;
-    $[71] = t23;
+    $[62] = exportFormats;
+    $[63] = exportTooltip;
+    $[64] = importTooltip;
+    $[65] = onExport;
+    $[66] = onImport;
+    $[67] = runExport;
+    $[68] = settings;
+    $[69] = t21;
   } else {
-    t23 = $[71];
+    t21 = $[69];
   }
-  let t24;
-  if ($[72] !== t20 || $[73] !== t21 || $[74] !== t22 || $[75] !== t23) {
-    t24 = /*#__PURE__*/_jsx(Stack, {
+  let t22;
+  if ($[70] !== t18 || $[71] !== t19 || $[72] !== t20 || $[73] !== t21) {
+    t22 = /*#__PURE__*/_jsx(Stack, {
       sx: _temp2,
       children: /*#__PURE__*/_jsxs(Stack, {
         direction: "row",
         spacing: "sm",
-        sx: t18,
-        children: [t20, t21, t22, t23]
+        sx: t16,
+        children: [t18, t19, t20, t21]
       })
     });
+    $[70] = t18;
+    $[71] = t19;
     $[72] = t20;
     $[73] = t21;
     $[74] = t22;
-    $[75] = t23;
-    $[76] = t24;
   } else {
-    t24 = $[76];
+    t22 = $[74];
   }
-  let t25;
-  if ($[77] !== api.selectedIds || $[78] !== executeAction || $[79] !== pendingAction) {
-    t25 = pendingAction && /*#__PURE__*/_jsx(ConfirmDialog, {
+  let t23;
+  if ($[75] !== api.selectedIds || $[76] !== executeAction || $[77] !== pendingAction) {
+    t23 = pendingAction && /*#__PURE__*/_jsx(ConfirmDialog, {
       open: true,
       title: pendingAction.confirmationMessage(api.selectedIds.length),
       description: pendingAction.confirmationDescription?.(api.selectedIds.length),
@@ -494,53 +469,31 @@ export function DataTable(t0) {
         executeAction(action_2);
       }
     });
-    $[77] = api.selectedIds;
-    $[78] = executeAction;
-    $[79] = pendingAction;
-    $[80] = t25;
+    $[75] = api.selectedIds;
+    $[76] = executeAction;
+    $[77] = pendingAction;
+    $[78] = t23;
   } else {
-    t25 = $[80];
+    t23 = $[78];
   }
-  let t26;
-  if ($[81] !== applyFilters || $[82] !== filterAnchor || $[83] !== filterColumns || $[84] !== filterDraft || $[85] !== filterRenderers || $[86] !== presets) {
-    t26 = filterColumns && /*#__PURE__*/_jsx(DataTableFilterMenu, {
-      filterRenderers: filterRenderers,
-      anchorEl: filterAnchor,
-      onClose: () => setFilterAnchor(null),
-      filterColumns: filterColumns,
-      draft: filterDraft,
-      onDraftChange: setFilterDraft,
-      onApply: applyFilters,
-      presets: presets
-    });
-    $[81] = applyFilters;
-    $[82] = filterAnchor;
-    $[83] = filterColumns;
-    $[84] = filterDraft;
-    $[85] = filterRenderers;
-    $[86] = presets;
-    $[87] = t26;
-  } else {
-    t26 = $[87];
-  }
-  let t27;
-  if ($[88] !== filterColumns || $[89] !== manageOpen || $[90] !== presets) {
-    t27 = presets && filterColumns && /*#__PURE__*/_jsx(ManageViewsDialog, {
+  let t24;
+  if ($[79] !== filterColumns || $[80] !== manageOpen || $[81] !== presets) {
+    t24 = presets && filterColumns && /*#__PURE__*/_jsx(ManageViewsDialog, {
       open: manageOpen,
       onClose: () => setManageOpen(false),
       presets: presets,
       filterColumns: filterColumns
     });
-    $[88] = filterColumns;
-    $[89] = manageOpen;
-    $[90] = presets;
-    $[91] = t27;
+    $[79] = filterColumns;
+    $[80] = manageOpen;
+    $[81] = presets;
+    $[82] = t24;
   } else {
-    t27 = $[91];
+    t24 = $[82];
   }
-  let t28;
-  if ($[92] !== filterColumns || $[93] !== presets || $[94] !== settings || $[95] !== settingsOpen) {
-    t28 = settings && /*#__PURE__*/_jsx(DataTableSettingsDialog, {
+  let t25;
+  if ($[83] !== filterColumns || $[84] !== presets || $[85] !== settings || $[86] !== settingsOpen) {
+    t25 = settings && /*#__PURE__*/_jsx(DataTableSettingsDialog, {
       open: settingsOpen,
       onClose: () => setSettingsOpen(false),
       onManageViews: presets && filterColumns ? () => {
@@ -548,17 +501,17 @@ export function DataTable(t0) {
         setManageOpen(true);
       } : undefined
     });
-    $[92] = filterColumns;
-    $[93] = presets;
-    $[94] = settings;
-    $[95] = settingsOpen;
-    $[96] = t28;
+    $[83] = filterColumns;
+    $[84] = presets;
+    $[85] = settings;
+    $[86] = settingsOpen;
+    $[87] = t25;
   } else {
-    t28 = $[96];
+    t25 = $[87];
   }
-  let t29;
-  if ($[97] === Symbol.for("react.memo_cache_sentinel")) {
-    t29 = {
+  let t26;
+  if ($[88] === Symbol.for("react.memo_cache_sentinel")) {
+    t26 = {
       p: 0,
       overflow: "hidden",
       display: "flex",
@@ -566,14 +519,14 @@ export function DataTable(t0) {
       flex: "1 1 auto",
       minHeight: 0
     };
-    $[97] = t29;
+    $[88] = t26;
   } else {
-    t29 = $[97];
+    t26 = $[88];
   }
-  let t30;
-  if ($[98] !== emptyMessage || $[99] !== errorMessage || $[100] !== infiniteScroll || $[101] !== noResultsMessage || $[102] !== onRowClick || $[103] !== onRowIntent || $[104] !== rowClass || $[105] !== stickyHeader || $[106] !== withSelection) {
-    t30 = /*#__PURE__*/_jsx(Card, {
-      sx: t29,
+  let t27;
+  if ($[89] !== emptyMessage || $[90] !== errorMessage || $[91] !== infiniteScroll || $[92] !== noResultsMessage || $[93] !== onRowClick || $[94] !== onRowIntent || $[95] !== rowClass || $[96] !== stickyHeader || $[97] !== withSelection) {
+    t27 = /*#__PURE__*/_jsx(Card, {
+      sx: t26,
       children: /*#__PURE__*/_jsx(DataTableBody, {
         selectable: withSelection,
         emptyMessage: emptyMessage,
@@ -586,22 +539,22 @@ export function DataTable(t0) {
         infiniteScroll: infiniteScroll
       })
     });
-    $[98] = emptyMessage;
-    $[99] = errorMessage;
-    $[100] = infiniteScroll;
-    $[101] = noResultsMessage;
-    $[102] = onRowClick;
-    $[103] = onRowIntent;
-    $[104] = rowClass;
-    $[105] = stickyHeader;
-    $[106] = withSelection;
-    $[107] = t30;
+    $[89] = emptyMessage;
+    $[90] = errorMessage;
+    $[91] = infiniteScroll;
+    $[92] = noResultsMessage;
+    $[93] = onRowClick;
+    $[94] = onRowIntent;
+    $[95] = rowClass;
+    $[96] = stickyHeader;
+    $[97] = withSelection;
+    $[98] = t27;
   } else {
-    t30 = $[107];
+    t27 = $[98];
   }
-  let t31;
-  if ($[108] !== api.groupBy || $[109] !== api.groups || $[110] !== api.groupsTotal || $[111] !== infiniteScroll || $[112] !== rowsPerPageOptions) {
-    t31 = (!infiniteScroll || api.groupBy) && /*#__PURE__*/_jsxs(Box, {
+  let t28;
+  if ($[99] !== api.groupBy || $[100] !== api.groups || $[101] !== api.groupsTotal || $[102] !== infiniteScroll || $[103] !== rowsPerPageOptions) {
+    t28 = (!infiniteScroll || api.groupBy) && /*#__PURE__*/_jsxs(Box, {
       "data-table-footer": "",
       sx: _temp3,
       children: [!infiniteScroll && /*#__PURE__*/_jsx(DataTablePagination, {
@@ -616,35 +569,34 @@ export function DataTable(t0) {
         children: [api.groups.length, " groups \xB7 ", api.groupsTotal, " records"]
       })]
     });
-    $[108] = api.groupBy;
-    $[109] = api.groups;
-    $[110] = api.groupsTotal;
-    $[111] = infiniteScroll;
-    $[112] = rowsPerPageOptions;
-    $[113] = t31;
+    $[99] = api.groupBy;
+    $[100] = api.groups;
+    $[101] = api.groupsTotal;
+    $[102] = infiniteScroll;
+    $[103] = rowsPerPageOptions;
+    $[104] = t28;
   } else {
-    t31 = $[113];
+    t28 = $[104];
   }
-  let t32;
-  if ($[114] !== api || $[115] !== t17 || $[116] !== t24 || $[117] !== t25 || $[118] !== t26 || $[119] !== t27 || $[120] !== t28 || $[121] !== t30 || $[122] !== t31) {
-    t32 = /*#__PURE__*/_jsxs(DataTableRoot, {
+  let t29;
+  if ($[105] !== api || $[106] !== t15 || $[107] !== t22 || $[108] !== t23 || $[109] !== t24 || $[110] !== t25 || $[111] !== t27 || $[112] !== t28) {
+    t29 = /*#__PURE__*/_jsxs(DataTableRoot, {
       api: api,
-      children: [t17, t24, t25, t26, t27, t28, t30, t31]
+      children: [t15, t22, t23, t24, t25, t27, t28]
     });
-    $[114] = api;
-    $[115] = t17;
-    $[116] = t24;
-    $[117] = t25;
-    $[118] = t26;
-    $[119] = t27;
-    $[120] = t28;
-    $[121] = t30;
-    $[122] = t31;
-    $[123] = t32;
+    $[105] = api;
+    $[106] = t15;
+    $[107] = t22;
+    $[108] = t23;
+    $[109] = t24;
+    $[110] = t25;
+    $[111] = t27;
+    $[112] = t28;
+    $[113] = t29;
   } else {
-    t32 = $[123];
+    t29 = $[113];
   }
-  return t32;
+  return t29;
 }
 function _temp3(theme_0) {
   return {

@@ -3,6 +3,7 @@ export type { DataTableApi } from './state/useDataTable.js';
 export { prefetchDataTable } from './state/cache.js';
 export type { PrefetchOptions } from './state/cache.js';
 export { usePresets } from './state/usePresets.js';
+export { useFilterLabels } from './state/useFilterLabels.js';
 export type { Preset, PresetsApi } from './state/usePresets.js';
 export { downloadBlob } from './utils.js';
 export { asDateRange, asSelectValues, asTextValue, countFilterValues, filterValuesEqual, summarizeFilterValues } from './filterValues.js';

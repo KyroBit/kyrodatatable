@@ -1,8 +1,8 @@
-import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { startTransition, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { cachedResult, entryKey, firstPage, load } from './cache.js'
 import { createClientEngine } from './clientEngine.js'
 import type {
-  ColumnDef, DataTableConfig, FetchParams, FilterValues, GroupByColumn, PaginationState,
+  ColumnDef, DataTableConfig, FetchParams, FilterOption, FilterValues, GroupByColumn, PaginationState,
   ResourceGroup, SortState, VisibleItem,
 } from '../types/index.js'
 
@@ -29,6 +29,8 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
 
   filters: Filters | undefined
   setFilters: (filters: Filters) => void
+  filterLabel: (field: string, value: string) => string | undefined
+  rememberFilterLabels: (field: string, options: FilterOption[]) => void
 
   sort: SortState<Field> | null
   toggleSort: (field: Field) => void
@@ -124,6 +126,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [filters, setFiltersInternal] = useState<Filters | undefined>(initial.params.filters)
+  const [filterLabels, setFilterLabels] = useState<Record<string, Record<string, string>>>({})
   const [sort, setSortInternal] = useState<SortState<Field> | null>(initial.params.sort)
   const [pagination, setPagination] = useState<PaginationState>({
     page: initial.params.page,
@@ -154,7 +157,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
 
   useEffect(() => {
     if (!searchDebounceMs) { setDebouncedSearch(search); return }
-    const id = setTimeout(() => setDebouncedSearch(search), searchDebounceMs)
+    const id = setTimeout(() => startTransition(() => setDebouncedSearch(search)), searchDebounceMs)
     return () => clearTimeout(id)
   }, [search, searchDebounceMs])
 
@@ -180,39 +183,50 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const fetchPage = useEffectEvent((params: FetchParams<Field, Filters>) => fetchRecords?.(params))
   const fetchGroupPage = useEffectEvent((params: FetchParams<Field, Filters>) => fetchGroups?.(params))
 
-  const setFilters = (next: Filters) => {
-    setFiltersInternal(next)
-    setPagination((p) => ({ ...p, page: 1 }))
-  }
-
-  const setGroupBy = (field: Field | null) => {
-    setGroupByField(field)
-    setExpanded({})
-    setGroupState({})
-    setPagination((p) => ({ ...p, page: 1 }))
-  }
-
-  const toggleSort = (field: Field) => {
-    setSortInternal((current) => {
-      if (!current || current.field !== field) return { field, direction: 'asc' }
-      if (current.direction === 'asc') return { field, direction: 'desc' }
-      return null
+  const setFilters = (next: Filters) =>
+    startTransition(() => {
+      setFiltersInternal(next)
+      setPagination((p) => ({ ...p, page: 1 }))
     })
-    setPagination((p) => ({ ...p, page: 1 }))
-  }
 
-  const setSort = (next: SortState<Field> | null) => {
-    setSortInternal(next)
-    setPagination((p) => ({ ...p, page: 1 }))
-  }
+  const filterLabel = (field: string, value: string) => filterLabels[field]?.[value]
 
-  const setPage = (page: number) => {
-    setPagination((p) => ({ ...p, page }))
-  }
+  const rememberFilterLabels = (field: string, options: FilterOption[]) =>
+    setFilterLabels((known) => {
+      const fresh = options.filter((option) => known[field]?.[option.value] !== option.label)
+      if (fresh.length === 0) return known
+      const labels = { ...known[field] }
+      for (const option of fresh) labels[option.value] = option.label
+      return { ...known, [field]: labels }
+    })
 
-  const setPageSize = (pageSize: number) => {
-    setPagination({ page: 1, pageSize })
-  }
+  const setGroupBy = (field: Field | null) =>
+    startTransition(() => {
+      setGroupByField(field)
+      setExpanded({})
+      setGroupState({})
+      setPagination((p) => ({ ...p, page: 1 }))
+    })
+
+  const toggleSort = (field: Field) =>
+    startTransition(() => {
+      setSortInternal((current) => {
+        if (!current || current.field !== field) return { field, direction: 'asc' }
+        if (current.direction === 'asc') return { field, direction: 'desc' }
+        return null
+      })
+      setPagination((p) => ({ ...p, page: 1 }))
+    })
+
+  const setSort = (next: SortState<Field> | null) =>
+    startTransition(() => {
+      setSortInternal(next)
+      setPagination((p) => ({ ...p, page: 1 }))
+    })
+
+  const setPage = (page: number) => startTransition(() => setPagination((p) => ({ ...p, page })))
+
+  const setPageSize = (pageSize: number) => startTransition(() => setPagination({ page: 1, pageSize }))
 
   const refetch = () => setFetchTick((t) => t + 1)
 
@@ -249,17 +263,21 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     pending
       .then((result) => {
         if (cancelled) return
-        setRows(result.rows)
-        setTotal(result.total)
-        setLoadedPage(params.page)
+        startTransition(() => {
+          setRows(result.rows)
+          setTotal(result.total)
+          setLoadedPage(params.page)
+        })
       })
       .catch((err) => {
-        if (!cancelled) setError(err)
+        if (!cancelled) startTransition(() => setError(err))
       })
       .finally(() => {
         if (cancelled) return
-        setLoading(false)
-        setRefreshing(false)
+        startTransition(() => {
+          setLoading(false)
+          setRefreshing(false)
+        })
       })
 
     return () => { cancelled = true }
@@ -278,14 +296,16 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     pending
       .then((result) => {
         if (cancelled) return
-        setGroups(result.groups)
-        setGroupsTotal(result.total)
+        startTransition(() => {
+          setGroups(result.groups)
+          setGroupsTotal(result.total)
+        })
       })
       .catch((err) => {
-        if (!cancelled) setError(err)
+        if (!cancelled) startTransition(() => setError(err))
       })
       .finally(() => {
-        if (!cancelled) setGroupsLoading(false)
+        if (!cancelled) startTransition(() => setGroupsLoading(false))
       })
 
     return () => { cancelled = true }
@@ -301,9 +321,11 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     fetchRecords({ page, pageSize: pagination.pageSize, search: debouncedSearch, sort, filters: filters as Filters })
       .then((result) => {
         if (generation.current !== started) return
-        setRows((prev) => [...prev, ...result.rows])
-        setTotal(result.total)
-        setLoadedPage(page)
+        startTransition(() => {
+          setRows((prev) => [...prev, ...result.rows])
+          setTotal(result.total)
+          setLoadedPage(page)
+        })
       })
       .catch((err) => {
         if (generation.current === started) setError(err)
@@ -323,10 +345,12 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     }
     fetchRecords(params)
       .then((result) => {
-        setGroupState((prev) => ({
-          ...prev,
-          [key]: { rows: result.rows, total: result.total, pagination: { page, pageSize: pagination.pageSize }, loading: false },
-        }))
+        startTransition(() =>
+          setGroupState((prev) => ({
+            ...prev,
+            [key]: { rows: result.rows, total: result.total, pagination: { page, pageSize: pagination.pageSize }, loading: false },
+          })),
+        )
       })
       .catch((err) => {
         setError(err)
@@ -445,6 +469,8 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
 
     filters,
     setFilters,
+    filterLabel,
+    rememberFilterLabels,
 
     sort,
     toggleSort,

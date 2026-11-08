@@ -1,11 +1,12 @@
 import { c as _c } from "react/compiler-runtime";
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { Autocomplete, Box, Button, ChipPicker, DatePicker, DateRangePicker, Divider, FormDialog, IconButton, Link, Popover, Stack, TextField, Tooltip, Typography } from '@kyrobit/kyroui';
 import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { countFilterValues, filterValuesEqual, summarizeFilterValues } from '@kyrobit/datatable';
+import { countFilterValues, filterValuesEqual, summarizeFilterValues, useFilterLabels } from '@kyrobit/datatable';
+import { useDataTableContext } from './context.js';
 import { ArrowBackIcon, CloseIcon, DragIcon, TrashIcon } from './icons.js';
 import { ConfirmDialog } from './ConfirmDialog.js';
 import { useDialogSize } from './dialogSize.js';
@@ -54,81 +55,78 @@ function ChoiceFilterField(t0) {
   }
   return t4;
 }
-const optionLabels = new WeakMap();
-function labelsFor(source) {
-  let cache = optionLabels.get(source);
-  if (!cache) {
-    cache = new Map();
-    optionLabels.set(source, cache);
-  }
-  return cache;
-}
 function SelectFilterField(t0) {
-  const $ = _c(56);
+  const $ = _c(44);
   const {
     column,
     value: raw,
     onChange
   } = t0;
-  const value = Array.isArray(raw) ? raw : typeof raw === "string" && raw ? [raw] : [];
-  const multiple = column.multi !== false;
-  const source = column.options;
   let t1;
-  if ($[0] !== source) {
-    t1 = labelsFor(source);
-    $[0] = source;
+  if ($[0] !== raw) {
+    t1 = Array.isArray(raw) ? raw : typeof raw === "string" && raw ? [raw] : [];
+    $[0] = raw;
     $[1] = t1;
   } else {
     t1 = $[1];
   }
-  const cache = t1;
-  const [, redraw] = useState(0);
-  const resolved = useRef(false);
+  const value = t1;
+  const multiple = column.multi !== false;
+  const source = column.options;
+  const api = useDataTableContext();
+  let t2;
+  if ($[2] !== column) {
+    t2 = [column];
+    $[2] = column;
+    $[3] = t2;
+  } else {
+    t2 = $[3];
+  }
+  let t3;
+  if ($[4] !== column.field || $[5] !== value) {
+    t3 = {
+      [column.field]: value
+    };
+    $[4] = column.field;
+    $[5] = value;
+    $[6] = t3;
+  } else {
+    t3 = $[6];
+  }
+  const labelOf = useFilterLabels(api, t2, t3);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  let t2;
-  if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = [];
-    $[2] = t2;
-  } else {
-    t2 = $[2];
-  }
-  const [found, setFound] = useState(t2);
-  const [loading, setLoading] = useState(false);
-  let t3;
-  if ($[3] !== cache || $[4] !== redraw) {
-    t3 = options => {
-      let changed = false;
-      for (const option of options) {
-        if (cache.get(option.value) === option.label) {
-          continue;
-        }
-        cache.set(option.value, option.label);
-        changed = true;
-      }
-      if (changed) {
-        redraw(_temp);
-      }
-    };
-    $[3] = cache;
-    $[4] = redraw;
-    $[5] = t3;
-  } else {
-    t3 = $[5];
-  }
-  const remember = useEffectEvent(t3);
   let t4;
-  if ($[6] !== source) {
-    t4 = typeof source === "function" ? undefined : source.map(_temp2);
-    $[6] = source;
+  if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
+    t4 = [];
     $[7] = t4;
   } else {
     t4 = $[7];
   }
-  const staticOptions = t4;
+  const [found, setFound] = useState(t4);
+  const [loading, setLoading] = useState(false);
   let t5;
-  if ($[8] !== open || $[9] !== query || $[10] !== remember || $[11] !== setFound || $[12] !== source) {
-    t5 = () => {
+  if ($[8] !== api || $[9] !== column.field) {
+    t5 = options => api.rememberFilterLabels(column.field, options);
+    $[8] = api;
+    $[9] = column.field;
+    $[10] = t5;
+  } else {
+    t5 = $[10];
+  }
+  const remember = useEffectEvent(t5);
+  let t6;
+  if ($[11] !== source) {
+    t6 = typeof source === "function" ? undefined : source.map(_temp);
+    $[11] = source;
+    $[12] = t6;
+  } else {
+    t6 = $[12];
+  }
+  const staticOptions = t6;
+  let t7;
+  if ($[13] !== open || $[14] !== query || $[15] !== remember || $[16] !== source) {
+    t7 = () => {
       if (!open || typeof source !== "function") {
         return;
       }
@@ -140,7 +138,7 @@ function SelectFilterField(t0) {
             return;
           }
           remember(results);
-          setFound(results.map(_temp3));
+          setFound(results.map(_temp2));
         }).finally(() => {
           if (!cancelled) {
             setLoading(false);
@@ -152,182 +150,127 @@ function SelectFilterField(t0) {
         clearTimeout(timer);
       };
     };
-    $[8] = open;
-    $[9] = query;
-    $[10] = remember;
-    $[11] = setFound;
-    $[12] = source;
-    $[13] = t5;
-  } else {
-    t5 = $[13];
-  }
-  let t6;
-  if ($[14] !== open || $[15] !== query || $[16] !== source) {
-    t6 = [open, query, source];
-    $[14] = open;
-    $[15] = query;
+    $[13] = open;
+    $[14] = query;
+    $[15] = remember;
     $[16] = source;
-    $[17] = t6;
+    $[17] = t7;
   } else {
-    t6 = $[17];
+    t7 = $[17];
   }
-  useEffect(t5, t6);
-  let t7;
-  if ($[18] !== cache) {
-    t7 = id => !cache.has(id);
-    $[18] = cache;
-    $[19] = t7;
-  } else {
-    t7 = $[19];
-  }
-  const unresolved = value.filter(t7).join(",");
   let t8;
-  if ($[20] !== remember || $[21] !== source || $[22] !== unresolved) {
-    t8 = () => {
-      if (typeof source !== "function" || !unresolved || resolved.current) {
-        return;
-      }
-      resolved.current = true;
-      source("").then(remember);
-    };
-    $[20] = remember;
-    $[21] = source;
-    $[22] = unresolved;
-    $[23] = t8;
+  if ($[18] !== open || $[19] !== query || $[20] !== source) {
+    t8 = [open, query, source];
+    $[18] = open;
+    $[19] = query;
+    $[20] = source;
+    $[21] = t8;
   } else {
-    t8 = $[23];
+    t8 = $[21];
   }
+  useEffect(t7, t8);
   let t9;
-  if ($[24] !== source || $[25] !== unresolved) {
-    t9 = [source, unresolved];
-    $[24] = source;
-    $[25] = unresolved;
-    $[26] = t9;
-  } else {
-    t9 = $[26];
-  }
-  useEffect(t8, t9);
-  let t10;
-  if ($[27] !== cache || $[28] !== staticOptions || $[29] !== value) {
-    let t11;
-    if ($[31] !== cache || $[32] !== staticOptions) {
-      t11 = id_0 => ({
-        id: id_0,
-        label: cache.get(id_0) ?? staticOptions?.find(option_2 => option_2.id === id_0)?.label ?? id_0
+  if ($[22] !== column || $[23] !== labelOf || $[24] !== value) {
+    let t10;
+    if ($[26] !== column || $[27] !== labelOf) {
+      t10 = id => ({
+        id,
+        label: labelOf(column, id)
       });
-      $[31] = cache;
-      $[32] = staticOptions;
-      $[33] = t11;
+      $[26] = column;
+      $[27] = labelOf;
+      $[28] = t10;
     } else {
-      t11 = $[33];
+      t10 = $[28];
     }
-    t10 = value.map(t11);
-    $[27] = cache;
-    $[28] = staticOptions;
-    $[29] = value;
-    $[30] = t10;
+    t9 = value.map(t10);
+    $[22] = column;
+    $[23] = labelOf;
+    $[24] = value;
+    $[25] = t9;
   } else {
-    t10 = $[30];
+    t9 = $[25];
   }
-  const selected = t10;
-  const t11 = staticOptions ?? found;
-  const t12 = multiple ? selected : selected[0] ?? null;
-  let t13;
-  if ($[34] !== onChange) {
-    t13 = (_, next) => onChange(Array.isArray(next) ? next.map(_temp4) : next ? [next.id] : []);
-    $[34] = onChange;
-    $[35] = t13;
+  const selected = t9;
+  const t10 = staticOptions ?? found;
+  const t11 = multiple ? selected : selected[0] ?? null;
+  let t12;
+  if ($[29] !== onChange) {
+    t12 = (_, next) => onChange(Array.isArray(next) ? next.map(_temp3) : next ? [next.id] : []);
+    $[29] = onChange;
+    $[30] = t12;
   } else {
-    t13 = $[35];
+    t12 = $[30];
   }
-  const t14 = staticOptions ? undefined : _temp7;
+  const t13 = staticOptions ? undefined : _temp6;
+  let t14;
   let t15;
-  if ($[36] !== setOpen) {
-    t15 = () => setOpen(true);
-    $[36] = setOpen;
-    $[37] = t15;
-  } else {
-    t15 = $[37];
-  }
   let t16;
-  if ($[38] !== setFound || $[39] !== setOpen) {
-    t16 = () => {
+  if ($[31] === Symbol.for("react.memo_cache_sentinel")) {
+    t14 = () => setOpen(true);
+    t15 = () => {
       setOpen(false);
       setFound([]);
     };
-    $[38] = setFound;
-    $[39] = setOpen;
-    $[40] = t16;
+    t16 = (__0, next_0, reason) => setQuery(reason === "input" ? next_0 : "");
+    $[31] = t14;
+    $[32] = t15;
+    $[33] = t16;
   } else {
-    t16 = $[40];
+    t14 = $[31];
+    t15 = $[32];
+    t16 = $[33];
   }
   let t17;
-  if ($[41] !== setQuery) {
-    t17 = (__0, next_0, reason) => setQuery(reason === "input" ? next_0 : "");
-    $[41] = setQuery;
-    $[42] = t17;
+  if ($[34] !== column.label) {
+    t17 = column.label.toLowerCase();
+    $[34] = column.label;
+    $[35] = t17;
   } else {
-    t17 = $[42];
+    t17 = $[35];
   }
-  let t18;
-  if ($[43] !== column.label) {
-    t18 = column.label.toLowerCase();
-    $[43] = column.label;
-    $[44] = t18;
-  } else {
-    t18 = $[44];
-  }
-  const t19 = `Select ${t18}`;
-  let t20;
-  if ($[45] !== loading || $[46] !== multiple || $[47] !== t11 || $[48] !== t12 || $[49] !== t13 || $[50] !== t14 || $[51] !== t15 || $[52] !== t16 || $[53] !== t17 || $[54] !== t19) {
-    t20 = /*#__PURE__*/_jsx(Autocomplete, {
+  const t18 = `Select ${t17}`;
+  let t19;
+  if ($[36] !== loading || $[37] !== multiple || $[38] !== t10 || $[39] !== t11 || $[40] !== t12 || $[41] !== t13 || $[42] !== t18) {
+    t19 = /*#__PURE__*/_jsx(Autocomplete, {
       multiple: multiple,
       fullWidth: true,
-      options: t11,
-      value: t12,
-      onChange: t13,
-      getOptionLabel: _temp5,
-      isOptionEqualToValue: _temp6,
-      filterOptions: t14,
+      options: t10,
+      value: t11,
+      onChange: t12,
+      getOptionLabel: _temp4,
+      isOptionEqualToValue: _temp5,
+      filterOptions: t13,
       loading: loading,
-      onOpen: t15,
-      onClose: t16,
-      onInputChange: t17,
-      placeholder: t19
+      onOpen: t14,
+      onClose: t15,
+      onInputChange: t16,
+      placeholder: t18
     });
-    $[45] = loading;
-    $[46] = multiple;
-    $[47] = t11;
-    $[48] = t12;
-    $[49] = t13;
-    $[50] = t14;
-    $[51] = t15;
-    $[52] = t16;
-    $[53] = t17;
-    $[54] = t19;
-    $[55] = t20;
+    $[36] = loading;
+    $[37] = multiple;
+    $[38] = t10;
+    $[39] = t11;
+    $[40] = t12;
+    $[41] = t13;
+    $[42] = t18;
+    $[43] = t19;
   } else {
-    t20 = $[55];
+    t19 = $[43];
   }
-  return t20;
+  return t19;
 }
-function _temp7(options_0) {
+function _temp6(options_0) {
   return options_0;
 }
-function _temp6(option_5, chosen) {
-  return option_5.id === chosen.id;
+function _temp5(option_3, chosen) {
+  return option_3.id === chosen.id;
 }
-function _temp5(option_4) {
-  return option_4.label;
-}
-function _temp4(option_3) {
-  return option_3.id;
+function _temp4(option_2) {
+  return option_2.label;
 }
 function _temp3(option_1) {
-  return {
-    id: option_1.value,
-    label: option_1.label
-  };
+  return option_1.id;
 }
 function _temp2(option_0) {
   return {
@@ -335,8 +278,11 @@ function _temp2(option_0) {
     label: option_0.label
   };
 }
-function _temp(tick) {
-  return tick + 1;
+function _temp(option) {
+  return {
+    id: option.value,
+    label: option.label
+  };
 }
 function TextFilterField(t0) {
   const $ = _c(10);
@@ -912,7 +858,7 @@ export function DataTableFilterMenu(t0) {
       onClose: close,
       placement: "bottom-end",
       "aria-label": "Filters",
-      sx: _temp8,
+      sx: _temp7,
       children: t18
     });
     $[47] = anchorEl;
@@ -925,7 +871,7 @@ export function DataTableFilterMenu(t0) {
   }
   return t19;
 }
-function _temp8(theme) {
+function _temp7(theme) {
   return {
     width: 400,
     maxWidth: `calc(100vw - 2 * ${theme.spacing("lg")})`
@@ -1169,7 +1115,7 @@ export function ManageViewsDialog(t0) {
         modifiers: [restrictToVerticalAxis, restrictToParentElement],
         onDragEnd: handleDragEnd,
         children: /*#__PURE__*/_jsx(SortableContext, {
-          items: presets.all.map(_temp9),
+          items: presets.all.map(_temp8),
           strategy: verticalListSortingStrategy,
           children: presets.all.map(p_4 => /*#__PURE__*/_jsxs(SortableViewRow, {
             id: p_4.id,
@@ -1198,7 +1144,7 @@ export function ManageViewsDialog(t0) {
             }), /*#__PURE__*/_jsx(Stack, {
               direction: "row",
               spacing: "xs",
-              onClick: _temp0,
+              onClick: _temp9,
               children: /*#__PURE__*/_jsx(Tooltip, {
                 title: "Delete",
                 children: /*#__PURE__*/_jsx(IconButton, {
@@ -1335,10 +1281,10 @@ export function ManageViewsDialog(t0) {
   }
   return t20;
 }
-function _temp0(e_1) {
+function _temp9(e_1) {
   return e_1.stopPropagation();
 }
-function _temp9(p_3) {
+function _temp8(p_3) {
   return p_3.id;
 }
 function SortableViewRow(t0) {
@@ -1464,7 +1410,7 @@ function SortableViewRow(t0) {
     t14 = /*#__PURE__*/_jsx(Box, {
       ...attributes,
       ...listeners,
-      onClick: _temp1,
+      onClick: _temp0,
       "aria-label": "Drag to reorder",
       sx: t12,
       children: t13
@@ -1509,6 +1455,6 @@ function SortableViewRow(t0) {
   }
   return t16;
 }
-function _temp1(e) {
+function _temp0(e) {
   return e.stopPropagation();
 }

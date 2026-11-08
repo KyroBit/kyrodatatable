@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactElement, type ReactNode } from 'react'
 import {
-  Badge, Box, Button, Card, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography,
+  Box, Button, Card, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
@@ -12,10 +12,11 @@ import { DataTableRoot } from './context.js'
 import { DataTableSearchField } from './SearchField.js'
 import { DataTableBody } from './Body.js'
 import { DataTablePagination } from './Pagination.js'
-import { DataTableFilterMenu, ManageViewsDialog } from './FilterMenu.js'
+import { ManageViewsDialog } from './FilterMenu.js'
+import { DataTableFilterButton } from './FilterButton.js'
 import { DataTableSettingsDialog } from './SettingsDialog.js'
 import { ConfirmDialog } from './ConfirmDialog.js'
-import { ActionsIcon, ExportIcon, FilterIcon, GroupIcon, ImportIcon, SettingIcon } from './icons.js'
+import { ActionsIcon, ExportIcon, GroupIcon, ImportIcon, SettingIcon } from './icons.js'
 
 export interface DataTableProps<Row, Field extends string = string> {
   api: DataTableApi<Row, Field, FilterValues>
@@ -101,8 +102,6 @@ export function DataTable<Row, Field extends string = string>({
   stickyHeader,
   rowsPerPageOptions,
 }: DataTableProps<Row, Field>) {
-  const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null)
-  const [filterDraft, setFilterDraft] = useState<FilterValues>({})
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
   const [groupAnchor, setGroupAnchor] = useState<HTMLElement | null>(null)
   const [actionsAnchor, setActionsAnchor] = useState<HTMLElement | null>(null)
@@ -112,7 +111,6 @@ export function DataTable<Row, Field extends string = string>({
   const [pendingAction, setPendingAction] = useState<ResourceAction | null>(null)
 
   const filters = api.filters ?? {}
-  const filterCount = countFilterValues(filters)
   const withSelection = Boolean(selectable || (actions && actions.length > 0))
 
   const activePresetId = useMemo(() => {
@@ -200,14 +198,12 @@ export function DataTable<Row, Field extends string = string>({
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', minWidth: 0 }}>
           <DataTableSearchField placeholder={searchPlaceholder} width={searchWidth} alwaysOpen />
           {filterColumns && (
-            <Badge badgeContent={filterCount} color="primary">
-              <ToolbarBtn
-                icon={<FilterIcon />}
-                label="Filters"
-                menu={false}
-                onClick={(e) => { setFilterDraft(filters); setFilterAnchor(e.currentTarget) }}
-              />
-            </Badge>
+            <DataTableFilterButton
+              filterColumns={filterColumns}
+              presets={presets}
+              filterRenderers={filterRenderers}
+              onApply={applyFilters}
+            />
           )}
           <Stack
             direction="row"
@@ -318,19 +314,6 @@ export function DataTable<Row, Field extends string = string>({
           </MenuItem>
         ))}
       </Menu>
-
-      {filterColumns && (
-        <DataTableFilterMenu
-          filterRenderers={filterRenderers}
-          anchorEl={filterAnchor}
-          onClose={() => setFilterAnchor(null)}
-          filterColumns={filterColumns}
-          draft={filterDraft}
-          onDraftChange={setFilterDraft}
-          onApply={applyFilters}
-          presets={presets}
-        />
-      )}
 
       {presets && filterColumns && (
         <ManageViewsDialog

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FocusEvent, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent, type ReactNode } from 'react'
 import {
   Box, Button, Checkbox, IconButton, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Typography,
@@ -131,8 +131,14 @@ export function DataTableBody<Row>({
   const fetching = api.loading || api.groupsLoading
   const hasExplicitWidths = api.visibleColumns.some((col) => col.width)
   const intentTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const { page, pageSize } = api.pagination
 
   useEffect(() => () => clearTimeout(intentTimer.current), [])
+
+  useLayoutEffect(() => {
+    containerRef.current?.scrollTo({ top: 0 })
+  }, [page, pageSize, api.search, api.sort, api.filters, api.groupBy])
 
   // An empty message describes a finished result, so it never stands in for one still loading:
   // a list with rows keeps them while the next page arrives, an empty one shows placeholders.
@@ -157,7 +163,7 @@ export function DataTableBody<Row>({
   }
 
   return (
-    <TableContainer sx={{ flex: '1 1 auto', minHeight: 0 }}>
+    <TableContainer ref={containerRef} sx={{ flex: '1 1 auto', minHeight: 0 }}>
       <Table size="small" stickyHeader={stickyHeader} sx={hasExplicitWidths ? { tableLayout: 'fixed' } : undefined}>
         {hasExplicitWidths && (
           <colgroup>

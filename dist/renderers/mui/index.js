@@ -6,6 +6,8 @@ export { DataTableBody } from './Body.js';
 export { DataTablePagination } from './Pagination.js';
 export { ConfirmDialog } from './ConfirmDialog.js';
 export { DataTableFilterMenu, ManageViewsDialog } from './FilterMenu.js';
+export { DataTableFilterButton } from './FilterButton.js';
+export { DataTableFilterChips } from './FilterChips.js';
 export { DataTableSettingsDialog } from './SettingsDialog.js';
 export { Select } from './Select.js';
 export * from './icons.js';

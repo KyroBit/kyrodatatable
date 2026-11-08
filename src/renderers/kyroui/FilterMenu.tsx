@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useEffectEvent, useMemo, useState, type ReactNode } from 'react'
 import {
   Autocomplete, Box, Button, ChipPicker, DatePicker, DateRangePicker, Divider, FormDialog, IconButton, Link, Popover, Stack, TextField, Tooltip, Typography,
 } from '@kyrobit/kyroui'
@@ -6,7 +6,8 @@ import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, close
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { countFilterValues, filterValuesEqual, summarizeFilterValues } from '@kyrobit/datatable'
+import { countFilterValues, filterValuesEqual, summarizeFilterValues, useFilterLabels } from '@kyrobit/datatable'
+import { useDataTableContext } from './context.js'
 import type {
   Preset, PresetsApi, ChoiceFilterColumnDef, FilterRenderers, FilterFieldProps, DateFilterColumnDef, DateRangeValue, FilterColumnDef, FilterOption, FilterValues, SelectFilterColumnDef, TextFilterColumnDef,
 } from '@kyrobit/datatable'
@@ -28,38 +29,18 @@ function ChoiceFilterField({ column, value: raw, onChange }: FilterFieldProps<Ch
   )
 }
 
-const optionLabels = new WeakMap<object, Map<string, string>>()
-
-function labelsFor(source: object) {
-  let cache = optionLabels.get(source)
-  if (!cache) {
-    cache = new Map()
-    optionLabels.set(source, cache)
-  }
-  return cache
-}
-
 function SelectFilterField({ column, value: raw, onChange }: FilterFieldProps<SelectFilterColumnDef>) {
   const value = Array.isArray(raw) ? raw : typeof raw === 'string' && raw ? [raw] : []
   const multiple = column.multi !== false
   const source = column.options
-  const cache = labelsFor(source)
-  const [, redraw] = useState(0)
-  const resolved = useRef(false)
+  const api = useDataTableContext<unknown, string, FilterValues>()
+  const labelOf = useFilterLabels(api, [column], { [column.field]: value })
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [found, setFound] = useState<{ id: string; label: string }[]>([])
   const [loading, setLoading] = useState(false)
 
-  const remember = useEffectEvent((options: FilterOption[]) => {
-    let changed = false
-    for (const option of options) {
-      if (cache.get(option.value) === option.label) continue
-      cache.set(option.value, option.label)
-      changed = true
-    }
-    if (changed) redraw((tick) => tick + 1)
-  })
+  const remember = useEffectEvent((options: FilterOption[]) => api.rememberFilterLabels(column.field, options))
 
   const staticOptions = useMemo(
     () => (typeof source === 'function' ? undefined : source.map((option) => ({ id: option.value, label: option.label }))),
@@ -85,18 +66,7 @@ function SelectFilterField({ column, value: raw, onChange }: FilterFieldProps<Se
     }
   }, [open, query, source])
 
-  const unresolved = value.filter((id) => !cache.has(id)).join(',')
-
-  useEffect(() => {
-    if (typeof source !== 'function' || !unresolved || resolved.current) return
-    resolved.current = true
-    void source('').then(remember)
-  }, [source, unresolved])
-
-  const selected = value.map((id) => ({
-    id,
-    label: cache.get(id) ?? staticOptions?.find((option) => option.id === id)?.label ?? id,
-  }))
+  const selected = value.map((id) => ({ id, label: labelOf(column, id) }))
 
   return (
     <Autocomplete

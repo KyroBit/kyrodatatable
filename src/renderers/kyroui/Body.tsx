@@ -142,8 +142,13 @@ export function DataTableBody<Row>({
   const [locked, setLocked] = useState<{ key: string; widths: string[] } | null>(null)
   const lockedWidths = locked?.key === columnsKey ? locked.widths : null
   const intentTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const { page, pageSize } = api.pagination
 
   useEffect(() => () => clearTimeout(intentTimer.current), [])
+
+  useLayoutEffect(() => {
+    containerRef.current?.scrollTo({ top: 0 })
+  }, [page, pageSize, api.search, api.sort, api.filters, api.groupBy])
 
   useLayoutEffect(() => {
     const container = containerRef.current

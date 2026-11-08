@@ -57,6 +57,27 @@ While a fetch with no rows on screen is loading, the body renders the real heade
 
 Iterates `api.visibleItems` — see [Core API](/reference/core-api) — so grouped and flat rendering share one path.
 
+When the body scrolls inside a bounded parent, it returns to the first row whenever the page, page size, search, sort, filters or grouping change.
+
+### `DataTableFilterButton`
+
+The toolbar's Filters button on its own, for filters that live outside the table — in a page-level bar, for example. Reads `api` from context. `<DataTable filterColumns>` renders this same component.
+
+| Prop | Type | | Description |
+|---|---|---|---|
+| `filterColumns` | `FilterColumnDef[]` | required | One section in the filter menu per entry. |
+| `presets` | `PresetsApi<FilterValues>` | optional | Enables saving the current filters as a view. |
+| `filterRenderers` | `FilterRenderers` | optional | Swap the component used for a filter type. |
+| `onApply` | `(filters: FilterValues, presetId?: string) => void` | optional | Defaults to `api.setFilters`. |
+
+### `DataTableFilterChips`
+
+One removable chip per applied value, read from `api.filters`. Select and choice values show their option label (see `filterLabel` in [Core API](/reference/core-api)); text and date filters show `Label: value`. Deleting a chip removes that value through `api.setFilters`. Renders nothing while no filter is applied.
+
+| Prop | Type | | Description |
+|---|---|---|---|
+| `filterColumns` | `FilterColumnDef[]` | required | Which fields to show chips for, and their labels. |
+
 ### `DataTable.Pagination` (`DataTablePagination`)
 
 No props. Renders `TablePagination` bound to `api.pagination`/`api.total`. Invisible, but still taking its space, while `api.total` is 0. Renders nothing while `api.groupBy` is set.

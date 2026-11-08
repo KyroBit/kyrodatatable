@@ -1,6 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import { useDialogSize } from './dialogSize.js';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Box, Button, Dialog, Divider, IconButton, Menu, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { Select } from './Select.js';
@@ -14,7 +14,8 @@ import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, close
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { countFilterValues, filterValuesEqual, summarizeFilterValues } from '@kyrobit/datatable';
+import { countFilterValues, filterValuesEqual, summarizeFilterValues, useFilterLabels } from '@kyrobit/datatable';
+import { useDataTableContext } from './context.js';
 import { TrashIcon } from './icons.js';
 import { ConfirmDialog } from './ConfirmDialog.js';
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
@@ -140,163 +141,144 @@ function ChoiceFilterField(t0) {
   }
   return t4;
 }
-const optionLabels = new WeakMap();
-function labelsFor(source) {
-  let cache = optionLabels.get(source);
-  if (!cache) {
-    cache = new Map();
-    optionLabels.set(source, cache);
-  }
-  return cache;
-}
 function SelectFilterField(t0) {
-  const $ = _c(27);
+  const $ = _c(31);
   const {
     column,
     value: raw,
     onChange
   } = t0;
-  const value = Array.isArray(raw) ? raw : typeof raw === "string" && raw ? [raw] : [];
-  const multiple = column.multi !== false;
-  const source = column.options;
-  const cache = labelsFor(source);
-  const [, redraw] = useState(0);
-  const resolved = useRef(false);
-  const remember = options => {
-    let changed = false;
-    for (const option of options) {
-      if (cache.get(option.value) === option.label) {
-        continue;
-      }
-      cache.set(option.value, option.label);
-      changed = true;
-    }
-    if (changed) {
-      redraw(_temp);
-    }
-  };
   let t1;
-  if ($[0] !== source) {
-    t1 = typeof source === "function" ? undefined : source.map(_temp2);
-    $[0] = source;
+  if ($[0] !== raw) {
+    t1 = Array.isArray(raw) ? raw : typeof raw === "string" && raw ? [raw] : [];
+    $[0] = raw;
     $[1] = t1;
   } else {
     t1 = $[1];
   }
-  const staticOptions = t1;
-  const search = typeof source === "function" ? async query => {
-    const results = await source(query);
-    remember(results);
-    return results.map(_temp3);
-  } : undefined;
-  const unresolved = value.filter(id => !cache.has(id)).join(",");
+  const value = t1;
+  const multiple = column.multi !== false;
+  const source = column.options;
+  const api = useDataTableContext();
   let t2;
-  if ($[2] !== remember || $[3] !== source || $[4] !== unresolved) {
-    t2 = () => {
-      if (typeof source !== "function" || !unresolved || resolved.current) {
-        return;
-      }
-      resolved.current = true;
-      source("").then(remember);
-    };
-    $[2] = remember;
-    $[3] = source;
-    $[4] = unresolved;
-    $[5] = t2;
+  if ($[2] !== column) {
+    t2 = [column];
+    $[2] = column;
+    $[3] = t2;
   } else {
-    t2 = $[5];
+    t2 = $[3];
   }
   let t3;
-  if ($[6] !== source || $[7] !== unresolved) {
-    t3 = [source, unresolved];
-    $[6] = source;
-    $[7] = unresolved;
-    $[8] = t3;
-  } else {
-    t3 = $[8];
-  }
-  useEffect(t2, t3);
-  let t4;
-  if ($[9] !== cache || $[10] !== staticOptions || $[11] !== value) {
-    let t5;
-    if ($[13] !== cache || $[14] !== staticOptions) {
-      t5 = id_0 => ({
-        id: id_0,
-        label: cache.get(id_0) ?? staticOptions?.find(option_2 => option_2.id === id_0)?.label ?? id_0
-      });
-      $[13] = cache;
-      $[14] = staticOptions;
-      $[15] = t5;
-    } else {
-      t5 = $[15];
-    }
-    t4 = value.map(t5);
-    $[9] = cache;
-    $[10] = staticOptions;
-    $[11] = value;
-    $[12] = t4;
-  } else {
-    t4 = $[12];
-  }
-  const selected = t4;
-  let t5;
-  if ($[16] !== column.label) {
-    t5 = column.label.toLowerCase();
-    $[16] = column.label;
-    $[17] = t5;
-  } else {
-    t5 = $[17];
-  }
-  const t6 = `Select ${t5}`;
-  let t7;
-  if ($[18] !== search || $[19] !== staticOptions || $[20] !== t6) {
-    t7 = {
-      options: staticOptions,
-      search,
-      getOptionLabel: _temp4,
-      placeholder: t6
+  if ($[4] !== column.field || $[5] !== value) {
+    t3 = {
+      [column.field]: value
     };
-    $[18] = search;
-    $[19] = staticOptions;
-    $[20] = t6;
+    $[4] = column.field;
+    $[5] = value;
+    $[6] = t3;
+  } else {
+    t3 = $[6];
+  }
+  const labelOf = useFilterLabels(api, t2, t3);
+  let t4;
+  if ($[7] !== source) {
+    t4 = typeof source === "function" ? undefined : source.map(_temp);
+    $[7] = source;
+    $[8] = t4;
+  } else {
+    t4 = $[8];
+  }
+  const staticOptions = t4;
+  let t5;
+  if ($[9] !== api || $[10] !== column.field || $[11] !== source) {
+    t5 = typeof source === "function" ? async query => {
+      const results = await source(query);
+      api.rememberFilterLabels(column.field, results);
+      return results.map(_temp2);
+    } : undefined;
+    $[9] = api;
+    $[10] = column.field;
+    $[11] = source;
+    $[12] = t5;
+  } else {
+    t5 = $[12];
+  }
+  const search = t5;
+  let t6;
+  if ($[13] !== column || $[14] !== labelOf || $[15] !== value) {
+    let t7;
+    if ($[17] !== column || $[18] !== labelOf) {
+      t7 = id => ({
+        id,
+        label: labelOf(column, id)
+      });
+      $[17] = column;
+      $[18] = labelOf;
+      $[19] = t7;
+    } else {
+      t7 = $[19];
+    }
+    t6 = value.map(t7);
+    $[13] = column;
+    $[14] = labelOf;
+    $[15] = value;
+    $[16] = t6;
+  } else {
+    t6 = $[16];
+  }
+  const selected = t6;
+  let t7;
+  if ($[20] !== column.label) {
+    t7 = column.label.toLowerCase();
+    $[20] = column.label;
     $[21] = t7;
   } else {
     t7 = $[21];
   }
-  const shared = t7;
-  let t8;
-  if ($[22] !== multiple || $[23] !== onChange || $[24] !== selected || $[25] !== shared) {
-    t8 = multiple ? /*#__PURE__*/_jsx(Select, {
+  const t8 = `Select ${t7}`;
+  let t9;
+  if ($[22] !== search || $[23] !== staticOptions || $[24] !== t8) {
+    t9 = {
+      options: staticOptions,
+      search,
+      getOptionLabel: _temp3,
+      placeholder: t8
+    };
+    $[22] = search;
+    $[23] = staticOptions;
+    $[24] = t8;
+    $[25] = t9;
+  } else {
+    t9 = $[25];
+  }
+  const shared = t9;
+  let t10;
+  if ($[26] !== multiple || $[27] !== onChange || $[28] !== selected || $[29] !== shared) {
+    t10 = multiple ? /*#__PURE__*/_jsx(Select, {
       ...shared,
       multiple: true,
       value: selected,
-      onChange: next => onChange(next.map(_temp5))
+      onChange: next => onChange(next.map(_temp4))
     }) : /*#__PURE__*/_jsx(Select, {
       ...shared,
       value: selected[0] ?? null,
       onChange: next_0 => onChange(next_0 ? [next_0.id] : [])
     });
-    $[22] = multiple;
-    $[23] = onChange;
-    $[24] = selected;
-    $[25] = shared;
-    $[26] = t8;
+    $[26] = multiple;
+    $[27] = onChange;
+    $[28] = selected;
+    $[29] = shared;
+    $[30] = t10;
   } else {
-    t8 = $[26];
+    t10 = $[30];
   }
-  return t8;
+  return t10;
 }
-function _temp5(option_4) {
-  return option_4.id;
-}
-function _temp4(option_3) {
-  return option_3.label;
+function _temp4(option_2) {
+  return option_2.id;
 }
 function _temp3(option_1) {
-  return {
-    id: option_1.value,
-    label: option_1.label
-  };
+  return option_1.label;
 }
 function _temp2(option_0) {
   return {
@@ -304,8 +286,11 @@ function _temp2(option_0) {
     label: option_0.label
   };
 }
-function _temp(tick) {
-  return tick + 1;
+function _temp(option) {
+  return {
+    id: option.value,
+    label: option.label
+  };
 }
 function TextFilterField(t0) {
   const $ = _c(10);
@@ -429,7 +414,7 @@ function SingleDatePicker(t0) {
     const today = new Date();
     const cells = [...Array.from({
       length: firstWeekday
-    }, _temp6), ...Array.from({
+    }, _temp5), ...Array.from({
       length: daysInMonth
     }, (_, i) => new Date(year, month, i + 1))];
     let t16;
@@ -627,7 +612,7 @@ function SingleDatePicker(t0) {
           gap: "2px",
           mb: 0.5
         },
-        children: ["S", "M", "T", "W", "T", "F", "S"].map(_temp7)
+        children: ["S", "M", "T", "W", "T", "F", "S"].map(_temp6)
       });
       $[49] = t8;
     } else {
@@ -812,7 +797,7 @@ function SingleDatePicker(t0) {
   }
   return t20;
 }
-function _temp7(d, i_0) {
+function _temp6(d, i_0) {
   return /*#__PURE__*/_jsx(Typography, {
     sx: {
       fontSize: "10px",
@@ -823,7 +808,7 @@ function _temp7(d, i_0) {
     children: d
   }, i_0);
 }
-function _temp6() {
+function _temp5() {
   return null;
 }
 function DateFilterField(t0) {
@@ -1124,7 +1109,7 @@ function HeaderIconButton(t0) {
     t1 = /*#__PURE__*/_jsx(IconButton, {
       onClick: onClick,
       "aria-label": label,
-      sx: _temp8,
+      sx: _temp7,
       children: children
     });
     $[0] = children;
@@ -1136,7 +1121,7 @@ function HeaderIconButton(t0) {
   }
   return t1;
 }
-function _temp8(theme) {
+function _temp7(theme) {
   return {
     width: 26,
     height: 26,
@@ -1774,7 +1759,7 @@ export function ManageViewsDialog(t0) {
     t14 = /*#__PURE__*/_jsx(IconButton, {
       onClick: close,
       "aria-label": "Close views",
-      sx: _temp9,
+      sx: _temp8,
       children: t13
     });
     $[33] = close;
@@ -1889,7 +1874,7 @@ export function ManageViewsDialog(t0) {
           modifiers: [restrictToVerticalAxis, restrictToParentElement],
           onDragEnd: handleDragEnd,
           children: /*#__PURE__*/_jsx(SortableContext, {
-            items: presets.all.map(_temp0),
+            items: presets.all.map(_temp9),
             strategy: verticalListSortingStrategy,
             children: presets.all.map(p_4 => /*#__PURE__*/_jsxs(SortableViewRow, {
               id: p_4.id,
@@ -1918,7 +1903,7 @@ export function ManageViewsDialog(t0) {
               }), /*#__PURE__*/_jsx(Stack, {
                 direction: "row",
                 spacing: 0.25,
-                onClick: _temp1,
+                onClick: _temp0,
                 children: /*#__PURE__*/_jsx(Tooltip, {
                   title: "Delete",
                   children: /*#__PURE__*/_jsx(IconButton, {
@@ -2079,13 +2064,13 @@ export function ManageViewsDialog(t0) {
   }
   return t27;
 }
-function _temp1(e_1) {
+function _temp0(e_1) {
   return e_1.stopPropagation();
 }
-function _temp0(p_3) {
+function _temp9(p_3) {
   return p_3.id;
 }
-function _temp9(theme) {
+function _temp8(theme) {
   return {
     width: 28,
     height: 28,
@@ -2189,7 +2174,7 @@ function SortableViewRow(t0) {
     t7 = /*#__PURE__*/_jsx(Box, {
       ...attributes,
       ...listeners,
-      onClick: _temp10,
+      onClick: _temp1,
       "aria-label": "Drag to reorder",
       sx: t5,
       children: t6
@@ -2221,6 +2206,6 @@ function SortableViewRow(t0) {
   }
   return t8;
 }
-function _temp10(e) {
+function _temp1(e) {
   return e.stopPropagation();
 }

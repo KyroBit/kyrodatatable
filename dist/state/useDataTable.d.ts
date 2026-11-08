@@ -1,4 +1,4 @@
-import type { ColumnDef, DataTableConfig, FilterValues, GroupByColumn, PaginationState, ResourceGroup, SortState, VisibleItem } from '../types/index.js';
+import type { ColumnDef, DataTableConfig, FilterOption, FilterValues, GroupByColumn, PaginationState, ResourceGroup, SortState, VisibleItem } from '../types/index.js';
 export interface DataTableApi<Row, Field extends string = string, Filters = FilterValues> {
     columns: ColumnDef<Row, Field>[];
     getRowId: (row: Row) => string;
@@ -11,6 +11,8 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
     setSearch: (value: string) => void;
     filters: Filters | undefined;
     setFilters: (filters: Filters) => void;
+    filterLabel: (field: string, value: string) => string | undefined;
+    rememberFilterLabels: (field: string, options: FilterOption[]) => void;
     sort: SortState<Field> | null;
     toggleSort: (field: Field) => void;
     setSort: (sort: SortState<Field> | null) => void;

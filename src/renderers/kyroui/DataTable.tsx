@@ -1,6 +1,6 @@
 import { startTransition, useEffect, useMemo, useOptimistic, useState, type ReactNode } from 'react'
 import {
-  Badge, Box, Button, Card, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Submenu, ToggleButton, ToggleButtonGroup, Typography,
+  Box, Button, Card, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Submenu, ToggleButton, ToggleButtonGroup, Typography,
 } from '@kyrobit/kyroui'
 import type {
   DataTableApi, PresetsApi, ExportFormat, ExportRequest, FilterColumnDef, FilterRenderers, FilterValues, ResourceAction,
@@ -10,10 +10,11 @@ import { DataTableRoot } from './context.js'
 import { DataTableSearchField } from './SearchField.js'
 import { DataTableBody } from './Body.js'
 import { DataTablePagination } from './Pagination.js'
-import { DataTableFilterMenu, ManageViewsDialog } from './FilterMenu.js'
+import { ManageViewsDialog } from './FilterMenu.js'
+import { DataTableFilterButton } from './FilterButton.js'
 import { DataTableSettingsDialog } from './SettingsDialog.js'
 import { ConfirmDialog } from './ConfirmDialog.js'
-import { ActionsIcon, AddIcon, ExportIcon, FilterIcon, GroupIcon, ImportIcon, SettingIcon } from './icons.js'
+import { ActionsIcon, AddIcon, ExportIcon, GroupIcon, ImportIcon, SettingIcon } from './icons.js'
 
 export interface DataTableProps<Row, Field extends string = string> {
   api: DataTableApi<Row, Field, FilterValues>
@@ -93,8 +94,6 @@ export function DataTable<Row, Field extends string = string>({
   rowsPerPageOptions,
   infiniteScroll,
 }: DataTableProps<Row, Field>) {
-  const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null)
-  const [filterDraft, setFilterDraft] = useState<FilterValues>({})
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
   const [manageOpen, setManageOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -107,7 +106,6 @@ export function DataTable<Row, Field extends string = string>({
   }, [infiniteScroll, page, setPage])
 
   const filters = api.filters ?? {}
-  const filterCount = countFilterValues(filters)
   const withSelection = Boolean(selectable || (actions && actions.length > 0))
 
   const activePresetId = useMemo(() => {
@@ -202,18 +200,12 @@ export function DataTable<Row, Field extends string = string>({
             width={searchWidth}
             alwaysOpen
             endAdornment={filterColumns && (
-              <Badge badgeContent={filterCount} color="primary">
-                <IconButton
-                  size="small"
-                  aria-label="Filters"
-                  onClick={(e) => {
-                    setFilterDraft(filters)
-                    setFilterAnchor(e.currentTarget.closest<HTMLElement>('.search-field') ?? e.currentTarget)
-                  }}
-                >
-                  <FilterIcon fontSize="small" />
-                </IconButton>
-              </Badge>
+              <DataTableFilterButton
+                filterColumns={filterColumns}
+                presets={presets}
+                filterRenderers={filterRenderers}
+                onApply={applyFilters}
+              />
             )}
           />
           {api.groupByColumns && api.groupByColumns.length > 0 && (
@@ -281,19 +273,6 @@ export function DataTable<Row, Field extends string = string>({
             setPendingAction(null)
             void executeAction(action)
           }}
-        />
-      )}
-
-      {filterColumns && (
-        <DataTableFilterMenu
-          filterRenderers={filterRenderers}
-          anchorEl={filterAnchor}
-          onClose={() => setFilterAnchor(null)}
-          filterColumns={filterColumns}
-          draft={filterDraft}
-          onDraftChange={setFilterDraft}
-          onApply={applyFilters}
-          presets={presets}
         />
       )}
 

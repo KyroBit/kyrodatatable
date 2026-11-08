@@ -94,6 +94,7 @@ What `useDataTable()` returns. Every renderer — built-in or your own — works
 | `rows`, `total`, `loading`, `error` | `Row[]`, `number`, `boolean`, `unknown` | Flat-mode result of the current page. |
 | `search`, `setSearch` | `string`, `(v: string) => void` | Setting resets to page 1. |
 | `filters`, `setFilters` | `Filters \| undefined`, `(f: Filters) => void` | Setting resets to page 1 and refetches/refilters, same as `setSearch`. |
+| `filterLabel`, `rememberFilterLabels` | `(field: string, value: string) => string \| undefined`, `(field: string, options: FilterOption[]) => void` | The label of a selected option, kept from when it was picked or loaded. Survives the filter menu closing and the options reloading, so chips can show "Tom Reid" for a stored id. The built-in select fields remember labels themselves; call `rememberFilterLabels` from a custom filter renderer. |
 | `sort`, `toggleSort` | `SortState<Field> \| null`, `(field: Field) => void` | `toggleSort` cycles asc → desc → unsorted on repeated calls for the *same* field; picking a new field jumps straight to asc. |
 | `setSort` | `(sort: SortState<Field> \| null) => void` | Sets sort directly — for a menu that lets someone pick field and direction independently, rather than relying on `toggleSort`'s cycling. |
 | `pagination`, `setPage`, `setPageSize` | `{ page, pageSize }`, ... | 1-indexed page. |
@@ -114,6 +115,10 @@ type VisibleItem<Row, Field> =
   | { type: 'group'; group: ResourceGroup<Field>; expanded: boolean } // group header
   | { type: 'group-row'; row: Row; groupKey: string }       // a row inside an expanded group
 ```
+
+## `useFilterLabels(api, filterColumns, filters)`
+
+Returns `(column, value) => string`: the label for a selected value, falling back to a static option's label and then the value itself. For a `select` column with an async `options` source, values with no known label are resolved once by calling the source with an empty query. The built-in select fields and `DataTableFilterChips` use it; use it in your own filter bar.
 
 ## `ColumnDef<Row, Field>`
 
