@@ -476,8 +476,8 @@ export function DataTableBody(t0) {
       padding: "checkbox",
       children: /*#__PURE__*/_jsx(Checkbox, {
         size: "small",
-        checked: api.allVisibleSelected,
-        indeterminate: api.someVisibleSelected && !api.allVisibleSelected,
+        checked: api.allSelected,
+        indeterminate: api.someSelected && !api.allSelected,
         onChange: () => api.toggleSelectAll(),
         slotProps: {
           input: {
@@ -593,7 +593,7 @@ export function DataTableBody(t0) {
                     fontSize: 18,
                     color: "text.secondary"
                   }
-                }), selectable && item.expanded && /*#__PURE__*/_jsx(Checkbox, {
+                }), selectable && /*#__PURE__*/_jsx(Checkbox, {
                   size: "small",
                   sx: {
                     p: 0.25,

@@ -1,6 +1,7 @@
 export { useDataTable } from './state/useDataTable.js'
 export type { DataTableApi } from './state/useDataTable.js'
 export { prefetchDataTable } from './state/cache.js'
+export { isRowSelected } from './state/selection.js'
 export type { PrefetchOptions } from './state/cache.js'
 export { usePresets } from './state/usePresets.js'
 export { useFilterLabels } from './state/useFilterLabels.js'
@@ -26,6 +27,8 @@ export type {
   ResourceAction,
   ResourceGroup,
   GroupPathEntry,
+  Selection,
+  SelectionRequest,
   ChoiceFilterColumnDef,
   FilterFieldProps,
   FilterRenderers,

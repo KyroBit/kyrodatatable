@@ -67,7 +67,7 @@ export function createClientEngine<Row, Field extends string, Filters>({
 
   async function fetchGroups(params: FetchParams<Field, Filters>): Promise<FetchGroupsResult<Field>> {
     const field = params.groupBy
-    if (!field) return { total: 0, groups: [] }
+    if (!field) return { total: 0, records: 0, groups: [] }
     const rows = filtered(params)
     const buckets = new Map<string, number>()
     for (const row of rows) {
@@ -75,7 +75,7 @@ export function createClientEngine<Row, Field extends string, Filters>({
       buckets.set(key, (buckets.get(key) ?? 0) + 1)
     }
     const groups: ResourceGroup<Field>[] = [...buckets.entries()].map(([key, count]) => ({ key, field, label: key, count }))
-    return { total: rows.length, groups }
+    return { total: groups.length, records: rows.length, groups: groups.slice((params.page - 1) * params.pageSize, params.page * params.pageSize) }
   }
 
   return { fetchRecords, fetchGroups }

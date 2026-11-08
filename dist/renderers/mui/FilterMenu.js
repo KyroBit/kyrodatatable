@@ -9,13 +9,9 @@ import CalendarTodayRoundedIcon from '@mui/icons-material/CalendarTodayRounded';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
-import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
-import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { countFilterValues, filterValuesEqual, summarizeFilterValues, useFilterLabels } from '@kyrobit/datatable';
 import { useDataTableContext } from './context.js';
+import { SortableList, SortableRow } from './Sortable.js';
 import { TrashIcon } from './icons.js';
 import { ConfirmDialog } from './ConfirmDialog.js';
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
@@ -1541,7 +1537,7 @@ export function DataTableFilterMenu(t0) {
   return t23;
 }
 export function ManageViewsDialog(t0) {
-  const $ = _c(74);
+  const $ = _c(68);
   const {
     open,
     onClose,
@@ -1560,50 +1556,29 @@ export function ManageViewsDialog(t0) {
     t1 = $[0];
   }
   const [editFilters, setEditFilters] = useState(t1);
-  let t2;
-  if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = {
-      activationConstraint: {
-        distance: 4
-      }
-    };
-    $[1] = t2;
-  } else {
-    t2 = $[1];
-  }
-  let t3;
-  if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-    t3 = {
-      coordinateGetter: sortableKeyboardCoordinates
-    };
-    $[2] = t3;
-  } else {
-    t3 = $[2];
-  }
-  const sensors = useSensors(useSensor(PointerSensor, t2), useSensor(KeyboardSensor, t3));
   let close;
   let commitEdit;
   let editing;
   let startEdit;
-  let t4;
-  let t5;
-  if ($[3] !== editFilters || $[4] !== editName || $[5] !== editingId || $[6] !== onClose || $[7] !== presets) {
+  let t2;
+  let t3;
+  if ($[1] !== editFilters || $[2] !== editName || $[3] !== editingId || $[4] !== onClose || $[5] !== presets) {
     editing = editingId ? presets.all.find(p => p.id === editingId) : null;
-    let t6;
-    if ($[14] !== onClose) {
-      t6 = () => {
+    let t4;
+    if ($[12] !== onClose) {
+      t4 = () => {
         setEditingId(null);
         onClose();
       };
-      $[14] = onClose;
-      $[15] = t6;
+      $[12] = onClose;
+      $[13] = t4;
     } else {
-      t6 = $[15];
+      t4 = $[13];
     }
-    close = t6;
-    let t7;
-    if ($[16] !== presets) {
-      t7 = id => {
+    close = t4;
+    let t5;
+    if ($[14] !== presets) {
+      t5 = id => {
         const preset = presets.all.find(p_0 => p_0.id === id);
         if (!preset) {
           return;
@@ -1612,15 +1587,15 @@ export function ManageViewsDialog(t0) {
         setEditFilters(preset.filters);
         setEditingId(id);
       };
-      $[16] = presets;
-      $[17] = t7;
+      $[14] = presets;
+      $[15] = t5;
     } else {
-      t7 = $[17];
+      t5 = $[15];
     }
-    startEdit = t7;
-    let t8;
-    if ($[18] !== editFilters || $[19] !== editName || $[20] !== editingId || $[21] !== presets) {
-      t8 = () => {
+    startEdit = t5;
+    let t6;
+    if ($[16] !== editFilters || $[17] !== editName || $[18] !== editingId || $[19] !== presets) {
+      t6 = () => {
         const trimmed = editName.trim();
         if (!editingId || !trimmed) {
           return;
@@ -1628,168 +1603,146 @@ export function ManageViewsDialog(t0) {
         presets.update(editingId, trimmed, editFilters);
         setEditingId(null);
       };
-      $[18] = editFilters;
-      $[19] = editName;
-      $[20] = editingId;
-      $[21] = presets;
-      $[22] = t8;
+      $[16] = editFilters;
+      $[17] = editName;
+      $[18] = editingId;
+      $[19] = presets;
+      $[20] = t6;
     } else {
-      t8 = $[22];
+      t6 = $[20];
     }
-    commitEdit = t8;
-    t4 = Boolean;
-    t5 = editing && (editName.trim() !== editing.name || !filterValuesEqual(editFilters, editing.filters));
-    $[3] = editFilters;
-    $[4] = editName;
-    $[5] = editingId;
-    $[6] = onClose;
-    $[7] = presets;
-    $[8] = close;
-    $[9] = commitEdit;
-    $[10] = editing;
-    $[11] = startEdit;
-    $[12] = t4;
-    $[13] = t5;
+    commitEdit = t6;
+    t2 = Boolean;
+    t3 = editing && (editName.trim() !== editing.name || !filterValuesEqual(editFilters, editing.filters));
+    $[1] = editFilters;
+    $[2] = editName;
+    $[3] = editingId;
+    $[4] = onClose;
+    $[5] = presets;
+    $[6] = close;
+    $[7] = commitEdit;
+    $[8] = editing;
+    $[9] = startEdit;
+    $[10] = t2;
+    $[11] = t3;
   } else {
-    close = $[8];
-    commitEdit = $[9];
-    editing = $[10];
-    startEdit = $[11];
-    t4 = $[12];
-    t5 = $[13];
+    close = $[6];
+    commitEdit = $[7];
+    editing = $[8];
+    startEdit = $[9];
+    t2 = $[10];
+    t3 = $[11];
   }
-  const isEditDirty = t4(t5);
+  const isEditDirty = t2(t3);
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
-  let t6;
-  if ($[23] !== isEditDirty) {
-    t6 = () => {
+  let t4;
+  if ($[21] !== isEditDirty) {
+    t4 = () => {
       if (isEditDirty) {
         setConfirmDiscardOpen(true);
         return;
       }
       setEditingId(null);
     };
-    $[23] = isEditDirty;
-    $[24] = t6;
+    $[21] = isEditDirty;
+    $[22] = t4;
   } else {
-    t6 = $[24];
+    t4 = $[22];
   }
-  const discardEdit = t6;
-  let t7;
-  if ($[25] !== presets) {
-    t7 = t8 => {
-      const {
-        active,
-        over
-      } = t8;
-      if (!over || active.id === over.id) {
-        return;
-      }
-      const from = presets.all.findIndex(p_1 => p_1.id === active.id);
-      const to = presets.all.findIndex(p_2 => p_2.id === over.id);
-      if (from !== -1 && to !== -1) {
-        presets.reorder(from, to);
-      }
-    };
-    $[25] = presets;
-    $[26] = t7;
-  } else {
-    t7 = $[26];
-  }
-  const handleDragEnd = t7;
-  let t8;
-  if ($[27] === Symbol.for("react.memo_cache_sentinel")) {
-    t8 = {
+  const discardEdit = t4;
+  let t5;
+  if ($[23] === Symbol.for("react.memo_cache_sentinel")) {
+    t5 = {
       px: 3,
       pt: 2,
       pb: 2.5
     };
-    $[27] = t8;
+    $[23] = t5;
   } else {
-    t8 = $[27];
+    t5 = $[23];
   }
-  let t9;
-  if ($[28] === Symbol.for("react.memo_cache_sentinel")) {
-    t9 = {
+  let t6;
+  if ($[24] === Symbol.for("react.memo_cache_sentinel")) {
+    t6 = {
       alignItems: "center",
       justifyContent: "space-between",
       mb: 1.5
     };
-    $[28] = t9;
+    $[24] = t6;
   } else {
-    t9 = $[28];
+    t6 = $[24];
   }
-  let t10;
-  if ($[29] === Symbol.for("react.memo_cache_sentinel")) {
-    t10 = {
+  let t7;
+  if ($[25] === Symbol.for("react.memo_cache_sentinel")) {
+    t7 = {
       fontSize: "18px",
       fontWeight: 600,
       color: "text.primary"
     };
-    $[29] = t10;
+    $[25] = t7;
   } else {
-    t10 = $[29];
+    t7 = $[25];
   }
-  const t11 = editing ? "Edit view" : "Views";
-  let t12;
-  if ($[30] !== t11) {
-    t12 = /*#__PURE__*/_jsx(Typography, {
-      sx: t10,
-      children: t11
+  const t8 = editing ? "Edit view" : "Views";
+  let t9;
+  if ($[26] !== t8) {
+    t9 = /*#__PURE__*/_jsx(Typography, {
+      sx: t7,
+      children: t8
     });
-    $[30] = t11;
-    $[31] = t12;
+    $[26] = t8;
+    $[27] = t9;
   } else {
-    t12 = $[31];
+    t9 = $[27];
   }
-  let t13;
-  if ($[32] === Symbol.for("react.memo_cache_sentinel")) {
-    t13 = /*#__PURE__*/_jsx(CloseRoundedIcon, {
+  let t10;
+  if ($[28] === Symbol.for("react.memo_cache_sentinel")) {
+    t10 = /*#__PURE__*/_jsx(CloseRoundedIcon, {
       sx: {
         fontSize: 16
       }
     });
-    $[32] = t13;
+    $[28] = t10;
   } else {
-    t13 = $[32];
+    t10 = $[28];
   }
-  let t14;
-  if ($[33] !== close) {
-    t14 = /*#__PURE__*/_jsx(IconButton, {
+  let t11;
+  if ($[29] !== close) {
+    t11 = /*#__PURE__*/_jsx(IconButton, {
       onClick: close,
       "aria-label": "Close views",
       sx: _temp8,
-      children: t13
+      children: t10
     });
-    $[33] = close;
-    $[34] = t14;
+    $[29] = close;
+    $[30] = t11;
   } else {
-    t14 = $[34];
+    t11 = $[30];
   }
-  let t15;
-  if ($[35] !== t12 || $[36] !== t14) {
-    t15 = /*#__PURE__*/_jsxs(Stack, {
+  let t12;
+  if ($[31] !== t11 || $[32] !== t9) {
+    t12 = /*#__PURE__*/_jsxs(Stack, {
       direction: "row",
-      sx: t9,
-      children: [t12, t14]
+      sx: t6,
+      children: [t9, t11]
     });
-    $[35] = t12;
-    $[36] = t14;
-    $[37] = t15;
+    $[31] = t11;
+    $[32] = t9;
+    $[33] = t12;
   } else {
-    t15 = $[37];
+    t12 = $[33];
   }
-  let t16;
-  if ($[38] === Symbol.for("react.memo_cache_sentinel")) {
-    t16 = /*#__PURE__*/_jsx(Divider, {});
-    $[38] = t16;
+  let t13;
+  if ($[34] === Symbol.for("react.memo_cache_sentinel")) {
+    t13 = /*#__PURE__*/_jsx(Divider, {});
+    $[34] = t13;
   } else {
-    t16 = $[38];
+    t13 = $[34];
   }
-  let t17;
-  if ($[39] !== close || $[40] !== commitEdit || $[41] !== discardEdit || $[42] !== editFilters || $[43] !== editName || $[44] !== editing || $[45] !== filterColumns || $[46] !== handleDragEnd || $[47] !== presets || $[48] !== sensors || $[49] !== startEdit) {
-    t17 = editing ? /*#__PURE__*/_jsxs(_Fragment, {
+  let t14;
+  if ($[35] !== close || $[36] !== commitEdit || $[37] !== discardEdit || $[38] !== editFilters || $[39] !== editName || $[40] !== editing || $[41] !== filterColumns || $[42] !== presets || $[43] !== startEdit) {
+    t14 = editing ? /*#__PURE__*/_jsxs(_Fragment, {
       children: [/*#__PURE__*/_jsx(Typography, {
         sx: {
           fontSize: "13.5px",
@@ -1868,61 +1821,55 @@ export function ManageViewsDialog(t0) {
           maxHeight: 380,
           overflowY: "auto"
         },
-        children: /*#__PURE__*/_jsx(DndContext, {
-          sensors: sensors,
-          collisionDetection: closestCenter,
-          modifiers: [restrictToVerticalAxis, restrictToParentElement],
-          onDragEnd: handleDragEnd,
-          children: /*#__PURE__*/_jsx(SortableContext, {
-            items: presets.all.map(_temp9),
-            strategy: verticalListSortingStrategy,
-            children: presets.all.map(p_4 => /*#__PURE__*/_jsxs(SortableViewRow, {
-              id: p_4.id,
-              onClick: () => startEdit(p_4.id),
-              children: [/*#__PURE__*/_jsxs(Box, {
+        children: /*#__PURE__*/_jsx(SortableList, {
+          ids: presets.all.map(_temp9),
+          onMove: presets.reorder,
+          children: presets.all.map(p_2 => /*#__PURE__*/_jsxs(SortableRow, {
+            id: p_2.id,
+            onClick: () => startEdit(p_2.id),
+            children: [/*#__PURE__*/_jsxs(Box, {
+              sx: {
+                flex: 1,
+                minWidth: 0
+              },
+              children: [/*#__PURE__*/_jsx(Typography, {
+                noWrap: true,
                 sx: {
-                  flex: 1,
-                  minWidth: 0
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "text.primary"
                 },
-                children: [/*#__PURE__*/_jsx(Typography, {
-                  noWrap: true,
+                children: p_2.name
+              }), /*#__PURE__*/_jsx(Typography, {
+                noWrap: true,
+                sx: {
+                  fontSize: "12.5px",
+                  color: "text.secondary"
+                },
+                children: summarizeFilterValues(p_2.filters, filterColumns)
+              })]
+            }), /*#__PURE__*/_jsx(Stack, {
+              direction: "row",
+              spacing: 0.25,
+              onClick: _temp0,
+              children: /*#__PURE__*/_jsx(Tooltip, {
+                title: "Delete",
+                children: /*#__PURE__*/_jsx(IconButton, {
+                  size: "small",
+                  "aria-label": `Delete ${p_2.name}`,
+                  onClick: () => setPendingDelete(p_2),
                   sx: {
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    color: "text.primary"
+                    color: "error.main"
                   },
-                  children: p_4.name
-                }), /*#__PURE__*/_jsx(Typography, {
-                  noWrap: true,
-                  sx: {
-                    fontSize: "12.5px",
-                    color: "text.secondary"
-                  },
-                  children: summarizeFilterValues(p_4.filters, filterColumns)
-                })]
-              }), /*#__PURE__*/_jsx(Stack, {
-                direction: "row",
-                spacing: 0.25,
-                onClick: _temp0,
-                children: /*#__PURE__*/_jsx(Tooltip, {
-                  title: "Delete",
-                  children: /*#__PURE__*/_jsx(IconButton, {
-                    size: "small",
-                    "aria-label": `Delete ${p_4.name}`,
-                    onClick: () => setPendingDelete(p_4),
+                  children: /*#__PURE__*/_jsx(TrashIcon, {
                     sx: {
-                      color: "error.main"
-                    },
-                    children: /*#__PURE__*/_jsx(TrashIcon, {
-                      sx: {
-                        fontSize: 15
-                      }
-                    })
+                      fontSize: 15
+                    }
                   })
                 })
-              })]
-            }, p_4.id))
-          })
+              })
+            })]
+          }, p_2.id))
         })
       }), /*#__PURE__*/_jsx(Stack, {
         direction: "row",
@@ -1943,132 +1890,130 @@ export function ManageViewsDialog(t0) {
         })
       })]
     });
-    $[39] = close;
-    $[40] = commitEdit;
-    $[41] = discardEdit;
-    $[42] = editFilters;
-    $[43] = editName;
-    $[44] = editing;
-    $[45] = filterColumns;
-    $[46] = handleDragEnd;
-    $[47] = presets;
-    $[48] = sensors;
-    $[49] = startEdit;
-    $[50] = t17;
+    $[35] = close;
+    $[36] = commitEdit;
+    $[37] = discardEdit;
+    $[38] = editFilters;
+    $[39] = editName;
+    $[40] = editing;
+    $[41] = filterColumns;
+    $[42] = presets;
+    $[43] = startEdit;
+    $[44] = t14;
   } else {
-    t17 = $[50];
+    t14 = $[44];
   }
-  let t18;
-  if ($[51] !== t15 || $[52] !== t17) {
-    t18 = /*#__PURE__*/_jsxs(Box, {
-      sx: t8,
-      children: [t15, t16, t17]
+  let t15;
+  if ($[45] !== t12 || $[46] !== t14) {
+    t15 = /*#__PURE__*/_jsxs(Box, {
+      sx: t5,
+      children: [t12, t13, t14]
     });
-    $[51] = t15;
-    $[52] = t17;
-    $[53] = t18;
+    $[45] = t12;
+    $[46] = t14;
+    $[47] = t15;
   } else {
-    t18 = $[53];
+    t15 = $[47];
   }
-  const t19 = Boolean(pendingDelete);
-  const t20 = `"${pendingDelete?.name}" will be removed for good.`;
-  let t21;
-  if ($[54] === Symbol.for("react.memo_cache_sentinel")) {
-    t21 = () => setPendingDelete(null);
-    $[54] = t21;
+  const t16 = Boolean(pendingDelete);
+  const t17 = `"${pendingDelete?.name}" will be removed for good.`;
+  let t18;
+  if ($[48] === Symbol.for("react.memo_cache_sentinel")) {
+    t18 = () => setPendingDelete(null);
+    $[48] = t18;
   } else {
-    t21 = $[54];
+    t18 = $[48];
   }
-  let t22;
-  if ($[55] !== pendingDelete || $[56] !== presets) {
-    t22 = () => {
+  let t19;
+  if ($[49] !== pendingDelete || $[50] !== presets) {
+    t19 = () => {
       if (pendingDelete) {
         presets.remove(pendingDelete.id);
       }
       setPendingDelete(null);
     };
-    $[55] = pendingDelete;
-    $[56] = presets;
-    $[57] = t22;
+    $[49] = pendingDelete;
+    $[50] = presets;
+    $[51] = t19;
   } else {
-    t22 = $[57];
+    t19 = $[51];
   }
-  let t23;
-  if ($[58] !== t19 || $[59] !== t20 || $[60] !== t22) {
-    t23 = /*#__PURE__*/_jsx(ConfirmDialog, {
-      open: t19,
+  let t20;
+  if ($[52] !== t16 || $[53] !== t17 || $[54] !== t19) {
+    t20 = /*#__PURE__*/_jsx(ConfirmDialog, {
+      open: t16,
       title: "Delete this view?",
-      description: t20,
+      description: t17,
       confirmLabel: "Delete",
       confirmColor: "error",
-      onCancel: t21,
-      onConfirm: t22
+      onCancel: t18,
+      onConfirm: t19
     });
-    $[58] = t19;
-    $[59] = t20;
-    $[60] = t22;
-    $[61] = t23;
+    $[52] = t16;
+    $[53] = t17;
+    $[54] = t19;
+    $[55] = t20;
   } else {
-    t23 = $[61];
+    t20 = $[55];
   }
-  let t24;
-  let t25;
-  if ($[62] === Symbol.for("react.memo_cache_sentinel")) {
-    t24 = () => setConfirmDiscardOpen(false);
-    t25 = () => {
+  let t21;
+  let t22;
+  if ($[56] === Symbol.for("react.memo_cache_sentinel")) {
+    t21 = () => setConfirmDiscardOpen(false);
+    t22 = () => {
       setConfirmDiscardOpen(false);
       setEditingId(null);
     };
-    $[62] = t24;
-    $[63] = t25;
+    $[56] = t21;
+    $[57] = t22;
   } else {
-    t24 = $[62];
-    t25 = $[63];
+    t21 = $[56];
+    t22 = $[57];
   }
-  let t26;
-  if ($[64] !== confirmDiscardOpen) {
-    t26 = /*#__PURE__*/_jsx(ConfirmDialog, {
+  let t23;
+  if ($[58] !== confirmDiscardOpen) {
+    t23 = /*#__PURE__*/_jsx(ConfirmDialog, {
       open: confirmDiscardOpen,
       title: "Discard your changes?",
       description: "Your edits to this view haven't been saved.",
       confirmLabel: "Discard",
       cancelLabel: "Keep editing",
       confirmColor: "error",
-      onCancel: t24,
-      onConfirm: t25
+      onCancel: t21,
+      onConfirm: t22
     });
-    $[64] = confirmDiscardOpen;
-    $[65] = t26;
+    $[58] = confirmDiscardOpen;
+    $[59] = t23;
   } else {
-    t26 = $[65];
+    t23 = $[59];
   }
-  let t27;
-  if ($[66] !== DialogProps || $[67] !== close || $[68] !== open || $[69] !== size || $[70] !== t18 || $[71] !== t23 || $[72] !== t26) {
-    t27 = /*#__PURE__*/_jsxs(Dialog, {
+  let t24;
+  if ($[60] !== DialogProps || $[61] !== close || $[62] !== open || $[63] !== size || $[64] !== t15 || $[65] !== t20 || $[66] !== t23) {
+    t24 = /*#__PURE__*/_jsxs(Dialog, {
       open: open,
       onClose: close,
       ...size,
       ...DialogProps,
-      children: [t18, t23, t26]
+      children: [t15, t20, t23]
     });
-    $[66] = DialogProps;
-    $[67] = close;
-    $[68] = open;
-    $[69] = size;
-    $[70] = t18;
-    $[71] = t23;
-    $[72] = t26;
-    $[73] = t27;
+    $[60] = DialogProps;
+    $[61] = close;
+    $[62] = open;
+    $[63] = size;
+    $[64] = t15;
+    $[65] = t20;
+    $[66] = t23;
+    $[67] = t24;
   } else {
-    t27 = $[73];
+    t24 = $[67];
   }
-  return t27;
+  return t24;
 }
 function _temp0(e_1) {
   return e_1.stopPropagation();
 }
-function _temp9(p_3) {
-  return p_3.id;
+function _temp9(p_1) {
+  return p_1.id;
 }
 function _temp8(theme) {
   return {
@@ -2080,132 +2025,4 @@ function _temp8(theme) {
       bgcolor: alpha(theme.palette.text.primary, 0.08)
     }
   };
-}
-function SortableViewRow(t0) {
-  const $ = _c(20);
-  const {
-    id,
-    children,
-    onClick
-  } = t0;
-  let t1;
-  if ($[0] !== id) {
-    t1 = {
-      id
-    };
-    $[0] = id;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable(t1);
-  let t2;
-  if ($[2] !== isDragging || $[3] !== transform || $[4] !== transition) {
-    t2 = theme => ({
-      alignItems: "center",
-      gap: 1,
-      pl: 1,
-      pr: 1,
-      py: 1.25,
-      borderRadius: "8px",
-      cursor: "pointer",
-      transform: CSS.Transform.toString(transform),
-      transition,
-      position: "relative",
-      zIndex: isDragging ? 1 : undefined,
-      bgcolor: isDragging ? alpha(theme.palette.text.primary, 0.04) : undefined,
-      boxShadow: isDragging ? "0px 8px 24px rgba(0,0,0,0.12)" : undefined,
-      "&:hover": {
-        bgcolor: alpha(theme.palette.text.primary, 0.04)
-      }
-    });
-    $[2] = isDragging;
-    $[3] = transform;
-    $[4] = transition;
-    $[5] = t2;
-  } else {
-    t2 = $[5];
-  }
-  const t3 = isDragging ? "grabbing" : "grab";
-  let t4;
-  if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t4 = {
-      color: "text.secondary"
-    };
-    $[6] = t4;
-  } else {
-    t4 = $[6];
-  }
-  let t5;
-  if ($[7] !== t3) {
-    t5 = {
-      display: "flex",
-      alignItems: "center",
-      color: "text.disabled",
-      cursor: t3,
-      touchAction: "none",
-      "&:hover": t4
-    };
-    $[7] = t3;
-    $[8] = t5;
-  } else {
-    t5 = $[8];
-  }
-  let t6;
-  if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = /*#__PURE__*/_jsx(DragIndicatorIcon, {
-      sx: {
-        fontSize: 18
-      }
-    });
-    $[9] = t6;
-  } else {
-    t6 = $[9];
-  }
-  let t7;
-  if ($[10] !== attributes || $[11] !== listeners || $[12] !== t5) {
-    t7 = /*#__PURE__*/_jsx(Box, {
-      ...attributes,
-      ...listeners,
-      onClick: _temp1,
-      "aria-label": "Drag to reorder",
-      sx: t5,
-      children: t6
-    });
-    $[10] = attributes;
-    $[11] = listeners;
-    $[12] = t5;
-    $[13] = t7;
-  } else {
-    t7 = $[13];
-  }
-  let t8;
-  if ($[14] !== children || $[15] !== onClick || $[16] !== setNodeRef || $[17] !== t2 || $[18] !== t7) {
-    t8 = /*#__PURE__*/_jsxs(Stack, {
-      ref: setNodeRef,
-      direction: "row",
-      onClick: onClick,
-      sx: t2,
-      children: [t7, children]
-    });
-    $[14] = children;
-    $[15] = onClick;
-    $[16] = setNodeRef;
-    $[17] = t2;
-    $[18] = t7;
-    $[19] = t8;
-  } else {
-    t8 = $[19];
-  }
-  return t8;
-}
-function _temp1(e) {
-  return e.stopPropagation();
 }

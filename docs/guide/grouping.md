@@ -44,7 +44,8 @@ export async function fetchCategoryGroups(params: FetchParams): Promise<FetchGro
   await new Promise((r) => setTimeout(r, 200))
 
   return {
-    total: rows.length,
+    total: 2,
+    records: rows.length,
     groups: [
       { key: 'active', field: 'is_active', label: 'Active', count: active.length },
       { key: 'inactive', field: 'is_active', label: 'Inactive', count: inactive.length },
@@ -79,7 +80,7 @@ const table = useDataTable({
 })
 ```
 
-Two new fields from the quick start's server-mode call — `fetchGroups`, and `groupByColumns` to tell the renderer what grouping options exist. `<DataTable />` grows a "Group by" select automatically; pick "Status" in it (or call `table.setGroupBy(['is_active'])` yourself) and the flat, paginated view is replaced by the two collapsed groups.
+Two new fields from the quick start's server-mode call — `fetchGroups`, and `groupByColumns` to tell the renderer what grouping options exist. `<DataTable />` grows a Group button automatically; add "Status" in its panel (or call `table.setGroupBy(['is_active'])` yourself) and the flat, paginated view is replaced by the two collapsed groups.
 
 To open the table already grouped, pass `initialGroupBy: ['is_active']`. It mounts calling `fetchGroups` only, never a flat `fetchRecords`; choosing "None" drops to the flat list, and a change in `deps` groups it again. A field missing from `groupByColumns` is ignored.
 
@@ -90,9 +91,13 @@ To open the table already grouped, pass `initialGroupBy: ['is_active']`. It moun
 3. Those 10 rows (page 1, whatever the page size is) land in `table.groupRows(item.id)`, entirely separate from `table.rows` (which is empty now — you're in grouped mode) and from whatever the "Inactive" group holds.
 4. Collapse it, expand it again: no refetch. The rows are still there. Expand "Inactive" for the first time: *that* triggers its own fetch, with its own path and its own independent page counter.
 
+## Many groups
+
+Every level is a paged list, the way MUI X and AG Grid load grouped server data. `fetchGroups` receives `page` and `pageSize` and returns one page of groups, with `total` the number of groups at that level and `records` the number of records across all of them. The top level uses the table's pager (in infinite mode it loads more as you scroll); an expanded group pages its sub-groups with the same small pager a leaf group uses for its rows. Grouping by a field with hundreds of values stays one page at a time; to group dates by month instead of by day, offer a derived field such as `created_month` in `groupByColumns`.
+
 ## Nested groups
 
-`groupBy` is a list. `table.setGroupBy(['is_active', 'country'])` groups by status, then by country inside each status. Expanding a status calls `fetchGroups` with `groupBy: 'country'` and `groupPath: [{ field: 'is_active', key: 'active' }]`; expanding a country inside it calls `fetchRecords` with both entries in `groupPath`. Every group header in `visibleItems` carries its `depth`, which the built-in renderers indent by. In `<DataTable />`'s Group menu, each field toggles in or out, appended in the order picked; "None" clears them all. Selecting a group selects every row loaded beneath it, and collapsing it clears them.
+`groupBy` is a list. `table.setGroupBy(['is_active', 'country'])` groups by status, then by country inside each status. Expanding a status calls `fetchGroups` with `groupBy: 'country'` and `groupPath: [{ field: 'is_active', key: 'active' }]`; expanding a country inside it calls `fetchRecords` with both entries in `groupPath`. Every group header in `visibleItems` carries its `depth`, which the built-in renderers indent by. In `<DataTable />`, the Group button opens a panel listing the levels in order, each with a drag handle and a remove button; the unused fields sit below them as chips to add. Nothing is fetched until Apply. Every group header has a checkbox that selects the whole group without loading it, expanded or not; see [Selection](/reference/core-api#selection).
 
 Read this state without any renderer at all via `table.groupRows`/`table.groupPagination`/`table.setGroupPage`, callable from any renderer — or your own markup.
 

@@ -2,7 +2,6 @@ import { c as _c } from "react/compiler-runtime";
 import { TablePagination } from '@mui/material';
 import { useDataTableContext } from './context.js';
 import { jsx as _jsx } from "react/jsx-runtime";
-/** Invisible while there is nothing to page through, keeping its space so the toolbar does not shift when rows arrive. Hidden while grouped — pagination happens per-group there instead (`api.setGroupPage`). */
 export function DataTablePagination(t0) {
   const $ = _c(15);
   const {
@@ -18,9 +17,7 @@ export function DataTablePagination(t0) {
   }
   const rowsPerPageOptions = t2;
   const api = useDataTableContext();
-  if (api.groupBy.length > 0) {
-    return null;
-  }
+  const count = api.groupBy.length > 0 ? api.groupsTotal : api.total;
   const t3 = api.pagination.page - 1;
   let t4;
   let t5;
@@ -34,7 +31,7 @@ export function DataTablePagination(t0) {
     t4 = $[3];
     t5 = $[4];
   }
-  const t6 = api.total === 0 ? "hidden" : undefined;
+  const t6 = count === 0 ? "hidden" : undefined;
   let t7;
   if ($[5] !== t6) {
     t7 = {
@@ -46,11 +43,11 @@ export function DataTablePagination(t0) {
     t7 = $[6];
   }
   let t8;
-  if ($[7] !== api.pagination.pageSize || $[8] !== api.total || $[9] !== rowsPerPageOptions || $[10] !== t3 || $[11] !== t4 || $[12] !== t5 || $[13] !== t7) {
+  if ($[7] !== api.pagination.pageSize || $[8] !== count || $[9] !== rowsPerPageOptions || $[10] !== t3 || $[11] !== t4 || $[12] !== t5 || $[13] !== t7) {
     t8 = /*#__PURE__*/_jsx(TablePagination, {
       component: "div",
       rowsPerPageOptions: rowsPerPageOptions,
-      count: api.total,
+      count: count,
       page: t3,
       rowsPerPage: api.pagination.pageSize,
       onPageChange: t4,
@@ -59,7 +56,7 @@ export function DataTablePagination(t0) {
       sx: t7
     });
     $[7] = api.pagination.pageSize;
-    $[8] = api.total;
+    $[8] = count;
     $[9] = rowsPerPageOptions;
     $[10] = t3;
     $[11] = t4;
@@ -75,7 +72,7 @@ function _temp(t0) {
   const {
     from,
     to,
-    count
+    count: count_0
   } = t0;
-  return `${from}–${to} of ${count}`;
+  return `${from}–${to} of ${count_0}`;
 }

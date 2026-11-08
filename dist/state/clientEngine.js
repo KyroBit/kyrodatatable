@@ -49,6 +49,7 @@ export function createClientEngine({
     const field = params.groupBy;
     if (!field) return {
       total: 0,
+      records: 0,
       groups: []
     };
     const rows = filtered(params);
@@ -64,8 +65,9 @@ export function createClientEngine({
       count
     }));
     return {
-      total: rows.length,
-      groups
+      total: groups.length,
+      records: rows.length,
+      groups: groups.slice((params.page - 1) * params.pageSize, params.page * params.pageSize)
     };
   }
   return {

@@ -565,7 +565,7 @@ export function DataTableBody(t0) {
                   sx: {
                     color: "text.secondary"
                   }
-                }), selectable && item.expanded && /*#__PURE__*/_jsx(Box, {
+                }), selectable && /*#__PURE__*/_jsx(Box, {
                   component: "span",
                   sx: {
                     display: "inline-flex"
@@ -684,8 +684,8 @@ export function DataTableBody(t0) {
         variant: "head",
         padding: "checkbox",
         children: /*#__PURE__*/_jsx(Checkbox, {
-          checked: api.allVisibleSelected,
-          indeterminate: api.someVisibleSelected && !api.allVisibleSelected,
+          checked: api.allSelected,
+          indeterminate: api.someSelected && !api.allSelected,
           onChange: () => api.toggleSelectAll(),
           "aria-label": "Select all rows"
         })

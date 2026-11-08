@@ -62,7 +62,7 @@ const presets = usePresets<Filters>('blog-categories', BUILT_IN)
 | Field | Type | | Description |
 |---|---|---|---|
 | `fetchRecords` | `(params: FetchParams<Field, Filters>) => Promise<FetchResult<Row>>` | required | Called for the flat list, and again per leaf group with `groupPath` set when that group is expanded. |
-| `fetchGroups` | `(params: FetchParams<Field, Filters>) => Promise<FetchGroupsResult<Field>>` | optional | Enables grouping. Without it, `groupByColumns` has nothing to call — `groupBy` stays inert. |
+| `fetchGroups` | `(params: FetchParams<Field, Filters>) => Promise<FetchGroupsResult<Field>>` | optional | Enables grouping. Returns one page of `groups`, `total` (groups at that level) and `records` (records across them). |
 
 ### Client mode — `data`
 
@@ -100,7 +100,7 @@ What `useDataTable()` returns. Every renderer — built-in or your own — works
 | `setSort` | `(sort: SortState<Field> \| null) => void` | Sets sort directly — for a menu that lets someone pick field and direction independently, rather than relying on `toggleSort`'s cycling. |
 | `pagination`, `setPage`, `setPageSize` | `{ page, pageSize }`, ... | 1-indexed page. |
 | `groupBy`, `setGroupBy` | `Field[]`, `(fields: Field[]) => void` | Outermost first; empty means flat. Switching clears all expanded/loaded group state. |
-| `groups`, `groupsTotal`, `groupsLoading` | `ResourceGroup<Field>[]`, `number`, `boolean` | Top-level group list, when grouped. |
+| `groups`, `groupsTotal`, `groupsLoading` | `ResourceGroup<Field>[]`, `number`, `boolean` | The loaded top-level groups and how many exist. While grouped, `total` is the record count and the pager pages groups. |
 | `isGroupExpanded`, `toggleGroup` | `(id: string) => boolean`, `(id: string) => void` | Expanding for the first time triggers that group's fetch. |
 | `groupRows`, `groupTotal`, `groupLoading`, `groupPagination`, `setGroupPage` | all keyed by group `key` | Fully independent per group. |
 | `visibleItems` | `VisibleItem<Row, Field>[]` | Flat rows, or interleaved groups + group-rows, in display order. What every built-in renderer actually iterates — see [Writing your own renderer](/guide/custom-renderer). |
@@ -131,6 +131,31 @@ Returns `(column, value) => string`: the label for a selected value, falling bac
 | `sortable` | `boolean` | optional | Default `true`. Set `false` for computed/action columns. |
 | `searchable` | `boolean` | optional | Default `true`. Set `false` to exclude this column from client-mode search matching — see [Searching](/guide/searching). |
 | `align` | `'left' \| 'right' \| 'center'` | optional | Cell and header alignment. |
+
+## Selection
+
+Selection records what the reader picked, not which records were loaded, so a whole group or everything matching the search can be selected without fetching a row. A server resolves it into records when an action runs.
+
+```ts
+interface Selection<Field> {
+  all: boolean                                                   // the header checkbox
+  groups: { path: GroupPathEntry<Field>[]; selected: boolean }[] // whole groups ticked, or unticked inside a ticked parent
+  rows: { id: string; selected: boolean }[]                      // single rows that differ from what contains them
+}
+```
+
+A row is selected by its own entry in `rows` if it has one; otherwise by the deepest entry in `groups` whose path contains it; otherwise by `all`. `isRowSelected(selection, id, path)` applies that rule, and the built-in renderers use it, so a server written in TypeScript can share it.
+
+| Member | Type | Notes |
+|---|---|---|
+| `selection`, `setSelection` | `Selection<Field>`, `(selection) => void` | |
+| `selectedCount` | `number` | Worked out from `total` or the groups' `count`, minus exceptions. |
+| `isSelected`, `toggleSelected` | `(id) => boolean`, `(id) => void` | |
+| `allSelected`, `someSelected`, `toggleSelectAll` | `boolean`, `boolean`, `() => void` | Everything matching the current search and filters, not just the rows on screen. |
+| `groupAllSelected`, `groupSomeSelected`, `toggleSelectGroup` | `(id) => boolean`, `(id) => boolean`, `(id) => void` | Independent of whether the group is expanded. |
+| `clearSelection` | `() => void` | Also runs when the search, filters, grouping or `deps` change, since `all` and group entries describe one query. |
+
+A `ResourceAction`'s `handle` receives `{ selection, count, search, filters }`; an `ExportRequest` carries `selection`. A server resolving it applies `all` to the query, then each group entry from the shallowest to the deepest, then the row entries.
 
 ## `usePresets(storageKey, builtIn?)`
 

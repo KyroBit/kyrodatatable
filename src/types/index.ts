@@ -75,7 +75,20 @@ export type FilterColumnDef =
   | DateFilterColumnDef
 
 /** A bulk action offered on the current selection. */
-export interface ResourceAction {
+export interface Selection<Field extends string = string> {
+  all: boolean
+  groups: { path: GroupPathEntry<Field>[]; selected: boolean }[]
+  rows: { id: string; selected: boolean }[]
+}
+
+export interface SelectionRequest<Field extends string = string, Filters = FilterValues> {
+  selection: Selection<Field>
+  count: number
+  search: string
+  filters: Filters | undefined
+}
+
+export interface ResourceAction<Field extends string = string, Filters = FilterValues> {
   label: string
   /** Shown as the dialog's title, so write it as a question. */
   confirmationMessage?: (count: number) => string
@@ -83,7 +96,7 @@ export interface ResourceAction {
   confirmationDescription?: (count: number) => string
   /** Colour of the confirm button. Defaults to `error`. */
   confirmColor?: 'primary' | 'error' | 'warning' | 'success'
-  handle: (rowIds: string[]) => void | Promise<void>
+  handle: (request: SelectionRequest<Field, Filters>) => void | Promise<void>
 }
 
 export interface ExportFormat {
@@ -98,7 +111,7 @@ export interface ExportRequest<Field extends string = string, Filters = FilterVa
   sort: SortState<Field> | null
   filters: Filters | undefined
   groupBy: Field[]
-  selectedIds: string[]
+  selection: Selection<Field>
 }
 
 export interface SortState<Field extends string = string> {
@@ -163,6 +176,7 @@ export interface FetchResult<Row> {
 
 export interface FetchGroupsResult<Field extends string = string> {
   total: number
+  records: number
   groups: ResourceGroup<Field>[]
 }
 

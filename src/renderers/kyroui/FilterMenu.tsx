@@ -2,16 +2,13 @@ import { useEffect, useEffectEvent, useMemo, useState, type ReactNode } from 're
 import {
   Autocomplete, Box, Button, ChipPicker, DatePicker, DateRangePicker, Divider, FormDialog, IconButton, Link, Popover, Stack, TextField, Tooltip, Typography,
 } from '@kyrobit/kyroui'
-import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, closestCenter, type DragEndEvent } from '@dnd-kit/core'
-import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'
-import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { countFilterValues, filterValuesEqual, summarizeFilterValues, useFilterLabels } from '@kyrobit/datatable'
 import { useDataTableContext } from './context.js'
+import { SortableList, SortableRow } from './Sortable.js'
 import type {
   Preset, PresetsApi, ChoiceFilterColumnDef, FilterRenderers, FilterFieldProps, DateFilterColumnDef, DateRangeValue, FilterColumnDef, FilterOption, FilterValues, SelectFilterColumnDef, TextFilterColumnDef,
 } from '@kyrobit/datatable'
-import { ArrowBackIcon, CloseIcon, DragIcon, TrashIcon } from './icons.js'
+import { ArrowBackIcon, CloseIcon, TrashIcon } from './icons.js'
 import { ConfirmDialog } from './ConfirmDialog.js'
 import { useDialogSize } from './dialogSize.js'
 
@@ -294,10 +291,6 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
   const [editName, setEditName] = useState('')
   const [editFilters, setEditFilters] = useState<FilterValues>({})
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
 
   const editing = editingId ? presets.all.find((p) => p.id === editingId) : null
 
@@ -332,12 +325,6 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
     setEditingId(null)
   }
 
-  const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    if (!over || active.id === over.id) return
-    const from = presets.all.findIndex((p) => p.id === active.id)
-    const to = presets.all.findIndex((p) => p.id === over.id)
-    if (from !== -1 && to !== -1) presets.reorder(from, to)
-  }
 
   return (
     <>
@@ -374,15 +361,9 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
           </Box>
         ) : (
           <Stack spacing="xs" sx={{ maxHeight: 380, overflowY: 'auto' }}>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext items={presets.all.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+              <SortableList ids={presets.all.map((p) => p.id)} onMove={presets.reorder}>
                   {presets.all.map((p) => (
-                    <SortableViewRow key={p.id} id={p.id} onClick={() => startEdit(p.id)}>
+                    <SortableRow key={p.id} id={p.id} onClick={() => startEdit(p.id)}>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography noWrap sx={{ fontSize: 'lg', fontWeight: 600, color: 'text.primary' }}>{p.name}</Typography>
                         <Typography noWrap sx={{ fontSize: 'sm', color: 'text.secondary' }}>
@@ -396,10 +377,9 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
                           </IconButton>
                         </Tooltip>
                       </Stack>
-                    </SortableViewRow>
+                    </SortableRow>
                   ))}
-                </SortableContext>
-              </DndContext>
+              </SortableList>
           </Stack>
         )}
       </FormDialog>
@@ -428,57 +408,5 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns }: Man
         onConfirm={() => { setConfirmDiscardOpen(false); setEditingId(null) }}
       />
     </>
-  )
-}
-
-function SortableViewRow({ id, children, onClick }: { id: string; children: ReactNode; onClick: () => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
-
-  return (
-    // KyroUI's Box and Stack do not take a ref, so dnd-kit's node is this plain div.
-    <div
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-        position: 'relative',
-        zIndex: isDragging ? 1 : undefined,
-      }}
-    >
-      <Stack
-        direction="row"
-        alignItems="center"
-        onClick={onClick}
-        sx={{
-          gap: 'sm',
-          px: 'sm',
-          py: 'md',
-          borderRadius: 'md',
-          cursor: 'pointer',
-          bgcolor: isDragging ? 'grey.50' : undefined,
-          boxShadow: isDragging ? 3 : undefined,
-          '&:hover': { bgcolor: 'grey.50' },
-        }}
-      >
-        <Box
-          {...attributes}
-          {...listeners}
-          onClick={(e) => e.stopPropagation()}
-          aria-label="Drag to reorder"
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            cursor: isDragging ? 'grabbing' : 'grab',
-            touchAction: 'none',
-            // Top-level sx is inline style, which a :hover rule cannot override, so the resting colour sits in a rule too.
-            '&': { color: 'text.disabled' },
-            '&:hover': { color: 'text.secondary' },
-          }}
-        >
-          <DragIcon fontSize="small" />
-        </Box>
-        {children}
-      </Stack>
-    </div>
   )
 }

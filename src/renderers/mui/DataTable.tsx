@@ -14,9 +14,10 @@ import { DataTableBody } from './Body.js'
 import { DataTablePagination } from './Pagination.js'
 import { ManageViewsDialog } from './FilterMenu.js'
 import { DataTableFilterButton } from './FilterButton.js'
+import { DataTableGroupMenu } from './GroupMenu.js'
 import { DataTableSettingsDialog } from './SettingsDialog.js'
 import { ConfirmDialog } from './ConfirmDialog.js'
-import { ActionsIcon, ExportIcon, GroupIcon, ImportIcon, SettingIcon } from './icons.js'
+import { ActionsIcon, ExportIcon, ImportIcon, SettingIcon } from './icons.js'
 
 export interface DataTableProps<Row, Field extends string = string> {
   api: DataTableApi<Row, Field, FilterValues>
@@ -42,7 +43,7 @@ export interface DataTableProps<Row, Field extends string = string> {
   exportTooltip?: string
   importTooltip?: string
   /** Bulk actions offered while rows are selected. Enables the checkbox column. */
-  actions?: ResourceAction[]
+  actions?: ResourceAction<Field>[]
   selectable?: boolean
   /** The toolbar's settings button and its dialog. Default `true`; pass `false` where a table
    * has one fixed column set and nothing to configure. */
@@ -103,12 +104,11 @@ export function DataTable<Row, Field extends string = string>({
   rowsPerPageOptions,
 }: DataTableProps<Row, Field>) {
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
-  const [groupAnchor, setGroupAnchor] = useState<HTMLElement | null>(null)
   const [actionsAnchor, setActionsAnchor] = useState<HTMLElement | null>(null)
   const [exportAnchor, setExportAnchor] = useState<HTMLElement | null>(null)
   const [manageOpen, setManageOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [pendingAction, setPendingAction] = useState<ResourceAction | null>(null)
+  const [pendingAction, setPendingAction] = useState<ResourceAction<Field> | null>(null)
 
   const filters = api.filters ?? {}
   const withSelection = Boolean(selectable || (actions && actions.length > 0))
@@ -127,18 +127,15 @@ export function DataTable<Row, Field extends string = string>({
     api.setFilters(next)
   }
 
-  const groupLabel = api.groupBy.map((field) => api.groupByColumns?.find((g) => g.field === field)?.label ?? field).join(' › ')
-  const toggleGroupField = (field: Field) =>
-    api.setGroupBy(api.groupBy.includes(field) ? api.groupBy.filter((f) => f !== field) : [...api.groupBy, field])
 
-  const executeAction = async (action: ResourceAction) => {
-    await action.handle(api.selectedIds)
+  const executeAction = async (action: ResourceAction<Field>) => {
+    await action.handle({ selection: api.selection, count: api.selectedCount, search: api.search, filters: api.filters })
     api.clearSelection()
     if (api.groupBy.length > 0) api.setGroupBy(api.groupBy)
     api.refetch()
   }
 
-  const runAction = (action: ResourceAction) => {
+  const runAction = (action: ResourceAction<Field>) => {
     setActionsAnchor(null)
     if (action.confirmationMessage) { setPendingAction(action); return }
     void executeAction(action)
@@ -152,7 +149,7 @@ export function DataTable<Row, Field extends string = string>({
       sort: api.sort,
       filters: api.filters,
       groupBy: api.groupBy,
-      selectedIds: api.selectedIds,
+      selection: api.selection,
     })
   }
 
@@ -220,11 +217,7 @@ export function DataTable<Row, Field extends string = string>({
             }}
           >
             {api.groupByColumns && api.groupByColumns.length > 0 && (
-              <ToolbarBtn
-                icon={<GroupIcon />}
-                label={groupLabel ? `Group: ${groupLabel}` : 'Group'}
-                onClick={(e) => setGroupAnchor(e.currentTarget)}
-              />
+              <DataTableGroupMenu />
             )}
             {onImport && withTooltip(
               importTooltip,
@@ -242,10 +235,10 @@ export function DataTable<Row, Field extends string = string>({
                 }}
               />,
             )}
-            {actions && actions.length > 0 && api.selectedIds.length > 0 && (
+            {actions && actions.length > 0 && api.selectedCount > 0 && (
               <ToolbarBtn
                 icon={<ActionsIcon />}
-                label={`Actions (${api.selectedIds.length})`}
+                label={`Actions (${api.selectedCount})`}
                 onClick={(e) => setActionsAnchor(e.currentTarget)}
               />
             )}
@@ -261,11 +254,6 @@ export function DataTable<Row, Field extends string = string>({
         </Stack>
         <Box sx={{ minHeight: 40, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <DataTablePagination rowsPerPageOptions={rowsPerPageOptions} />
-          {api.groupBy.length > 0 && (
-            <Typography sx={{ fontSize: '13px', fontWeight: 500, color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>
-              {api.groups.length} groups · {api.groupsTotal} records
-            </Typography>
-          )}
         </Box>
       </Stack>
 
@@ -282,8 +270,8 @@ export function DataTable<Row, Field extends string = string>({
       {pendingAction && (
         <ConfirmDialog
           open
-          title={pendingAction.confirmationMessage!(api.selectedIds.length)}
-          description={pendingAction.confirmationDescription?.(api.selectedIds.length)}
+          title={pendingAction.confirmationMessage!(api.selectedCount)}
+          description={pendingAction.confirmationDescription?.(api.selectedCount)}
           confirmLabel={pendingAction.label}
           confirmColor={pendingAction.confirmColor ?? 'error'}
           onCancel={() => setPendingAction(null)}
@@ -304,19 +292,6 @@ export function DataTable<Row, Field extends string = string>({
           ))}
         </Menu>
       )}
-
-      <Menu anchorEl={groupAnchor} open={Boolean(groupAnchor)} onClose={() => setGroupAnchor(null)}>
-        <MenuItem selected={api.groupBy.length === 0} onClick={() => { api.setGroupBy([]); setGroupAnchor(null) }}>None</MenuItem>
-        {(api.groupByColumns ?? []).map((g) => (
-          <MenuItem
-            key={g.field}
-            selected={api.groupBy.includes(g.field)}
-            onClick={() => { toggleGroupField(g.field); setGroupAnchor(null) }}
-          >
-            {g.label}
-          </MenuItem>
-        ))}
-      </Menu>
 
       {presets && filterColumns && (
         <ManageViewsDialog

@@ -1,4 +1,4 @@
-import type { ColumnDef, DataTableConfig, FilterOption, FilterValues, GroupByColumn, PaginationState, ResourceGroup, SortState, VisibleItem } from '../types/index.js';
+import type { ColumnDef, DataTableConfig, FilterOption, FilterValues, GroupByColumn, PaginationState, ResourceGroup, Selection, SortState, VisibleItem } from '../types/index.js';
 export interface DataTableApi<Row, Field extends string = string, Filters = FilterValues> {
     columns: ColumnDef<Row, Field>[];
     getRowId: (row: Row) => string;
@@ -44,18 +44,15 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
     setGroupPage: (id: string, page: number) => void;
     /** Flat + grouped rows in one display-ordered list — see the `VisibleItem` type. What every built-in renderer actually iterates. */
     visibleItems: VisibleItem<Row, Field>[];
-    /** Row selection, keyed by row id. Persists across pages; collapsing a group drops its rows. */
-    selection: Record<string, boolean>;
-    selectedIds: string[];
+    selection: Selection<Field>;
+    selectedCount: number;
     isSelected: (id: string) => boolean;
     toggleSelected: (id: string) => void;
-    setSelection: (selection: Record<string, boolean>) => void;
+    setSelection: (selection: Selection<Field>) => void;
     clearSelection: () => void;
-    /** Selects every currently visible row; if all are already selected, unselects them. */
     toggleSelectAll: () => void;
-    allVisibleSelected: boolean;
-    someVisibleSelected: boolean;
-    /** Per-group selection over the group's loaded rows. */
+    allSelected: boolean;
+    someSelected: boolean;
     groupAllSelected: (id: string) => boolean;
     groupSomeSelected: (id: string) => boolean;
     toggleSelectGroup: (id: string) => void;

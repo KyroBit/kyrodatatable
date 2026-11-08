@@ -179,8 +179,8 @@ export function DataTableBody<Row>({
               <TableCell padding="checkbox">
                 <Checkbox
                   size="small"
-                  checked={api.allVisibleSelected}
-                  indeterminate={api.someVisibleSelected && !api.allVisibleSelected}
+                  checked={api.allSelected}
+                  indeterminate={api.someSelected && !api.allSelected}
                   onChange={() => api.toggleSelectAll()}
                   slotProps={{ input: { 'aria-label': 'Select all rows' } }}
                 />
@@ -249,7 +249,7 @@ export function DataTableBody<Row>({
                           {item.expanded
                             ? <KeyboardArrowDownIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
                             : <KeyboardArrowRightIcon sx={{ fontSize: 18, color: 'text.secondary' }} />}
-                          {selectable && item.expanded && (
+                          {selectable && (
                             <Checkbox
                               size="small"
                               sx={{ p: 0.25, ml: -0.5 }}

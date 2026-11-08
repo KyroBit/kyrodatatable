@@ -28,7 +28,7 @@ export interface DataTableProps<Row, Field extends string = string> {
     exportTooltip?: string;
     importTooltip?: string;
     /** Bulk actions offered while rows are selected. Enables the checkbox column. */
-    actions?: ResourceAction[];
+    actions?: ResourceAction<Field>[];
     selectable?: boolean;
     /** The toolbar's settings button and its dialog. Default `true`; pass `false` where a table
      * has one fixed column set and nothing to configure. */

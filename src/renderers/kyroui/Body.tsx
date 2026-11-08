@@ -226,7 +226,7 @@ export function DataTableBody<Row>({
                 {item.expanded
                   ? <ExpandMoreIcon fontSize="small" sx={{ color: 'text.secondary' }} />
                   : <ChevronRightIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
-                {selectable && item.expanded && (
+                {selectable && (
                   <Box component="span" sx={{ display: 'inline-flex' }} onClick={(e: MouseEvent<HTMLElement>) => e.stopPropagation()}>
                     <Checkbox
                       checked={api.groupAllSelected(item.id)}
@@ -327,8 +327,8 @@ export function DataTableBody<Row>({
             {selectable && (
               <TableCell variant="head" padding="checkbox">
                 <Checkbox
-                  checked={api.allVisibleSelected}
-                  indeterminate={api.someVisibleSelected && !api.allVisibleSelected}
+                  checked={api.allSelected}
+                  indeterminate={api.someSelected && !api.allSelected}
                   onChange={() => api.toggleSelectAll()}
                   aria-label="Select all rows"
                 />

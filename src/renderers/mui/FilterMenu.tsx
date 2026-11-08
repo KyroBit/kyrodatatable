@@ -8,13 +8,9 @@ import CalendarTodayRoundedIcon from '@mui/icons-material/CalendarTodayRounded'
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
-import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, closestCenter, type DragEndEvent } from '@dnd-kit/core'
-import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'
-import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { countFilterValues, filterValuesEqual, summarizeFilterValues, useFilterLabels } from '@kyrobit/datatable'
 import { useDataTableContext } from './context.js'
+import { SortableList, SortableRow } from './Sortable.js'
 import type {
   Preset, PresetsApi, ChoiceFilterColumnDef, FilterRenderers, FilterFieldProps, DateFilterColumnDef, DateRangeValue, FilterColumnDef, FilterValues, SelectFilterColumnDef, TextFilterColumnDef,
 } from '@kyrobit/datatable'
@@ -515,10 +511,6 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, Dialo
   const [editName, setEditName] = useState('')
   const [editFilters, setEditFilters] = useState<FilterValues>({})
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
 
   const editing = editingId ? presets.all.find((p) => p.id === editingId) : null
 
@@ -553,12 +545,6 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, Dialo
     setEditingId(null)
   }
 
-  const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    if (!over || active.id === over.id) return
-    const from = presets.all.findIndex((p) => p.id === active.id)
-    const to = presets.all.findIndex((p) => p.id === over.id)
-    if (from !== -1 && to !== -1) presets.reorder(from, to)
-  }
 
   return (
     <Dialog open={open} onClose={close} {...size} {...DialogProps}>
@@ -626,15 +612,9 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, Dialo
         ) : (
           <>
             <Stack spacing={0.25} sx={{ mt: 1.5, maxHeight: 380, overflowY: 'auto' }}>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext items={presets.all.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+              <SortableList ids={presets.all.map((p) => p.id)} onMove={presets.reorder}>
                   {presets.all.map((p) => (
-                    <SortableViewRow key={p.id} id={p.id} onClick={() => startEdit(p.id)}>
+                    <SortableRow key={p.id} id={p.id} onClick={() => startEdit(p.id)}>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography noWrap sx={{ fontSize: '14px', fontWeight: 600, color: 'text.primary' }}>{p.name}</Typography>
                         <Typography noWrap sx={{ fontSize: '12.5px', color: 'text.secondary' }}>
@@ -648,10 +628,9 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, Dialo
                           </IconButton>
                         </Tooltip>
                       </Stack>
-                    </SortableViewRow>
+                    </SortableRow>
                   ))}
-                </SortableContext>
-              </DndContext>
+              </SortableList>
             </Stack>
 
             <Stack direction="row" sx={{ justifyContent: 'flex-end', mt: 2 }}>
@@ -687,51 +666,5 @@ export function ManageViewsDialog({ open, onClose, presets, filterColumns, Dialo
         onConfirm={() => { setConfirmDiscardOpen(false); setEditingId(null) }}
       />
     </Dialog>
-  )
-}
-
-function SortableViewRow({ id, children, onClick }: { id: string; children: ReactNode; onClick: () => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
-
-  return (
-    <Stack
-      ref={setNodeRef}
-      direction="row"
-      onClick={onClick}
-      sx={(theme) => ({
-        alignItems: 'center',
-        gap: 1,
-        pl: 1,
-        pr: 1,
-        py: 1.25,
-        borderRadius: '8px',
-        cursor: 'pointer',
-        transform: CSS.Transform.toString(transform),
-        transition,
-        position: 'relative',
-        zIndex: isDragging ? 1 : undefined,
-        bgcolor: isDragging ? alpha(theme.palette.text.primary, 0.04) : undefined,
-        boxShadow: isDragging ? '0px 8px 24px rgba(0,0,0,0.12)' : undefined,
-        '&:hover': { bgcolor: alpha(theme.palette.text.primary, 0.04) },
-      })}
-    >
-      <Box
-        {...attributes}
-        {...listeners}
-        onClick={(e) => e.stopPropagation()}
-        aria-label="Drag to reorder"
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          color: 'text.disabled',
-          cursor: isDragging ? 'grabbing' : 'grab',
-          touchAction: 'none',
-          '&:hover': { color: 'text.secondary' },
-        }}
-      >
-        <DragIndicatorIcon sx={{ fontSize: 18 }} />
-      </Box>
-      {children}
-    </Stack>
   )
 }

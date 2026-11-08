@@ -1,9 +1,10 @@
 import { startTransition, useEffect, useEffectEvent, useRef, useState, type RefObject } from 'react'
 import { cachedList, entryKey, firstPage, load, rememberLastPage, type CachedList } from './cache.js'
 import { createClientEngine } from './clientEngine.js'
+import { isPathSelected, isRowSelected } from './selection.js'
 import type {
   ColumnDef, DataTableConfig, FetchParams, FilterOption, FilterValues, GroupByColumn, GroupPathEntry, PaginationState,
-  ResourceGroup, SortState, VisibleItem,
+  ResourceGroup, Selection, SortState, VisibleItem,
 } from '../types/index.js'
 
 interface GroupRuntime<Row, Field extends string> {
@@ -71,18 +72,15 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
   /** Flat + grouped rows in one display-ordered list — see the `VisibleItem` type. What every built-in renderer actually iterates. */
   visibleItems: VisibleItem<Row, Field>[]
 
-  /** Row selection, keyed by row id. Persists across pages; collapsing a group drops its rows. */
-  selection: Record<string, boolean>
-  selectedIds: string[]
+  selection: Selection<Field>
+  selectedCount: number
   isSelected: (id: string) => boolean
   toggleSelected: (id: string) => void
-  setSelection: (selection: Record<string, boolean>) => void
+  setSelection: (selection: Selection<Field>) => void
   clearSelection: () => void
-  /** Selects every currently visible row; if all are already selected, unselects them. */
   toggleSelectAll: () => void
-  allVisibleSelected: boolean
-  someVisibleSelected: boolean
-  /** Per-group selection over the group's loaded rows. */
+  allSelected: boolean
+  someSelected: boolean
   groupAllSelected: (id: string) => boolean
   groupSomeSelected: (id: string) => boolean
   toggleSelectGroup: (id: string) => void
@@ -106,6 +104,17 @@ const rowsKey = (rows: readonly unknown[] | undefined) =>
   rows === undefined
     ? undefined
     : `${rows.length}:${rows.reduce<number>((hash, row) => (Math.imul(hash, 31) + idOf(row)) | 0, 7)}`
+
+interface Picked {
+  all: boolean
+  groups: Record<string, boolean>
+  rows: Record<string, { selected: boolean; group: string | null }>
+}
+
+const nothingPicked: Picked = { all: false, groups: {}, rows: {} }
+
+const groupIdOf = (path: GroupPathEntry<string>[]) => JSON.stringify(path.map((entry) => [entry.field, entry.key]))
+const contains = (id: string, other: string) => other === id || other.startsWith(`${id.slice(0, -1)},`)
 
 const enqueue = <Result,>(queue: RefObject<Promise<unknown>>, request: () => Promise<Result>) => {
   const next = queue.current.then(request)
@@ -162,10 +171,11 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const [groups, setGroups] = useState<ResourceGroup<Field>[]>([])
   const [groupsTotal, setGroupsTotal] = useState(0)
   const [groupsLoading, setGroupsLoading] = useState(initial.groupBy.length > 0)
+  const [groupsPage, setGroupsPage] = useState(1)
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [groupState, setGroupState] = useState<Record<string, GroupRuntime<Row, Field>>>({})
-  const [selection, setSelectionState] = useState<Record<string, boolean>>({})
+  const [picked, setPicked] = useState<Picked>(nothingPicked)
 
   useEffect(() => {
     if (!searchDebounceMs) { setDebouncedSearch(search); return }
@@ -197,6 +207,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const setFilters = (next: Filters) =>
     startTransition(() => {
       setFiltersInternal(next)
+      setPicked(nothingPicked)
       setPagination((p) => ({ ...p, page: 1 }))
     })
 
@@ -214,6 +225,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const setGroupBy = (fields: Field[]) =>
     startTransition(() => {
       setGroupByField(fields)
+      setPicked(nothingPicked)
       setExpanded({})
       setGroupState({})
       setPagination((p) => ({ ...p, page: 1 }))
@@ -252,7 +264,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
       setExpanded({})
       setGroupState({})
     }
-    setSelectionState({})
+    setPicked(nothingPicked)
     setPagination((prev) => ({ ...prev, page: 1 }))
     setFetchTick((t) => t + 1)
   }, [depsKey])
@@ -318,6 +330,8 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
       groupBy: groupBy[0], groupPath: [],
     }
     const pending = fetchGroupPage(params)
+    generation.current += 1
+    setLoadingMore(false)
     if (!pending) return
     let cancelled = false
     setGroupsLoading(true)
@@ -327,6 +341,8 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
         startTransition(() => {
           setGroups(result.groups)
           setGroupsTotal(result.total)
+          setTotal(result.records)
+          setGroupsPage(params.page)
         })
       })
       .catch((err) => {
@@ -339,9 +355,38 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     return () => { cancelled = true }
   }, [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, dataKey, fetchTick])
 
-  const hasMore = !grouped && (pagination.page - 1) * pagination.pageSize + rows.length < total
+  const hasMore = grouped
+    ? (pagination.page - 1) * pagination.pageSize + groups.length < groupsTotal
+    : (pagination.page - 1) * pagination.pageSize + rows.length < total
 
-  const loadMore = () => {
+  const loadMoreGroups = () => {
+    if (!hasMore || groupsLoading || loadingMore) return
+    const page = groupsPage + 1
+    const pending = fetchGroups?.({ ...listParams, page, groupBy: groupBy[0], groupPath: [] })
+    if (!pending) return
+    const started = generation.current
+    setLoadingMore(true)
+    pending
+      .then((result) => {
+        if (generation.current !== started) return
+        startTransition(() => {
+          setGroups((prev) => [...prev, ...result.groups])
+          setGroupsTotal(result.total)
+          setTotal(result.records)
+          setGroupsPage(page)
+          setLoadingMore(false)
+        })
+      })
+      .catch((err) => {
+        if (generation.current !== started) return
+        startTransition(() => {
+          setError(err)
+          setLoadingMore(false)
+        })
+      })
+  }
+
+  const loadFlatPage = () => {
     const page = loadedPage + 1
     const params = { ...listParams, page }
     const key = entryKey(cacheKey ?? '', params)
@@ -370,30 +415,32 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
       })
   }
 
+  const loadMore = grouped ? loadMoreGroups : loadFlatPage
+
   const visibleItems: VisibleItem<Row, Field>[] = []
-  const nodes = new Map<string, { path: GroupPathEntry<Field>[]; leaf: boolean; rows: Row[] }>()
-  const walk = (list: ResourceGroup<Field>[], parent: GroupPathEntry<Field>[], ancestors: Row[][]) => {
+  const nodes = new Map<string, { path: GroupPathEntry<Field>[]; leaf: boolean }>()
+  const rowGroups = new Map<string, string>()
+  const walk = (list: ResourceGroup<Field>[], parent: GroupPathEntry<Field>[]) => {
     for (const group of list) {
       const depth = parent.length
       const path = [...parent, { field: groupBy[depth]!, key: group.key }]
-      const id = JSON.stringify(path.map((entry) => [entry.field, entry.key]))
-      const node = { path, leaf: depth === groupBy.length - 1, rows: [] as Row[] }
+      const id = groupIdOf(path)
+      const leaf = depth === groupBy.length - 1
       const open = Boolean(expanded[id])
-      nodes.set(id, node)
+      nodes.set(id, { path, leaf })
       visibleItems.push({ type: 'group', id, group, depth, expanded: open })
       if (!open) continue
-      const buckets = [...ancestors, node.rows]
-      if (!node.leaf) {
-        walk(groupState[id]?.groups ?? [], path, buckets)
+      if (!leaf) {
+        walk(groupState[id]?.groups ?? [], path)
         continue
       }
       for (const row of groupState[id]?.rows ?? []) {
+        rowGroups.set(getRowId(row), id)
         visibleItems.push({ type: 'group-row', row, groupId: id, depth: depth + 1 })
-        for (const bucket of buckets) bucket.push(row)
       }
     }
   }
-  if (grouped) walk(groups, [], [])
+  if (grouped) walk(groups, [])
   else for (const row of rows) visibleItems.push({ type: 'row', row })
 
   const updateGroup = (id: string, patch: Partial<GroupRuntime<Row, Field>>) =>
@@ -410,7 +457,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     }
     const pending: Promise<Partial<GroupRuntime<Row, Field>>> | undefined = node.leaf
       ? fetchRecords?.(params).then((result) => ({ rows: result.rows, total: result.total }))
-      : fetchGroups?.({ ...params, groupBy: groupBy[node.path.length] }).then((result) => ({ groups: result.groups }))
+      : fetchGroups?.({ ...params, groupBy: groupBy[node.path.length] }).then((result) => ({ groups: result.groups, total: result.total }))
     if (!pending) return
     updateGroup(id, { pagination: { page, pageSize: pagination.pageSize }, loading: true })
     pending
@@ -421,23 +468,9 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
       })
   }
 
-  const loadedRows = (id: string) => nodes.get(id)?.rows ?? []
-
-  const setRowsSelected = (list: Row[], selected: boolean) =>
-    setSelectionState((prev) => {
-      const next = { ...prev }
-      for (const row of list) {
-        if (selected) next[getRowId(row)] = true
-        else delete next[getRowId(row)]
-      }
-      return next
-    })
-
   const toggleGroup = (id: string) => {
-    const opening = !expanded[id]
-    setExpanded((prev) => ({ ...prev, [id]: opening }))
-    if (opening && !groupState[id]) fetchChildren(id, 1)
-    if (!opening && loadedRows(id).length > 0) setRowsSelected(loadedRows(id), false)
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }))
+    if (!expanded[id] && !groupState[id]) fetchChildren(id, 1)
   }
 
   const isGroupExpanded = (id: string) => Boolean(expanded[id])
@@ -446,23 +479,77 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const groupLoadingFor = (id: string) => groupState[id]?.loading ?? false
   const groupPaginationFor = (id: string) => groupState[id]?.pagination ?? { page: 1, pageSize: pagination.pageSize }
 
-  const selectableRows: Row[] = grouped ? visibleItems.flatMap((item) => (item.type === 'group-row' ? [item.row] : [])) : rows
-  const allSelected = (list: Row[]) => list.length > 0 && list.every((row) => selection[getRowId(row)])
-  const someSelected = (list: Row[]) => list.some((row) => selection[getRowId(row)])
+  const pathOf = (id: string) => (JSON.parse(id) as [Field, string][]).map(([field, key]) => ({ field, key }))
 
-  const selectedIds = Object.keys(selection).filter((id) => selection[id])
-  const allVisibleSelected = allSelected(selectableRows)
-  const someVisibleSelected = someSelected(selectableRows)
+  const selection: Selection<Field> = {
+    all: picked.all,
+    groups: Object.entries(picked.groups).map(([id, selected]) => ({ path: pathOf(id), selected })),
+    rows: Object.entries(picked.rows).map(([id, row]) => ({ id, selected: row.selected })),
+  }
 
-  const isSelected = (id: string) => Boolean(selection[id])
-  const toggleSelected = (id: string) => setSelectionState((prev) => ({ ...prev, [id]: !prev[id] }))
-  const clearSelection = () => setSelectionState({})
-  const toggleSelectAll = () => setRowsSelected(selectableRows, !allVisibleSelected)
+  const rowPath = (id: string) => {
+    const group = rowGroups.get(id)
+    return group === undefined ? [] : pathOf(group)
+  }
+
+  const decidedBeneath = (id: string, selected: boolean) =>
+    Object.entries(picked.groups).some(([key, value]) => key !== id && contains(id, key) && value === selected) ||
+    Object.values(picked.rows).some((row) => row.group !== null && contains(id, row.group) && row.selected === selected)
+
+  const groupAllSelected = (id: string) => isPathSelected(selection, pathOf(id)) && !decidedBeneath(id, false)
+  const groupSomeSelected = (id: string) => isPathSelected(selection, pathOf(id)) || decidedBeneath(id, true)
+
+  const exceptions = Object.values(picked.rows).filter((row) => row.selected !== picked.all).length
+  const countIn = (list: ResourceGroup<Field>[], parent: GroupPathEntry<Field>[], records: number): number => {
+    const unloaded = records - list.reduce((sum, group) => sum + group.count, 0)
+    return list.reduce((sum, group) => {
+      const path = [...parent, { field: groupBy[parent.length]!, key: group.key }]
+      const id = groupIdOf(path)
+      const on = isPathSelected(selection, path)
+      const children = groupState[id]?.groups
+      if (!decidedBeneath(id, !on)) return sum + (on ? group.count : 0)
+      if (path.length < groupBy.length && children) return sum + countIn(children, path, group.count)
+      const flipped = Object.values(picked.rows).filter((row) => row.group === id && row.selected !== on).length
+      return sum + (on ? group.count - flipped : flipped)
+    }, isPathSelected(selection, parent) ? unloaded : 0)
+  }
+  const selectedCount = grouped ? countIn(groups, [], total) : picked.all ? total - exceptions : exceptions
+
+  const allSelected = picked.all && !Object.values(picked.groups).includes(false) && !Object.values(picked.rows).some((row) => !row.selected)
+  const someSelected = picked.all || Object.values(picked.groups).includes(true) || Object.values(picked.rows).some((row) => row.selected)
+
+  const isSelected = (id: string) => isRowSelected(selection, id, rowPath(id))
+
+  const toggleSelected = (id: string) => {
+    const group = rowGroups.get(id) ?? null
+    const next = !isSelected(id)
+    const inherited = isPathSelected(selection, rowPath(id))
+    setPicked((prev) => {
+      const rows = { ...prev.rows }
+      if (next === inherited) delete rows[id]
+      else rows[id] = { selected: next, group }
+      return { ...prev, rows }
+    })
+  }
 
   const toggleSelectGroup = (id: string) => {
-    const list = loadedRows(id)
-    if (list.length > 0) setRowsSelected(list, !allSelected(list))
+    const path = pathOf(id)
+    const next = !groupAllSelected(id)
+    const inherited = isPathSelected(selection, path.slice(0, -1))
+    setPicked((prev) => {
+      const groups = Object.fromEntries(Object.entries(prev.groups).filter(([key]) => !contains(id, key)))
+      const rows = Object.fromEntries(Object.entries(prev.rows).filter(([, row]) => row.group === null || !contains(id, row.group)))
+      if (next !== inherited) groups[id] = next
+      return { ...prev, groups, rows }
+    })
   }
+
+  const setSelection = (next: Selection<Field>) =>
+    setPicked({
+      all: next.all,
+      groups: Object.fromEntries(next.groups.map((group) => [groupIdOf(group.path), group.selected])),
+      rows: Object.fromEntries(next.rows.map((row) => [row.id, { selected: row.selected, group: null }])),
+    })
 
   return {
     columns,
@@ -475,7 +562,11 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     setColumnHidden,
 
     search,
-    setSearch: (value: string) => { setSearch(value); setPagination((p) => ({ ...p, page: 1 })) },
+    setSearch: (value: string) => {
+      setSearch(value)
+      setPicked(nothingPicked)
+      setPagination((p) => ({ ...p, page: 1 }))
+    },
 
     filters,
     setFilters,
@@ -517,16 +608,16 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     visibleItems,
 
     selection,
-    selectedIds,
+    selectedCount,
     isSelected,
     toggleSelected,
-    setSelection: setSelectionState,
-    clearSelection,
-    toggleSelectAll,
-    allVisibleSelected,
-    someVisibleSelected,
-    groupAllSelected: (id: string) => allSelected(loadedRows(id)),
-    groupSomeSelected: (id: string) => someSelected(loadedRows(id)),
+    setSelection,
+    clearSelection: () => setPicked(nothingPicked),
+    toggleSelectAll: () => setPicked({ all: !allSelected, groups: {}, rows: {} }),
+    allSelected,
+    someSelected,
+    groupAllSelected,
+    groupSomeSelected,
     toggleSelectGroup,
 
     refetch,
