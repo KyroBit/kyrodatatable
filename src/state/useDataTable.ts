@@ -116,9 +116,11 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   config: DataTableConfig<Row, Field, Filters>,
 ): DataTableApi<Row, Field, Filters> {
   const { columns, getRowId, groupByColumns, searchDebounceMs, cacheKey } = config
+  const startingGroup = groupByColumns?.find((column) => column.field === config.initialGroupBy)?.field ?? null
   const [initial] = useState(() => {
     const params = firstPage(config)
-    return { params, result: cacheKey === undefined ? undefined : cachedList<Row>(cacheKey, params) }
+    const flat = startingGroup === null && cacheKey !== undefined
+    return { params, groupBy: startingGroup, result: flat ? cachedList<Row>(cacheKey, params) : undefined }
   })
 
   const [hiddenColumns, setHiddenColumns] = useState<Field[]>(config.initialHiddenColumns ?? [])
@@ -145,7 +147,7 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const [total, setTotal] = useState(initial.result?.total ?? 0)
   // The first fetch starts on mount, so the first render must already read as loading, or a
   // table flashes its empty state before the first page arrives.
-  const [loading, setLoading] = useState(!initial.result)
+  const [loading, setLoading] = useState(!initial.result && initial.groupBy === null)
   const [error, setError] = useState<unknown>(null)
   const [fetchTick, setFetchTick] = useState(0)
   const [loadedPage, setLoadedPage] = useState(initial.result?.lastPage ?? 1)
@@ -154,10 +156,10 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const queue = useRef<Promise<unknown>>(Promise.resolve())
   const requestedMore = useRef<string | null>(null)
 
-  const [groupBy, setGroupByField] = useState<Field | null>(null)
+  const [groupBy, setGroupByField] = useState<Field | null>(initial.groupBy)
   const [groups, setGroups] = useState<ResourceGroup<Field>[]>([])
   const [groupsTotal, setGroupsTotal] = useState(0)
-  const [groupsLoading, setGroupsLoading] = useState(false)
+  const [groupsLoading, setGroupsLoading] = useState(initial.groupBy !== null)
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [groupState, setGroupState] = useState<Record<string, GroupRuntime<Row>>>({})
@@ -244,6 +246,11 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   useEffect(() => {
     if (knownDeps.current === depsKey) return
     knownDeps.current = depsKey
+    if (startingGroup !== null) {
+      setGroupByField(startingGroup)
+      setExpanded({})
+      setGroupState({})
+    }
     setSelectionState({})
     setPagination((prev) => ({ ...prev, page: 1 }))
     setFetchTick((t) => t + 1)

@@ -174,6 +174,7 @@ interface DataTableConfigBase<Row, Field extends string, Filters> {
   initialPageSize?: number
   initialSort?: SortState<Field> | null
   initialFilters?: Filters
+  initialGroupBy?: Field
   /** Delay, in ms, between a `setSearch` call and the query it triggers actually running. Default `0` (no debounce). */
   searchDebounceMs?: number
   /** Columns hidden until the reader turns them on. Anything not listed starts visible. */

@@ -81,6 +81,8 @@ const table = useDataTable({
 
 Two new fields from the quick start's server-mode call — `fetchGroups`, and `groupByColumns` to tell the renderer what grouping options exist. `<DataTable />` grows a "Group by" select automatically; pick "Status" in it (or call `table.setGroupBy('is_active')` yourself) and the flat, paginated view is replaced by the two collapsed groups.
 
+To open the table already grouped, pass `initialGroupBy: 'is_active'`. It mounts calling `fetchGroups` only, never a flat `fetchRecords`; choosing "None" drops to the flat list, and a change in `deps` groups it again. A field missing from `groupByColumns` is ignored.
+
 ## What happens, in order, when someone expands "Active"
 
 1. `table.toggleGroup('active')` flips it open.

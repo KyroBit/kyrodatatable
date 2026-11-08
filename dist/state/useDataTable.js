@@ -19,7 +19,7 @@ const enqueue = (queue, request) => {
   return next;
 };
 export function useDataTable(config) {
-  const $ = _c(215);
+  const $ = _c(221);
   const {
     columns,
     getRowId,
@@ -28,147 +28,160 @@ export function useDataTable(config) {
     cacheKey
   } = config;
   let t0;
-  if ($[0] !== cacheKey || $[1] !== config) {
-    t0 = () => {
-      const params = firstPage(config);
-      return {
-        params,
-        result: cacheKey === undefined ? undefined : cachedList(cacheKey, params)
-      };
-    };
-    $[0] = cacheKey;
-    $[1] = config;
+  if ($[0] !== config.initialGroupBy || $[1] !== groupByColumns) {
+    t0 = groupByColumns?.find(column => column.field === config.initialGroupBy)?.field ?? null;
+    $[0] = config.initialGroupBy;
+    $[1] = groupByColumns;
     $[2] = t0;
   } else {
     t0 = $[2];
   }
-  const [initial] = useState(t0);
+  const startingGroup = t0;
   let t1;
-  if ($[3] !== config.initialHiddenColumns) {
-    t1 = config.initialHiddenColumns ?? [];
-    $[3] = config.initialHiddenColumns;
-    $[4] = t1;
+  if ($[3] !== cacheKey || $[4] !== config || $[5] !== startingGroup) {
+    t1 = () => {
+      const params = firstPage(config);
+      const flat = startingGroup === null && cacheKey !== undefined;
+      return {
+        params,
+        groupBy: startingGroup,
+        result: flat ? cachedList(cacheKey, params) : undefined
+      };
+    };
+    $[3] = cacheKey;
+    $[4] = config;
+    $[5] = startingGroup;
+    $[6] = t1;
   } else {
-    t1 = $[4];
+    t1 = $[6];
   }
-  const [hiddenColumns, setHiddenColumns] = useState(t1);
+  const [initial] = useState(t1);
   let t2;
-  if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = (field, hidden) => {
+  if ($[7] !== config.initialHiddenColumns) {
+    t2 = config.initialHiddenColumns ?? [];
+    $[7] = config.initialHiddenColumns;
+    $[8] = t2;
+  } else {
+    t2 = $[8];
+  }
+  const [hiddenColumns, setHiddenColumns] = useState(t2);
+  let t3;
+  if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
+    t3 = (field, hidden) => {
       setHiddenColumns(current => hidden ? current.includes(field) ? current : [...current, field] : current.filter(f => f !== field));
     };
-    $[5] = t2;
+    $[9] = t3;
   } else {
-    t2 = $[5];
+    t3 = $[9];
   }
-  const setColumnHidden = t2;
-  let t3;
-  if ($[6] !== columns || $[7] !== hiddenColumns) {
-    let t4;
-    if ($[9] !== hiddenColumns) {
-      t4 = column => !hiddenColumns.includes(column.field);
-      $[9] = hiddenColumns;
-      $[10] = t4;
+  const setColumnHidden = t3;
+  let t4;
+  if ($[10] !== columns || $[11] !== hiddenColumns) {
+    let t5;
+    if ($[13] !== hiddenColumns) {
+      t5 = column_0 => !hiddenColumns.includes(column_0.field);
+      $[13] = hiddenColumns;
+      $[14] = t5;
     } else {
-      t4 = $[10];
+      t5 = $[14];
     }
-    t3 = columns.filter(t4);
-    $[6] = columns;
-    $[7] = hiddenColumns;
-    $[8] = t3;
+    t4 = columns.filter(t5);
+    $[10] = columns;
+    $[11] = hiddenColumns;
+    $[12] = t4;
   } else {
-    t3 = $[8];
+    t4 = $[12];
   }
-  const visibleColumns = t3;
+  const visibleColumns = t4;
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filters, setFiltersInternal] = useState(initial.params.filters);
-  let t4;
-  if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
-    t4 = {};
-    $[11] = t4;
-  } else {
-    t4 = $[11];
-  }
-  const [filterLabels, setFilterLabels] = useState(t4);
-  const [sort, setSortInternal] = useState(initial.params.sort);
   let t5;
-  if ($[12] !== initial.params.page || $[13] !== initial.params.pageSize) {
-    t5 = {
+  if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
+    t5 = {};
+    $[15] = t5;
+  } else {
+    t5 = $[15];
+  }
+  const [filterLabels, setFilterLabels] = useState(t5);
+  const [sort, setSortInternal] = useState(initial.params.sort);
+  let t6;
+  if ($[16] !== initial.params.page || $[17] !== initial.params.pageSize) {
+    t6 = {
       page: initial.params.page,
       pageSize: initial.params.pageSize
     };
-    $[12] = initial.params.page;
-    $[13] = initial.params.pageSize;
-    $[14] = t5;
+    $[16] = initial.params.page;
+    $[17] = initial.params.pageSize;
+    $[18] = t6;
   } else {
-    t5 = $[14];
+    t6 = $[18];
   }
-  const [pagination, setPagination] = useState(t5);
-  let t6;
-  if ($[15] !== initial.result?.rows) {
-    t6 = initial.result?.rows ?? [];
-    $[15] = initial.result?.rows;
-    $[16] = t6;
+  const [pagination, setPagination] = useState(t6);
+  let t7;
+  if ($[19] !== initial.result?.rows) {
+    t7 = initial.result?.rows ?? [];
+    $[19] = initial.result?.rows;
+    $[20] = t7;
   } else {
-    t6 = $[16];
+    t7 = $[20];
   }
-  const [rows, setRows] = useState(t6);
+  const [rows, setRows] = useState(t7);
   const [total, setTotal] = useState(initial.result?.total ?? 0);
-  const [loading, setLoading] = useState(!initial.result);
+  const [loading, setLoading] = useState(!initial.result && initial.groupBy === null);
   const [error, setError] = useState(null);
   const [fetchTick, setFetchTick] = useState(0);
   const [loadedPage, setLoadedPage] = useState(initial.result?.lastPage ?? 1);
   const [loadingMore, setLoadingMore] = useState(false);
   const generation = useRef(0);
-  let t7;
-  if ($[17] === Symbol.for("react.memo_cache_sentinel")) {
-    t7 = Promise.resolve();
-    $[17] = t7;
-  } else {
-    t7 = $[17];
-  }
-  const queue = useRef(t7);
-  const requestedMore = useRef(null);
-  const [groupBy, setGroupByField] = useState(null);
   let t8;
-  if ($[18] === Symbol.for("react.memo_cache_sentinel")) {
-    t8 = [];
-    $[18] = t8;
-  } else {
-    t8 = $[18];
-  }
-  const [groups, setGroups] = useState(t8);
-  const [groupsTotal, setGroupsTotal] = useState(0);
-  const [groupsLoading, setGroupsLoading] = useState(false);
-  let t9;
-  if ($[19] === Symbol.for("react.memo_cache_sentinel")) {
-    t9 = {};
-    $[19] = t9;
-  } else {
-    t9 = $[19];
-  }
-  const [expanded, setExpanded] = useState(t9);
-  let t10;
-  if ($[20] === Symbol.for("react.memo_cache_sentinel")) {
-    t10 = {};
-    $[20] = t10;
-  } else {
-    t10 = $[20];
-  }
-  const [groupState, setGroupState] = useState(t10);
-  let t11;
   if ($[21] === Symbol.for("react.memo_cache_sentinel")) {
-    t11 = {};
-    $[21] = t11;
+    t8 = Promise.resolve();
+    $[21] = t8;
   } else {
-    t11 = $[21];
+    t8 = $[21];
   }
-  const [selection, setSelectionState] = useState(t11);
+  const queue = useRef(t8);
+  const requestedMore = useRef(null);
+  const [groupBy, setGroupByField] = useState(initial.groupBy);
+  let t9;
+  if ($[22] === Symbol.for("react.memo_cache_sentinel")) {
+    t9 = [];
+    $[22] = t9;
+  } else {
+    t9 = $[22];
+  }
+  const [groups, setGroups] = useState(t9);
+  const [groupsTotal, setGroupsTotal] = useState(0);
+  const [groupsLoading, setGroupsLoading] = useState(initial.groupBy !== null);
+  let t10;
+  if ($[23] === Symbol.for("react.memo_cache_sentinel")) {
+    t10 = {};
+    $[23] = t10;
+  } else {
+    t10 = $[23];
+  }
+  const [expanded, setExpanded] = useState(t10);
+  let t11;
+  if ($[24] === Symbol.for("react.memo_cache_sentinel")) {
+    t11 = {};
+    $[24] = t11;
+  } else {
+    t11 = $[24];
+  }
+  const [groupState, setGroupState] = useState(t11);
   let t12;
+  if ($[25] === Symbol.for("react.memo_cache_sentinel")) {
+    t12 = {};
+    $[25] = t12;
+  } else {
+    t12 = $[25];
+  }
+  const [selection, setSelectionState] = useState(t12);
   let t13;
-  if ($[22] !== search || $[23] !== searchDebounceMs) {
-    t12 = () => {
+  let t14;
+  if ($[26] !== search || $[27] !== searchDebounceMs) {
+    t13 = () => {
       if (!searchDebounceMs) {
         setDebouncedSearch(search);
         return;
@@ -176,85 +189,85 @@ export function useDataTable(config) {
       const id = setTimeout(() => startTransition(() => setDebouncedSearch(search)), searchDebounceMs);
       return () => clearTimeout(id);
     };
-    t13 = [search, searchDebounceMs];
-    $[22] = search;
-    $[23] = searchDebounceMs;
-    $[24] = t12;
-    $[25] = t13;
+    t14 = [search, searchDebounceMs];
+    $[26] = search;
+    $[27] = searchDebounceMs;
+    $[28] = t13;
+    $[29] = t14;
   } else {
-    t12 = $[24];
-    t13 = $[25];
+    t13 = $[28];
+    t14 = $[29];
   }
-  useEffect(t12, t13);
-  let t14;
-  if ($[26] !== config.data) {
-    t14 = rowsKey(config.data);
-    $[26] = config.data;
-    $[27] = t14;
-  } else {
-    t14 = $[27];
-  }
-  const dataKey = t14;
+  useEffect(t13, t14);
   let t15;
-  if ($[28] !== columns || $[29] !== config.applyFilters || $[30] !== config.data || $[31] !== groupBy) {
-    t15 = config.data ? createClientEngine({
+  if ($[30] !== config.data) {
+    t15 = rowsKey(config.data);
+    $[30] = config.data;
+    $[31] = t15;
+  } else {
+    t15 = $[31];
+  }
+  const dataKey = t15;
+  let t16;
+  if ($[32] !== columns || $[33] !== config.applyFilters || $[34] !== config.data || $[35] !== groupBy) {
+    t16 = config.data ? createClientEngine({
       data: config.data,
       columns,
       applyFilters: config.applyFilters,
       groupField: groupBy ? row => row[groupBy] : undefined
     }) : null;
-    $[28] = columns;
-    $[29] = config.applyFilters;
-    $[30] = config.data;
-    $[31] = groupBy;
-    $[32] = t15;
+    $[32] = columns;
+    $[33] = config.applyFilters;
+    $[34] = config.data;
+    $[35] = groupBy;
+    $[36] = t16;
   } else {
-    t15 = $[32];
+    t16 = $[36];
   }
-  const clientEngine = t15;
+  const clientEngine = t16;
   const fetchRecords = config.fetchRecords ?? clientEngine?.fetchRecords;
   const fetchGroups = config.fetchGroups ?? clientEngine?.fetchGroups;
-  let t16;
-  if ($[33] !== fetchRecords) {
-    t16 = params_0 => fetchRecords?.(params_0);
-    $[33] = fetchRecords;
-    $[34] = t16;
-  } else {
-    t16 = $[34];
-  }
-  const fetchPage = useEffectEvent(t16);
   let t17;
-  if ($[35] !== fetchGroups) {
-    t17 = params_1 => fetchGroups?.(params_1);
-    $[35] = fetchGroups;
-    $[36] = t17;
+  if ($[37] !== fetchRecords) {
+    t17 = params_0 => fetchRecords?.(params_0);
+    $[37] = fetchRecords;
+    $[38] = t17;
   } else {
-    t17 = $[36];
+    t17 = $[38];
   }
-  const fetchGroupPage = useEffectEvent(t17);
+  const fetchPage = useEffectEvent(t17);
   let t18;
-  if ($[37] === Symbol.for("react.memo_cache_sentinel")) {
-    t18 = next => startTransition(() => {
+  if ($[39] !== fetchGroups) {
+    t18 = params_1 => fetchGroups?.(params_1);
+    $[39] = fetchGroups;
+    $[40] = t18;
+  } else {
+    t18 = $[40];
+  }
+  const fetchGroupPage = useEffectEvent(t18);
+  let t19;
+  if ($[41] === Symbol.for("react.memo_cache_sentinel")) {
+    t19 = next => startTransition(() => {
       setFiltersInternal(next);
       setPagination(_temp);
     });
-    $[37] = t18;
+    $[41] = t19;
   } else {
-    t18 = $[37];
+    t19 = $[41];
   }
-  const setFilters = t18;
-  let t19;
-  if ($[38] !== filterLabels) {
-    t19 = (field_0, value) => filterLabels[field_0]?.[value];
-    $[38] = filterLabels;
-    $[39] = t19;
-  } else {
-    t19 = $[39];
-  }
-  const filterLabel = t19;
+  const setFilters = t19;
   let t20;
-  if ($[40] === Symbol.for("react.memo_cache_sentinel")) {
-    t20 = (field_1, options) => setFilterLabels(known => {
+  if ($[42] !== filterLabels) {
+    t20 = (field_0, value) => filterLabels[field_0]?.[value];
+    $[42] = filterLabels;
+    $[43] = t20;
+  } else {
+    t20 = $[43];
+  }
+  const filterLabel = t20;
+  let t21;
+  if ($[44] === Symbol.for("react.memo_cache_sentinel")) {
+    t21 = (field_1, options) => setFilterLabels(known => {
       const fresh = options.filter(option => known[field_1]?.[option.value] !== option.label);
       if (fresh.length === 0) {
         return known;
@@ -270,27 +283,27 @@ export function useDataTable(config) {
         [field_1]: labels
       };
     });
-    $[40] = t20;
+    $[44] = t21;
   } else {
-    t20 = $[40];
+    t21 = $[44];
   }
-  const rememberFilterLabels = t20;
-  let t21;
-  if ($[41] === Symbol.for("react.memo_cache_sentinel")) {
-    t21 = field_2 => startTransition(() => {
+  const rememberFilterLabels = t21;
+  let t22;
+  if ($[45] === Symbol.for("react.memo_cache_sentinel")) {
+    t22 = field_2 => startTransition(() => {
       setGroupByField(field_2);
       setExpanded({});
       setGroupState({});
       setPagination(_temp2);
     });
-    $[41] = t21;
+    $[45] = t22;
   } else {
-    t21 = $[41];
+    t22 = $[45];
   }
-  const setGroupBy = t21;
-  let t22;
-  if ($[42] === Symbol.for("react.memo_cache_sentinel")) {
-    t22 = field_3 => startTransition(() => {
+  const setGroupBy = t22;
+  let t23;
+  if ($[46] === Symbol.for("react.memo_cache_sentinel")) {
+    t23 = field_3 => startTransition(() => {
       setSortInternal(current_0 => {
         if (!current_0 || current_0.field !== field_3) {
           return {
@@ -308,111 +321,121 @@ export function useDataTable(config) {
       });
       setPagination(_temp3);
     });
-    $[42] = t22;
+    $[46] = t23;
   } else {
-    t22 = $[42];
+    t23 = $[46];
   }
-  const toggleSort = t22;
-  let t23;
-  if ($[43] === Symbol.for("react.memo_cache_sentinel")) {
-    t23 = next_0 => startTransition(() => {
+  const toggleSort = t23;
+  let t24;
+  if ($[47] === Symbol.for("react.memo_cache_sentinel")) {
+    t24 = next_0 => startTransition(() => {
       setSortInternal(next_0);
       setPagination(_temp4);
     });
-    $[43] = t23;
+    $[47] = t24;
   } else {
-    t23 = $[43];
+    t24 = $[47];
   }
-  const setSort = t23;
-  let t24;
-  if ($[44] === Symbol.for("react.memo_cache_sentinel")) {
-    t24 = page => startTransition(() => setPagination(p_3 => ({
+  const setSort = t24;
+  let t25;
+  if ($[48] === Symbol.for("react.memo_cache_sentinel")) {
+    t25 = page => startTransition(() => setPagination(p_3 => ({
       ...p_3,
       page
     })));
-    $[44] = t24;
+    $[48] = t25;
   } else {
-    t24 = $[44];
+    t25 = $[48];
   }
-  const setPage = t24;
-  let t25;
-  if ($[45] === Symbol.for("react.memo_cache_sentinel")) {
-    t25 = pageSize => startTransition(() => setPagination({
+  const setPage = t25;
+  let t26;
+  if ($[49] === Symbol.for("react.memo_cache_sentinel")) {
+    t26 = pageSize => startTransition(() => setPagination({
       page: 1,
       pageSize
     }));
-    $[45] = t25;
+    $[49] = t26;
   } else {
-    t25 = $[45];
+    t26 = $[49];
   }
-  const setPageSize = t25;
-  let t26;
-  if ($[46] === Symbol.for("react.memo_cache_sentinel")) {
-    t26 = () => setFetchTick(_temp5);
-    $[46] = t26;
-  } else {
-    t26 = $[46];
-  }
-  const refetch = t26;
+  const setPageSize = t26;
   let t27;
-  if ($[47] !== config.deps) {
-    t27 = JSON.stringify(config.deps ?? []);
-    $[47] = config.deps;
-    $[48] = t27;
+  if ($[50] === Symbol.for("react.memo_cache_sentinel")) {
+    t27 = () => setFetchTick(_temp5);
+    $[50] = t27;
   } else {
-    t27 = $[48];
+    t27 = $[50];
   }
-  const depsKey = t27;
-  const knownDeps = useRef(depsKey);
+  const refetch = t27;
   let t28;
+  if ($[51] !== config.deps) {
+    t28 = JSON.stringify(config.deps ?? []);
+    $[51] = config.deps;
+    $[52] = t28;
+  } else {
+    t28 = $[52];
+  }
+  const depsKey = t28;
+  const knownDeps = useRef(depsKey);
   let t29;
-  if ($[49] !== depsKey) {
-    t28 = () => {
+  if ($[53] !== depsKey || $[54] !== startingGroup) {
+    t29 = () => {
       if (knownDeps.current === depsKey) {
         return;
       }
       knownDeps.current = depsKey;
+      if (startingGroup !== null) {
+        setGroupByField(startingGroup);
+        setExpanded({});
+        setGroupState({});
+      }
       setSelectionState({});
       setPagination(_temp6);
       setFetchTick(_temp7);
     };
-    t29 = [depsKey];
-    $[49] = depsKey;
-    $[50] = t28;
-    $[51] = t29;
+    $[53] = depsKey;
+    $[54] = startingGroup;
+    $[55] = t29;
   } else {
-    t28 = $[50];
-    t29 = $[51];
+    t29 = $[55];
   }
-  useEffect(t28, t29);
-  const t30 = filters;
+  let t30;
+  if ($[56] !== depsKey) {
+    t30 = [depsKey];
+    $[56] = depsKey;
+    $[57] = t30;
+  } else {
+    t30 = $[57];
+  }
+  useEffect(t29, t30);
+  const t31 = filters;
   let listParams;
-  let t31;
-  if ($[52] !== cacheKey || $[53] !== debouncedSearch || $[54] !== pagination.page || $[55] !== pagination.pageSize || $[56] !== sort || $[57] !== t30) {
+  let t32;
+  if ($[58] !== cacheKey || $[59] !== debouncedSearch || $[60] !== pagination.page || $[61] !== pagination.pageSize || $[62] !== sort || $[63] !== t31) {
     listParams = {
       page: pagination.page,
       pageSize: pagination.pageSize,
       search: debouncedSearch,
       sort,
-      filters: t30
+      filters: t31
     };
-    t31 = entryKey(cacheKey ?? "", listParams);
-    $[52] = cacheKey;
-    $[53] = debouncedSearch;
-    $[54] = pagination.page;
-    $[55] = pagination.pageSize;
-    $[56] = sort;
-    $[57] = t30;
-    $[58] = listParams;
-    $[59] = t31;
+    t32 = entryKey(cacheKey ?? "", listParams);
+    $[58] = cacheKey;
+    $[59] = debouncedSearch;
+    $[60] = pagination.page;
+    $[61] = pagination.pageSize;
+    $[62] = sort;
+    $[63] = t31;
+    $[64] = listParams;
+    $[65] = t32;
   } else {
-    listParams = $[58];
-    t31 = $[59];
+    listParams = $[64];
+    t32 = $[65];
   }
-  const listKey = t31;
-  let t32;
-  if ($[60] !== cacheKey || $[61] !== fetchPage || $[62] !== groupBy || $[63] !== listParams) {
-    t32 = () => {
+  const listKey = t32;
+  let t33;
+  if ($[66] !== cacheKey || $[67] !== fetchPage || $[68] !== groupBy || $[69] !== listParams) {
+    t33 = () => {
       if (groupBy) {
         return;
       }
@@ -476,34 +499,34 @@ export function useDataTable(config) {
         cancelled = true;
       };
     };
-    $[60] = cacheKey;
-    $[61] = fetchPage;
-    $[62] = groupBy;
-    $[63] = listParams;
-    $[64] = t32;
+    $[66] = cacheKey;
+    $[67] = fetchPage;
+    $[68] = groupBy;
+    $[69] = listParams;
+    $[70] = t33;
   } else {
-    t32 = $[64];
+    t33 = $[70];
   }
-  let t33;
-  if ($[65] !== cacheKey || $[66] !== dataKey || $[67] !== debouncedSearch || $[68] !== fetchTick || $[69] !== filters || $[70] !== groupBy || $[71] !== pagination.page || $[72] !== pagination.pageSize || $[73] !== sort) {
-    t33 = [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, dataKey, fetchTick, cacheKey];
-    $[65] = cacheKey;
-    $[66] = dataKey;
-    $[67] = debouncedSearch;
-    $[68] = fetchTick;
-    $[69] = filters;
-    $[70] = groupBy;
-    $[71] = pagination.page;
-    $[72] = pagination.pageSize;
-    $[73] = sort;
-    $[74] = t33;
-  } else {
-    t33 = $[74];
-  }
-  useEffect(t32, t33);
   let t34;
-  if ($[75] !== debouncedSearch || $[76] !== fetchGroupPage || $[77] !== filters || $[78] !== groupBy || $[79] !== pagination.page || $[80] !== pagination.pageSize || $[81] !== sort) {
-    t34 = () => {
+  if ($[71] !== cacheKey || $[72] !== dataKey || $[73] !== debouncedSearch || $[74] !== fetchTick || $[75] !== filters || $[76] !== groupBy || $[77] !== pagination.page || $[78] !== pagination.pageSize || $[79] !== sort) {
+    t34 = [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, dataKey, fetchTick, cacheKey];
+    $[71] = cacheKey;
+    $[72] = dataKey;
+    $[73] = debouncedSearch;
+    $[74] = fetchTick;
+    $[75] = filters;
+    $[76] = groupBy;
+    $[77] = pagination.page;
+    $[78] = pagination.pageSize;
+    $[79] = sort;
+    $[80] = t34;
+  } else {
+    t34 = $[80];
+  }
+  useEffect(t33, t34);
+  let t35;
+  if ($[81] !== debouncedSearch || $[82] !== fetchGroupPage || $[83] !== filters || $[84] !== groupBy || $[85] !== pagination.page || $[86] !== pagination.pageSize || $[87] !== sort) {
+    t35 = () => {
       if (!groupBy) {
         return;
       }
@@ -542,37 +565,37 @@ export function useDataTable(config) {
         cancelled_0 = true;
       };
     };
-    $[75] = debouncedSearch;
-    $[76] = fetchGroupPage;
-    $[77] = filters;
-    $[78] = groupBy;
-    $[79] = pagination.page;
-    $[80] = pagination.pageSize;
-    $[81] = sort;
-    $[82] = t34;
+    $[81] = debouncedSearch;
+    $[82] = fetchGroupPage;
+    $[83] = filters;
+    $[84] = groupBy;
+    $[85] = pagination.page;
+    $[86] = pagination.pageSize;
+    $[87] = sort;
+    $[88] = t35;
   } else {
-    t34 = $[82];
+    t35 = $[88];
   }
-  let t35;
-  if ($[83] !== dataKey || $[84] !== debouncedSearch || $[85] !== fetchTick || $[86] !== filters || $[87] !== groupBy || $[88] !== pagination.page || $[89] !== pagination.pageSize || $[90] !== sort) {
-    t35 = [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, dataKey, fetchTick];
-    $[83] = dataKey;
-    $[84] = debouncedSearch;
-    $[85] = fetchTick;
-    $[86] = filters;
-    $[87] = groupBy;
-    $[88] = pagination.page;
-    $[89] = pagination.pageSize;
-    $[90] = sort;
-    $[91] = t35;
-  } else {
-    t35 = $[91];
-  }
-  useEffect(t34, t35);
-  const hasMore = !groupBy && (pagination.page - 1) * pagination.pageSize + rows.length < total;
   let t36;
-  if ($[92] !== cacheKey || $[93] !== fetchRecords || $[94] !== hasMore || $[95] !== listKey || $[96] !== listParams || $[97] !== loadedPage || $[98] !== loading) {
-    t36 = () => {
+  if ($[89] !== dataKey || $[90] !== debouncedSearch || $[91] !== fetchTick || $[92] !== filters || $[93] !== groupBy || $[94] !== pagination.page || $[95] !== pagination.pageSize || $[96] !== sort) {
+    t36 = [groupBy, pagination.page, pagination.pageSize, debouncedSearch, sort, filters, dataKey, fetchTick];
+    $[89] = dataKey;
+    $[90] = debouncedSearch;
+    $[91] = fetchTick;
+    $[92] = filters;
+    $[93] = groupBy;
+    $[94] = pagination.page;
+    $[95] = pagination.pageSize;
+    $[96] = sort;
+    $[97] = t36;
+  } else {
+    t36 = $[97];
+  }
+  useEffect(t35, t36);
+  const hasMore = !groupBy && (pagination.page - 1) * pagination.pageSize + rows.length < total;
+  let t37;
+  if ($[98] !== cacheKey || $[99] !== fetchRecords || $[100] !== hasMore || $[101] !== listKey || $[102] !== listParams || $[103] !== loadedPage || $[104] !== loading) {
+    t37 = () => {
       const page_1 = loadedPage + 1;
       const params_3 = {
         ...listParams,
@@ -609,21 +632,21 @@ export function useDataTable(config) {
         });
       });
     };
-    $[92] = cacheKey;
-    $[93] = fetchRecords;
-    $[94] = hasMore;
-    $[95] = listKey;
-    $[96] = listParams;
-    $[97] = loadedPage;
-    $[98] = loading;
-    $[99] = t36;
+    $[98] = cacheKey;
+    $[99] = fetchRecords;
+    $[100] = hasMore;
+    $[101] = listKey;
+    $[102] = listParams;
+    $[103] = loadedPage;
+    $[104] = loading;
+    $[105] = t37;
   } else {
-    t36 = $[99];
+    t37 = $[105];
   }
-  const loadMore = t36;
-  let t37;
-  if ($[100] !== debouncedSearch || $[101] !== fetchRecords || $[102] !== filters || $[103] !== groupBy || $[104] !== pagination.pageSize || $[105] !== sort) {
-    t37 = (key_0, page_2) => {
+  const loadMore = t37;
+  let t38;
+  if ($[106] !== debouncedSearch || $[107] !== fetchRecords || $[108] !== filters || $[109] !== groupBy || $[110] !== pagination.pageSize || $[111] !== sort) {
+    t38 = (key_0, page_2) => {
       if (!groupBy || !fetchRecords) {
         return;
       }
@@ -677,20 +700,20 @@ export function useDataTable(config) {
         }));
       });
     };
-    $[100] = debouncedSearch;
-    $[101] = fetchRecords;
-    $[102] = filters;
-    $[103] = groupBy;
-    $[104] = pagination.pageSize;
-    $[105] = sort;
-    $[106] = t37;
+    $[106] = debouncedSearch;
+    $[107] = fetchRecords;
+    $[108] = filters;
+    $[109] = groupBy;
+    $[110] = pagination.pageSize;
+    $[111] = sort;
+    $[112] = t38;
   } else {
-    t37 = $[106];
+    t38 = $[112];
   }
-  const fetchGroupRows = t37;
-  let t38;
-  if ($[107] !== expanded || $[108] !== fetchGroupRows || $[109] !== getRowId || $[110] !== groupState) {
-    t38 = key_1 => {
+  const fetchGroupRows = t38;
+  let t39;
+  if ($[113] !== expanded || $[114] !== fetchGroupRows || $[115] !== getRowId || $[116] !== groupState) {
+    t39 = key_1 => {
       setExpanded(prev_4 => {
         const next_1 = {
           ...prev_4,
@@ -716,170 +739,170 @@ export function useDataTable(config) {
         }
       }
     };
-    $[107] = expanded;
-    $[108] = fetchGroupRows;
-    $[109] = getRowId;
-    $[110] = groupState;
-    $[111] = t38;
+    $[113] = expanded;
+    $[114] = fetchGroupRows;
+    $[115] = getRowId;
+    $[116] = groupState;
+    $[117] = t39;
   } else {
-    t38 = $[111];
+    t39 = $[117];
   }
-  const toggleGroup = t38;
-  let t39;
-  if ($[112] !== fetchGroupRows) {
-    t39 = (key_2, page_3) => {
+  const toggleGroup = t39;
+  let t40;
+  if ($[118] !== fetchGroupRows) {
+    t40 = (key_2, page_3) => {
       fetchGroupRows(key_2, page_3);
     };
-    $[112] = fetchGroupRows;
-    $[113] = t39;
+    $[118] = fetchGroupRows;
+    $[119] = t40;
   } else {
-    t39 = $[113];
+    t40 = $[119];
   }
-  const setGroupPage = t39;
-  let t40;
-  if ($[114] !== expanded) {
-    t40 = key_3 => Boolean(expanded[key_3]);
-    $[114] = expanded;
-    $[115] = t40;
-  } else {
-    t40 = $[115];
-  }
-  const isGroupExpanded = t40;
+  const setGroupPage = t40;
   let t41;
-  if ($[116] !== groupState) {
-    t41 = key_4 => groupState[key_4]?.rows ?? [];
-    $[116] = groupState;
-    $[117] = t41;
+  if ($[120] !== expanded) {
+    t41 = key_3 => Boolean(expanded[key_3]);
+    $[120] = expanded;
+    $[121] = t41;
   } else {
-    t41 = $[117];
+    t41 = $[121];
   }
-  const groupRowsFor = t41;
+  const isGroupExpanded = t41;
   let t42;
-  if ($[118] !== groupState) {
-    t42 = key_5 => groupState[key_5]?.total ?? 0;
-    $[118] = groupState;
-    $[119] = t42;
+  if ($[122] !== groupState) {
+    t42 = key_4 => groupState[key_4]?.rows ?? [];
+    $[122] = groupState;
+    $[123] = t42;
   } else {
-    t42 = $[119];
+    t42 = $[123];
   }
-  const groupTotalFor = t42;
+  const groupRowsFor = t42;
   let t43;
-  if ($[120] !== groupState) {
-    t43 = key_6 => groupState[key_6]?.loading ?? false;
-    $[120] = groupState;
-    $[121] = t43;
+  if ($[124] !== groupState) {
+    t43 = key_5 => groupState[key_5]?.total ?? 0;
+    $[124] = groupState;
+    $[125] = t43;
   } else {
-    t43 = $[121];
+    t43 = $[125];
   }
-  const groupLoadingFor = t43;
+  const groupTotalFor = t43;
   let t44;
-  if ($[122] !== groupState || $[123] !== pagination.pageSize) {
-    t44 = key_7 => groupState[key_7]?.pagination ?? {
+  if ($[126] !== groupState) {
+    t44 = key_6 => groupState[key_6]?.loading ?? false;
+    $[126] = groupState;
+    $[127] = t44;
+  } else {
+    t44 = $[127];
+  }
+  const groupLoadingFor = t44;
+  let t45;
+  if ($[128] !== groupState || $[129] !== pagination.pageSize) {
+    t45 = key_7 => groupState[key_7]?.pagination ?? {
       page: 1,
       pageSize: pagination.pageSize
     };
-    $[122] = groupState;
-    $[123] = pagination.pageSize;
-    $[124] = t44;
-  } else {
-    t44 = $[124];
-  }
-  const groupPaginationFor = t44;
-  let t45;
-  if ($[125] !== expanded || $[126] !== groupBy || $[127] !== groupState || $[128] !== groups || $[129] !== rows) {
-    t45 = groupBy ? groups.flatMap(g => expanded[g.key] ? groupState[g.key]?.rows ?? [] : []) : rows;
-    $[125] = expanded;
-    $[126] = groupBy;
-    $[127] = groupState;
-    $[128] = groups;
-    $[129] = rows;
+    $[128] = groupState;
+    $[129] = pagination.pageSize;
     $[130] = t45;
   } else {
     t45 = $[130];
   }
-  const selectableRows = t45;
+  const groupPaginationFor = t45;
   let t46;
-  if ($[131] !== selection) {
-    t46 = Object.keys(selection);
-    $[131] = selection;
-    $[132] = t46;
+  if ($[131] !== expanded || $[132] !== groupBy || $[133] !== groupState || $[134] !== groups || $[135] !== rows) {
+    t46 = groupBy ? groups.flatMap(g => expanded[g.key] ? groupState[g.key]?.rows ?? [] : []) : rows;
+    $[131] = expanded;
+    $[132] = groupBy;
+    $[133] = groupState;
+    $[134] = groups;
+    $[135] = rows;
+    $[136] = t46;
   } else {
-    t46 = $[132];
+    t46 = $[136];
   }
+  const selectableRows = t46;
   let t47;
-  if ($[133] !== selection || $[134] !== t46) {
-    t47 = t46.filter(id_0 => selection[id_0]);
-    $[133] = selection;
-    $[134] = t46;
-    $[135] = t47;
+  if ($[137] !== selection) {
+    t47 = Object.keys(selection);
+    $[137] = selection;
+    $[138] = t47;
   } else {
-    t47 = $[135];
+    t47 = $[138];
   }
-  const selectedIds = t47;
   let t48;
-  if ($[136] !== getRowId || $[137] !== selectableRows || $[138] !== selection) {
-    t48 = selectableRows.length > 0 && selectableRows.every(r => selection[getRowId(r)]);
-    $[136] = getRowId;
-    $[137] = selectableRows;
-    $[138] = selection;
-    $[139] = t48;
+  if ($[139] !== selection || $[140] !== t47) {
+    t48 = t47.filter(id_0 => selection[id_0]);
+    $[139] = selection;
+    $[140] = t47;
+    $[141] = t48;
   } else {
-    t48 = $[139];
+    t48 = $[141];
   }
-  const allVisibleSelected = t48;
+  const selectedIds = t48;
   let t49;
-  if ($[140] !== getRowId || $[141] !== selectableRows || $[142] !== selection) {
-    let t50;
-    if ($[144] !== getRowId || $[145] !== selection) {
-      t50 = r_0 => selection[getRowId(r_0)];
-      $[144] = getRowId;
-      $[145] = selection;
-      $[146] = t50;
-    } else {
-      t50 = $[146];
-    }
-    t49 = selectableRows.some(t50);
-    $[140] = getRowId;
-    $[141] = selectableRows;
-    $[142] = selection;
-    $[143] = t49;
+  if ($[142] !== getRowId || $[143] !== selectableRows || $[144] !== selection) {
+    t49 = selectableRows.length > 0 && selectableRows.every(r => selection[getRowId(r)]);
+    $[142] = getRowId;
+    $[143] = selectableRows;
+    $[144] = selection;
+    $[145] = t49;
   } else {
-    t49 = $[143];
+    t49 = $[145];
   }
-  const someVisibleSelected = t49;
+  const allVisibleSelected = t49;
   let t50;
-  if ($[147] !== selection) {
-    t50 = id_1 => Boolean(selection[id_1]);
-    $[147] = selection;
-    $[148] = t50;
+  if ($[146] !== getRowId || $[147] !== selectableRows || $[148] !== selection) {
+    let t51;
+    if ($[150] !== getRowId || $[151] !== selection) {
+      t51 = r_0 => selection[getRowId(r_0)];
+      $[150] = getRowId;
+      $[151] = selection;
+      $[152] = t51;
+    } else {
+      t51 = $[152];
+    }
+    t50 = selectableRows.some(t51);
+    $[146] = getRowId;
+    $[147] = selectableRows;
+    $[148] = selection;
+    $[149] = t50;
   } else {
-    t50 = $[148];
+    t50 = $[149];
   }
-  const isSelected = t50;
+  const someVisibleSelected = t50;
   let t51;
-  if ($[149] === Symbol.for("react.memo_cache_sentinel")) {
-    t51 = id_2 => {
+  if ($[153] !== selection) {
+    t51 = id_1 => Boolean(selection[id_1]);
+    $[153] = selection;
+    $[154] = t51;
+  } else {
+    t51 = $[154];
+  }
+  const isSelected = t51;
+  let t52;
+  if ($[155] === Symbol.for("react.memo_cache_sentinel")) {
+    t52 = id_2 => {
       setSelectionState(prev_5 => ({
         ...prev_5,
         [id_2]: !prev_5[id_2]
       }));
     };
-    $[149] = t51;
+    $[155] = t52;
   } else {
-    t51 = $[149];
+    t52 = $[155];
   }
-  const toggleSelected = t51;
-  let t52;
-  if ($[150] === Symbol.for("react.memo_cache_sentinel")) {
-    t52 = () => setSelectionState({});
-    $[150] = t52;
-  } else {
-    t52 = $[150];
-  }
-  const clearSelection = t52;
+  const toggleSelected = t52;
   let t53;
-  if ($[151] !== allVisibleSelected || $[152] !== getRowId || $[153] !== selectableRows) {
-    t53 = () => {
+  if ($[156] === Symbol.for("react.memo_cache_sentinel")) {
+    t53 = () => setSelectionState({});
+    $[156] = t53;
+  } else {
+    t53 = $[156];
+  }
+  const clearSelection = t53;
+  let t54;
+  if ($[157] !== allVisibleSelected || $[158] !== getRowId || $[159] !== selectableRows) {
+    t54 = () => {
       setSelectionState(prev_6 => {
         const next_3 = {
           ...prev_6
@@ -896,45 +919,45 @@ export function useDataTable(config) {
         return next_3;
       });
     };
-    $[151] = allVisibleSelected;
-    $[152] = getRowId;
-    $[153] = selectableRows;
-    $[154] = t53;
+    $[157] = allVisibleSelected;
+    $[158] = getRowId;
+    $[159] = selectableRows;
+    $[160] = t54;
   } else {
-    t53 = $[154];
+    t54 = $[160];
   }
-  const toggleSelectAll = t53;
-  let t54;
-  if ($[155] !== getRowId || $[156] !== groupState || $[157] !== selection) {
-    t54 = key_8 => {
+  const toggleSelectAll = t54;
+  let t55;
+  if ($[161] !== getRowId || $[162] !== groupState || $[163] !== selection) {
+    t55 = key_8 => {
       const rows_1 = groupState[key_8]?.rows ?? [];
       return rows_1.length > 0 && rows_1.every(r_1 => selection[getRowId(r_1)]);
     };
-    $[155] = getRowId;
-    $[156] = groupState;
-    $[157] = selection;
-    $[158] = t54;
+    $[161] = getRowId;
+    $[162] = groupState;
+    $[163] = selection;
+    $[164] = t55;
   } else {
-    t54 = $[158];
+    t55 = $[164];
   }
-  const groupAllSelected = t54;
-  let t55;
-  if ($[159] !== getRowId || $[160] !== groupState || $[161] !== selection) {
-    t55 = key_9 => {
+  const groupAllSelected = t55;
+  let t56;
+  if ($[165] !== getRowId || $[166] !== groupState || $[167] !== selection) {
+    t56 = key_9 => {
       const rows_2 = groupState[key_9]?.rows ?? [];
       return rows_2.some(r_2 => selection[getRowId(r_2)]);
     };
-    $[159] = getRowId;
-    $[160] = groupState;
-    $[161] = selection;
-    $[162] = t55;
+    $[165] = getRowId;
+    $[166] = groupState;
+    $[167] = selection;
+    $[168] = t56;
   } else {
-    t55 = $[162];
+    t56 = $[168];
   }
-  const groupSomeSelected = t55;
-  let t56;
-  if ($[163] !== getRowId || $[164] !== groupState || $[165] !== selection) {
-    t56 = key_10 => {
+  const groupSomeSelected = t56;
+  let t57;
+  if ($[169] !== getRowId || $[170] !== groupState || $[171] !== selection) {
+    t57 = key_10 => {
       const rows_3 = groupState[key_10]?.rows ?? [];
       if (rows_3.length === 0) {
         return;
@@ -956,16 +979,16 @@ export function useDataTable(config) {
         return next_4;
       });
     };
-    $[163] = getRowId;
-    $[164] = groupState;
-    $[165] = selection;
-    $[166] = t56;
+    $[169] = getRowId;
+    $[170] = groupState;
+    $[171] = selection;
+    $[172] = t57;
   } else {
-    t56 = $[166];
+    t57 = $[172];
   }
-  const toggleSelectGroup = t56;
+  const toggleSelectGroup = t57;
   let visibleItems;
-  if ($[167] !== expanded || $[168] !== groupBy || $[169] !== groupState || $[170] !== groups || $[171] !== rows) {
+  if ($[173] !== expanded || $[174] !== groupBy || $[175] !== groupState || $[176] !== groups || $[177] !== rows) {
     visibleItems = [];
     if (groupBy) {
       for (const group of groups) {
@@ -993,28 +1016,28 @@ export function useDataTable(config) {
         });
       }
     }
-    $[167] = expanded;
-    $[168] = groupBy;
-    $[169] = groupState;
-    $[170] = groups;
-    $[171] = rows;
-    $[172] = visibleItems;
+    $[173] = expanded;
+    $[174] = groupBy;
+    $[175] = groupState;
+    $[176] = groups;
+    $[177] = rows;
+    $[178] = visibleItems;
   } else {
-    visibleItems = $[172];
+    visibleItems = $[178];
   }
-  let t57;
-  if ($[173] === Symbol.for("react.memo_cache_sentinel")) {
-    t57 = value_0 => {
+  let t58;
+  if ($[179] === Symbol.for("react.memo_cache_sentinel")) {
+    t58 = value_0 => {
       setSearch(value_0);
       setPagination(_temp9);
     };
-    $[173] = t57;
+    $[179] = t58;
   } else {
-    t57 = $[173];
+    t58 = $[179];
   }
-  let t58;
-  if ($[174] !== allVisibleSelected || $[175] !== cacheKey || $[176] !== columns || $[177] !== error || $[178] !== filterLabel || $[179] !== filters || $[180] !== getRowId || $[181] !== groupAllSelected || $[182] !== groupBy || $[183] !== groupByColumns || $[184] !== groupLoadingFor || $[185] !== groupPaginationFor || $[186] !== groupRowsFor || $[187] !== groupSomeSelected || $[188] !== groupTotalFor || $[189] !== groups || $[190] !== groupsLoading || $[191] !== groupsTotal || $[192] !== hasMore || $[193] !== hiddenColumns || $[194] !== isGroupExpanded || $[195] !== isSelected || $[196] !== listKey || $[197] !== loadMore || $[198] !== loading || $[199] !== loadingMore || $[200] !== pagination || $[201] !== rows || $[202] !== search || $[203] !== selectedIds || $[204] !== selection || $[205] !== setGroupPage || $[206] !== someVisibleSelected || $[207] !== sort || $[208] !== toggleGroup || $[209] !== toggleSelectAll || $[210] !== toggleSelectGroup || $[211] !== total || $[212] !== visibleColumns || $[213] !== visibleItems) {
-    t58 = {
+  let t59;
+  if ($[180] !== allVisibleSelected || $[181] !== cacheKey || $[182] !== columns || $[183] !== error || $[184] !== filterLabel || $[185] !== filters || $[186] !== getRowId || $[187] !== groupAllSelected || $[188] !== groupBy || $[189] !== groupByColumns || $[190] !== groupLoadingFor || $[191] !== groupPaginationFor || $[192] !== groupRowsFor || $[193] !== groupSomeSelected || $[194] !== groupTotalFor || $[195] !== groups || $[196] !== groupsLoading || $[197] !== groupsTotal || $[198] !== hasMore || $[199] !== hiddenColumns || $[200] !== isGroupExpanded || $[201] !== isSelected || $[202] !== listKey || $[203] !== loadMore || $[204] !== loading || $[205] !== loadingMore || $[206] !== pagination || $[207] !== rows || $[208] !== search || $[209] !== selectedIds || $[210] !== selection || $[211] !== setGroupPage || $[212] !== someVisibleSelected || $[213] !== sort || $[214] !== toggleGroup || $[215] !== toggleSelectAll || $[216] !== toggleSelectGroup || $[217] !== total || $[218] !== visibleColumns || $[219] !== visibleItems) {
+    t59 = {
       columns,
       getRowId,
       groupByColumns,
@@ -1023,7 +1046,7 @@ export function useDataTable(config) {
       hiddenColumns,
       setColumnHidden,
       search,
-      setSearch: t57,
+      setSearch: t58,
       filters,
       setFilters,
       filterLabel,
@@ -1069,51 +1092,51 @@ export function useDataTable(config) {
       toggleSelectGroup,
       refetch
     };
-    $[174] = allVisibleSelected;
-    $[175] = cacheKey;
-    $[176] = columns;
-    $[177] = error;
-    $[178] = filterLabel;
-    $[179] = filters;
-    $[180] = getRowId;
-    $[181] = groupAllSelected;
-    $[182] = groupBy;
-    $[183] = groupByColumns;
-    $[184] = groupLoadingFor;
-    $[185] = groupPaginationFor;
-    $[186] = groupRowsFor;
-    $[187] = groupSomeSelected;
-    $[188] = groupTotalFor;
-    $[189] = groups;
-    $[190] = groupsLoading;
-    $[191] = groupsTotal;
-    $[192] = hasMore;
-    $[193] = hiddenColumns;
-    $[194] = isGroupExpanded;
-    $[195] = isSelected;
-    $[196] = listKey;
-    $[197] = loadMore;
-    $[198] = loading;
-    $[199] = loadingMore;
-    $[200] = pagination;
-    $[201] = rows;
-    $[202] = search;
-    $[203] = selectedIds;
-    $[204] = selection;
-    $[205] = setGroupPage;
-    $[206] = someVisibleSelected;
-    $[207] = sort;
-    $[208] = toggleGroup;
-    $[209] = toggleSelectAll;
-    $[210] = toggleSelectGroup;
-    $[211] = total;
-    $[212] = visibleColumns;
-    $[213] = visibleItems;
-    $[214] = t58;
+    $[180] = allVisibleSelected;
+    $[181] = cacheKey;
+    $[182] = columns;
+    $[183] = error;
+    $[184] = filterLabel;
+    $[185] = filters;
+    $[186] = getRowId;
+    $[187] = groupAllSelected;
+    $[188] = groupBy;
+    $[189] = groupByColumns;
+    $[190] = groupLoadingFor;
+    $[191] = groupPaginationFor;
+    $[192] = groupRowsFor;
+    $[193] = groupSomeSelected;
+    $[194] = groupTotalFor;
+    $[195] = groups;
+    $[196] = groupsLoading;
+    $[197] = groupsTotal;
+    $[198] = hasMore;
+    $[199] = hiddenColumns;
+    $[200] = isGroupExpanded;
+    $[201] = isSelected;
+    $[202] = listKey;
+    $[203] = loadMore;
+    $[204] = loading;
+    $[205] = loadingMore;
+    $[206] = pagination;
+    $[207] = rows;
+    $[208] = search;
+    $[209] = selectedIds;
+    $[210] = selection;
+    $[211] = setGroupPage;
+    $[212] = someVisibleSelected;
+    $[213] = sort;
+    $[214] = toggleGroup;
+    $[215] = toggleSelectAll;
+    $[216] = toggleSelectGroup;
+    $[217] = total;
+    $[218] = visibleColumns;
+    $[219] = visibleItems;
+    $[220] = t59;
   } else {
-    t58 = $[214];
+    t59 = $[220];
   }
-  return t58;
+  return t59;
 }
 function _temp9(p_4) {
   return {
