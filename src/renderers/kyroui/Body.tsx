@@ -229,7 +229,7 @@ export function DataTableBody<Row>({
                   sx={{
                     fontSize: 'sm', fontWeight: 600, lineHeight: 1,
                     px: 'sm', py: 'xs', borderRadius: 'pill',
-                    bgcolor: 'background.surfaceHover', color: 'text.secondary',
+                    bgcolor: 'action.hover', color: 'text.secondary',
                   }}
                 >
                   {item.group.count}

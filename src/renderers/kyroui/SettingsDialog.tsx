@@ -19,7 +19,7 @@ function SectionLabel({ children }: { children: string }) {
 
 function Group({ children }: { children: React.ReactNode }) {
   return (
-    <Box sx={{ borderRadius: 'popup', overflow: 'hidden', bgcolor: 'background.surface' }}>
+    <Box sx={{ borderRadius: 'popup', overflow: 'hidden', bgcolor: 'grey.50' }}>
       {children}
     </Box>
   )
@@ -47,7 +47,7 @@ function Row({
         py: 'md',
         cursor: onClick ? 'pointer' : 'default',
         '& + &': { boxShadow: `inset 0 1px 0 ${theme.vars.palette.divider}` },
-        '&:hover': onClick ? { bgcolor: 'background.surfaceHover' } : undefined,
+        '&:hover': onClick ? { bgcolor: 'action.hover' } : undefined,
       })}
     >
       <Box sx={{ flex: 1, minWidth: 0 }}>

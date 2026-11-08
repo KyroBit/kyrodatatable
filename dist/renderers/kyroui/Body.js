@@ -572,7 +572,7 @@ export function DataTableBody(t0) {
                     px: "sm",
                     py: "xs",
                     borderRadius: "pill",
-                    bgcolor: "background.surfaceHover",
+                    bgcolor: "action.hover",
                     color: "text.secondary"
                   },
                   children: item.group.count

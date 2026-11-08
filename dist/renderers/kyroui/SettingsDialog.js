@@ -44,7 +44,7 @@ function Group(t0) {
     t1 = {
       borderRadius: "popup",
       overflow: "hidden",
-      bgcolor: "background.surface"
+      bgcolor: "grey.50"
     };
     $[0] = t1;
   } else {
@@ -82,7 +82,7 @@ function Row(t0) {
         boxShadow: `inset 0 1px 0 ${theme.vars.palette.divider}`
       },
       "&:hover": onClick ? {
-        bgcolor: "background.surfaceHover"
+        bgcolor: "action.hover"
       } : undefined
     });
     $[0] = onClick;

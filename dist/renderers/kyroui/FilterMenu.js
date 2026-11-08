@@ -1336,12 +1336,12 @@ function SortableViewRow(t0) {
   } else {
     t4 = $[7];
   }
-  const t5 = isDragging ? "background.surface" : undefined;
+  const t5 = isDragging ? "grey.50" : undefined;
   const t6 = isDragging ? 3 : undefined;
   let t7;
   if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
     t7 = {
-      bgcolor: "background.surface"
+      bgcolor: "grey.50"
     };
     $[8] = t7;
   } else {

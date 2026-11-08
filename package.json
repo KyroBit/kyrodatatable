@@ -1,6 +1,6 @@
 {
   "name": "@kyrobit/datatable",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Headless data-table state (pagination, sorting, search, server-side grouping) fully decoupled from rendering. Bring your own UI, or use the built-in MUI renderer.",
   "license": "MIT",
   "type": "module",
@@ -67,7 +67,7 @@
     "@dnd-kit/sortable": "*",
     "@dnd-kit/utilities": "*",
     "@dnd-kit/modifiers": "*",
-    "@kyrobit/kyroui": ">=0.2.9"
+    "@kyrobit/kyroui": ">=0.4.0"
   },
   "peerDependenciesMeta": {
     "@mui/material": {
@@ -88,7 +88,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@kyrobit/kyroui": "0.2.9",
+    "@kyrobit/kyroui": "0.4.0",
     "@mui/icons-material": "^9.2.0",
     "@mui/material": "^9.0.1",
     "@types/babel__core": "7.20.5",
