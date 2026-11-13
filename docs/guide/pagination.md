@@ -100,6 +100,7 @@ By default `infiniteScroll` scrolls rows inside a box of their own. To let the p
 - The table scrolls with the nearest scrolling ancestor, or the window if there is none. It has no scrollbar of its own and is only as tall as its rows.
 - `stickyTop` is where the column header pins, as any CSS length. A CSS variable lets the header follow an area above it that changes height.
 - The next page still loads one screen ahead, and returning to a list with a `cacheKey` restores the same rows at the same scroll position.
+- `restoreScroll={false}` (on the body or the full `<DataTable>`) opens a returning list at the top instead. Cached rows still show at once.
 - Everything between the body and the scrolling element must leave overflow visible: use `overflow: 'clip'` to round a card's corners, because `hidden` or `auto` gives the header a different box to pin in.
 - What pins above the table, and its background, is yours to lay out.
 

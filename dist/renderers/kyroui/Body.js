@@ -310,6 +310,7 @@ export function DataTableBody(t0) {
     rowClass,
     infiniteScroll: t5,
     pageScroll: t6,
+    restoreScroll: t7,
     stickyTop
   } = t0;
   const emptyMessage = t1 === undefined ? "No records found." : t1;
@@ -318,60 +319,61 @@ export function DataTableBody(t0) {
   const stickyHeader = t4 === undefined ? true : t4;
   const infiniteScroll = t5 === undefined ? false : t5;
   const pageScroll = t6 === undefined ? false : t6;
+  const restoreScroll = t7 === undefined ? true : t7;
   const api = useDataTableContext();
   const items = api.visibleItems;
   const colSpan = api.visibleColumns.length + (selectable ? 1 : 0);
   const fetching = api.loading || api.groupsLoading;
-  let t7;
+  let t8;
   if ($[0] !== api.visibleColumns) {
-    t7 = api.visibleColumns.some(_temp2);
+    t8 = api.visibleColumns.some(_temp2);
     $[0] = api.visibleColumns;
-    $[1] = t7;
+    $[1] = t8;
   } else {
-    t7 = $[1];
+    t8 = $[1];
   }
-  const hasExplicitWidths = t7;
+  const hasExplicitWidths = t8;
   const containerRef = useRef(null);
   const [scroller, setScroller] = useState(null);
   const [rowHeight, setRowHeight] = useState(0);
-  let t8;
+  let t9;
   if ($[2] !== api.visibleColumns) {
-    t8 = api.visibleColumns.map(_temp3).join("|");
+    t9 = api.visibleColumns.map(_temp3).join("|");
     $[2] = api.visibleColumns;
-    $[3] = t8;
+    $[3] = t9;
   } else {
-    t8 = $[3];
+    t9 = $[3];
   }
-  const columnsKey = t8;
+  const columnsKey = t9;
   const [locked, setLocked] = useState(null);
   const lockedWidths = locked?.key === columnsKey ? locked.widths : null;
   const intentTimer = useRef(undefined);
-  const viewKey = api.cacheKey === undefined ? null : api.listKey;
-  let t9;
-  if ($[4] !== viewKey) {
-    t9 = viewKey === null ? undefined : views.get(viewKey);
-    $[4] = viewKey;
-    $[5] = t9;
-  } else {
-    t9 = $[5];
-  }
-  const view = t9;
-  const snapshot = useRef(_temp4);
+  const viewKey = api.cacheKey === undefined || !restoreScroll ? null : api.listKey;
   let t10;
-  let t11;
-  if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t10 = () => () => clearTimeout(intentTimer.current);
-    t11 = [];
-    $[6] = t10;
-    $[7] = t11;
+  if ($[4] !== viewKey) {
+    t10 = viewKey === null ? undefined : views.get(viewKey);
+    $[4] = viewKey;
+    $[5] = t10;
   } else {
-    t10 = $[6];
-    t11 = $[7];
+    t10 = $[5];
   }
-  useEffect(t10, t11);
+  const view = t10;
+  const snapshot = useRef(_temp4);
+  let t11;
   let t12;
+  if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
+    t11 = () => () => clearTimeout(intentTimer.current);
+    t12 = [];
+    $[6] = t11;
+    $[7] = t12;
+  } else {
+    t11 = $[6];
+    t12 = $[7];
+  }
+  useEffect(t11, t12);
+  let t13;
   if ($[8] !== pageScroll || $[9] !== scroller) {
-    t12 = () => {
+    t13 = () => {
       const container = containerRef.current;
       if (!container) {
         return;
@@ -383,14 +385,14 @@ export function DataTableBody(t0) {
     };
     $[8] = pageScroll;
     $[9] = scroller;
-    $[10] = t12;
+    $[10] = t13;
   } else {
-    t12 = $[10];
+    t13 = $[10];
   }
-  useLayoutEffect(t12);
-  let t13;
+  useLayoutEffect(t13);
+  let t14;
   if ($[11] !== pageScroll || $[12] !== view || $[13] !== viewKey) {
-    t13 = () => {
+    t14 = () => {
       const container_0 = containerRef.current;
       if (!container_0) {
         return;
@@ -429,23 +431,23 @@ export function DataTableBody(t0) {
     $[11] = pageScroll;
     $[12] = view;
     $[13] = viewKey;
-    $[14] = t13;
+    $[14] = t14;
   } else {
-    t13 = $[14];
+    t14 = $[14];
   }
-  let t14;
+  let t15;
   if ($[15] !== api.groupBy || $[16] !== api.listKey) {
-    t14 = [api.listKey, api.groupBy];
+    t15 = [api.listKey, api.groupBy];
     $[15] = api.groupBy;
     $[16] = api.listKey;
-    $[17] = t14;
+    $[17] = t15;
   } else {
-    t14 = $[17];
+    t15 = $[17];
   }
-  useLayoutEffect(t13, t14);
-  let t15;
+  useLayoutEffect(t14, t15);
+  let t16;
   if ($[18] !== columnsKey || $[19] !== hasExplicitWidths || $[20] !== lockedWidths || $[21] !== rowHeight || $[22] !== selectable) {
-    t15 = () => {
+    t16 = () => {
       const container_1 = containerRef.current;
       if (!container_1) {
         return;
@@ -470,26 +472,26 @@ export function DataTableBody(t0) {
     $[20] = lockedWidths;
     $[21] = rowHeight;
     $[22] = selectable;
-    $[23] = t15;
+    $[23] = t16;
   } else {
-    t15 = $[23];
+    t16 = $[23];
   }
-  useLayoutEffect(t15);
+  useLayoutEffect(t16);
   const fixedWidths = hasExplicitWidths || lockedWidths !== null;
   if (items.length === 0 && !fetching) {
-    let t16;
+    let t17;
     if ($[24] !== api.filters || $[25] !== api.search) {
-      t16 = Boolean(api.search) || countFilterValues(api.filters ?? {}) > 0;
+      t17 = Boolean(api.search) || countFilterValues(api.filters ?? {}) > 0;
       $[24] = api.filters;
       $[25] = api.search;
-      $[26] = t16;
+      $[26] = t17;
     } else {
-      t16 = $[26];
+      t17 = $[26];
     }
-    const filtered = t16;
-    let t17;
+    const filtered = t17;
+    let t18;
     if ($[27] !== api || $[28] !== emptyMessage || $[29] !== errorMessage || $[30] !== filtered || $[31] !== noResultsMessage) {
-      t17 = api.error ? errorMessage ?? /*#__PURE__*/_jsxs(Box, {
+      t18 = api.error ? errorMessage ?? /*#__PURE__*/_jsxs(Box, {
         sx: {
           display: "flex",
           flexDirection: "column",
@@ -513,24 +515,24 @@ export function DataTableBody(t0) {
       $[29] = errorMessage;
       $[30] = filtered;
       $[31] = noResultsMessage;
-      $[32] = t17;
+      $[32] = t18;
     } else {
-      t17 = $[32];
+      t18 = $[32];
     }
-    const message = t17;
-    let t18;
+    const message = t18;
+    let t19;
     if ($[33] === Symbol.for("react.memo_cache_sentinel")) {
-      t18 = {
+      t19 = {
         flex: 1,
         py: "xl"
       };
-      $[33] = t18;
+      $[33] = t19;
     } else {
-      t18 = $[33];
+      t19 = $[33];
     }
-    let t19;
+    let t20;
     if ($[34] !== message) {
-      t19 = typeof message === "string" ? /*#__PURE__*/_jsx(Typography, {
+      t20 = typeof message === "string" ? /*#__PURE__*/_jsx(Typography, {
         sx: {
           color: "text.secondary",
           textAlign: "center",
@@ -539,28 +541,27 @@ export function DataTableBody(t0) {
         children: message
       }) : message;
       $[34] = message;
-      $[35] = t19;
+      $[35] = t20;
     } else {
-      t19 = $[35];
+      t20 = $[35];
     }
-    let t20;
-    if ($[36] !== t19) {
-      t20 = /*#__PURE__*/_jsx(Box, {
+    let t21;
+    if ($[36] !== t20) {
+      t21 = /*#__PURE__*/_jsx(Box, {
         className: "KyroTable-empty",
-        sx: t18,
-        children: t19
+        sx: t19,
+        children: t20
       });
-      $[36] = t19;
-      $[37] = t20;
+      $[36] = t20;
+      $[37] = t21;
     } else {
-      t20 = $[37];
+      t21 = $[37];
     }
-    return t20;
+    return t21;
   }
   let T0;
   let T1;
   let T2;
-  let t16;
   let t17;
   let t18;
   let t19;
@@ -569,6 +570,7 @@ export function DataTableBody(t0) {
   let t22;
   let t23;
   let t24;
+  let t25;
   if ($[38] !== api || $[39] !== colSpan || $[40] !== fixedWidths || $[41] !== hasExplicitWidths || $[42] !== infiniteScroll || $[43] !== items || $[44] !== lockedWidths || $[45] !== onRowClick || $[46] !== onRowIntent || $[47] !== pageScroll || $[48] !== rowClass || $[49] !== rowHeight || $[50] !== scroller || $[51] !== selectable || $[52] !== stickyHeader || $[53] !== stickyTop || $[54] !== view) {
     const renderItem = (index, measure) => {
       const item = items[index];
@@ -706,10 +708,10 @@ export function DataTableBody(t0) {
       render: renderItem
     };
     T2 = TableContainer;
-    t22 = containerRef;
-    t23 = pageScroll ? undefined : "";
+    t23 = containerRef;
+    t24 = pageScroll ? undefined : "";
     if ($[67] !== pageScroll || $[68] !== stickyTop) {
-      t24 = theme => pageScroll ? {
+      t25 = theme => pageScroll ? {
         overflow: "visible",
         scrollMarginTop: stickyTop
       } : {
@@ -720,48 +722,48 @@ export function DataTableBody(t0) {
       };
       $[67] = pageScroll;
       $[68] = stickyTop;
-      $[69] = t24;
+      $[69] = t25;
     } else {
-      t24 = $[69];
+      t25 = $[69];
     }
     T1 = Table;
-    t17 = "small";
-    t18 = stickyHeader;
-    let t25;
+    t18 = "small";
+    t19 = stickyHeader;
+    let t26;
     if ($[70] !== fixedWidths) {
-      t25 = fixedWidths && {
+      t26 = fixedWidths && {
         tableLayout: "fixed"
       };
       $[70] = fixedWidths;
-      $[71] = t25;
+      $[71] = t26;
     } else {
-      t25 = $[71];
+      t26 = $[71];
     }
-    let t26;
+    let t27;
     if ($[72] !== stickyTop) {
-      t26 = stickyTop && {
+      t27 = stickyTop && {
         "& thead th": {
           top: stickyTop
         }
       };
       $[72] = stickyTop;
-      $[73] = t26;
+      $[73] = t27;
     } else {
-      t26 = $[73];
+      t27 = $[73];
     }
-    if ($[74] !== t25 || $[75] !== t26) {
-      t19 = {
-        ...t25,
-        ...t26
+    if ($[74] !== t26 || $[75] !== t27) {
+      t20 = {
+        ...t26,
+        ...t27
       };
-      $[74] = t25;
-      $[75] = t26;
-      $[76] = t19;
+      $[74] = t26;
+      $[75] = t27;
+      $[76] = t20;
     } else {
-      t19 = $[76];
+      t20 = $[76];
     }
     if ($[77] !== api.visibleColumns || $[78] !== hasExplicitWidths || $[79] !== lockedWidths || $[80] !== selectable) {
-      t20 = hasExplicitWidths ? /*#__PURE__*/_jsxs("colgroup", {
+      t21 = hasExplicitWidths ? /*#__PURE__*/_jsxs("colgroup", {
         children: [selectable && /*#__PURE__*/_jsx("col", {}), api.visibleColumns.map(_temp8)]
       }) : lockedWidths ? /*#__PURE__*/_jsxs("colgroup", {
         children: [selectable && /*#__PURE__*/_jsx("col", {}), lockedWidths.map(_temp9)]
@@ -770,13 +772,13 @@ export function DataTableBody(t0) {
       $[78] = hasExplicitWidths;
       $[79] = lockedWidths;
       $[80] = selectable;
-      $[81] = t20;
+      $[81] = t21;
     } else {
-      t20 = $[81];
+      t21 = $[81];
     }
-    let t27;
+    let t28;
     if ($[82] !== api || $[83] !== selectable) {
-      t27 = selectable && /*#__PURE__*/_jsx(TableCell, {
+      t28 = selectable && /*#__PURE__*/_jsx(TableCell, {
         variant: "head",
         padding: "checkbox",
         children: /*#__PURE__*/_jsx(Checkbox, {
@@ -788,13 +790,13 @@ export function DataTableBody(t0) {
       });
       $[82] = api;
       $[83] = selectable;
-      $[84] = t27;
+      $[84] = t28;
     } else {
-      t27 = $[84];
+      t28 = $[84];
     }
-    let t28;
+    let t29;
     if ($[85] !== api) {
-      t28 = api.visibleColumns.map(col_3 => /*#__PURE__*/_jsx(TableCell, {
+      t29 = api.visibleColumns.map(col_3 => /*#__PURE__*/_jsx(TableCell, {
         variant: "head",
         align: col_3.align,
         sortDirection: api.sort?.field === col_3.field ? api.sort.direction : false,
@@ -829,24 +831,24 @@ export function DataTableBody(t0) {
         })
       }, col_3.field));
       $[85] = api;
-      $[86] = t28;
+      $[86] = t29;
     } else {
-      t28 = $[86];
+      t29 = $[86];
     }
-    if ($[87] !== t27 || $[88] !== t28) {
-      t21 = /*#__PURE__*/_jsx(TableHead, {
+    if ($[87] !== t28 || $[88] !== t29) {
+      t22 = /*#__PURE__*/_jsx(TableHead, {
         children: /*#__PURE__*/_jsxs(TableRow, {
-          children: [t27, t28]
+          children: [t28, t29]
         })
       });
-      $[87] = t27;
-      $[88] = t28;
-      $[89] = t21;
+      $[87] = t28;
+      $[88] = t29;
+      $[89] = t22;
     } else {
-      t21 = $[89];
+      t22 = $[89];
     }
     T0 = TableBody;
-    t16 = items.length === 0 ? /*#__PURE__*/_jsx(SkeletonRows, {
+    t17 = items.length === 0 ? /*#__PURE__*/_jsx(SkeletonRows, {
       count: Math.min(api.pagination.pageSize, SKELETON_ROWS),
       selectable: selectable
     }) : infiniteScroll ? scroller && (scroller instanceof Window ? /*#__PURE__*/_jsx(WindowRows, {
@@ -875,32 +877,32 @@ export function DataTableBody(t0) {
     $[55] = T0;
     $[56] = T1;
     $[57] = T2;
-    $[58] = t16;
-    $[59] = t17;
-    $[60] = t18;
-    $[61] = t19;
-    $[62] = t20;
-    $[63] = t21;
-    $[64] = t22;
-    $[65] = t23;
-    $[66] = t24;
+    $[58] = t17;
+    $[59] = t18;
+    $[60] = t19;
+    $[61] = t20;
+    $[62] = t21;
+    $[63] = t22;
+    $[64] = t23;
+    $[65] = t24;
+    $[66] = t25;
   } else {
     T0 = $[55];
     T1 = $[56];
     T2 = $[57];
-    t16 = $[58];
-    t17 = $[59];
-    t18 = $[60];
-    t19 = $[61];
-    t20 = $[62];
-    t21 = $[63];
-    t22 = $[64];
-    t23 = $[65];
-    t24 = $[66];
+    t17 = $[58];
+    t18 = $[59];
+    t19 = $[60];
+    t20 = $[61];
+    t21 = $[62];
+    t22 = $[63];
+    t23 = $[64];
+    t24 = $[65];
+    t25 = $[66];
   }
-  let t25;
+  let t26;
   if ($[90] !== api.hasMore || $[91] !== colSpan || $[92] !== infiniteScroll || $[93] !== scroller || $[94] !== selectable) {
-    t25 = infiniteScroll && api.hasMore && scroller && /*#__PURE__*/_jsx(ScrollEnd, {
+    t26 = infiniteScroll && api.hasMore && scroller && /*#__PURE__*/_jsx(ScrollEnd, {
       scroller: scroller,
       colSpan: colSpan,
       selectable: selectable
@@ -910,59 +912,59 @@ export function DataTableBody(t0) {
     $[92] = infiniteScroll;
     $[93] = scroller;
     $[94] = selectable;
-    $[95] = t25;
+    $[95] = t26;
   } else {
-    t25 = $[95];
-  }
-  let t26;
-  if ($[96] !== T0 || $[97] !== t16 || $[98] !== t25) {
-    t26 = /*#__PURE__*/_jsxs(T0, {
-      children: [t16, t25]
-    });
-    $[96] = T0;
-    $[97] = t16;
-    $[98] = t25;
-    $[99] = t26;
-  } else {
-    t26 = $[99];
+    t26 = $[95];
   }
   let t27;
-  if ($[100] !== T1 || $[101] !== t17 || $[102] !== t18 || $[103] !== t19 || $[104] !== t20 || $[105] !== t21 || $[106] !== t26) {
-    t27 = /*#__PURE__*/_jsxs(T1, {
-      size: t17,
-      stickyHeader: t18,
-      sx: t19,
-      children: [t20, t21, t26]
+  if ($[96] !== T0 || $[97] !== t17 || $[98] !== t26) {
+    t27 = /*#__PURE__*/_jsxs(T0, {
+      children: [t17, t26]
     });
-    $[100] = T1;
-    $[101] = t17;
-    $[102] = t18;
-    $[103] = t19;
-    $[104] = t20;
-    $[105] = t21;
-    $[106] = t26;
-    $[107] = t27;
+    $[96] = T0;
+    $[97] = t17;
+    $[98] = t26;
+    $[99] = t27;
   } else {
-    t27 = $[107];
+    t27 = $[99];
   }
   let t28;
-  if ($[108] !== T2 || $[109] !== t22 || $[110] !== t23 || $[111] !== t24 || $[112] !== t27) {
-    t28 = /*#__PURE__*/_jsx(T2, {
-      ref: t22,
-      "data-scroll-root": t23,
-      sx: t24,
-      children: t27
+  if ($[100] !== T1 || $[101] !== t18 || $[102] !== t19 || $[103] !== t20 || $[104] !== t21 || $[105] !== t22 || $[106] !== t27) {
+    t28 = /*#__PURE__*/_jsxs(T1, {
+      size: t18,
+      stickyHeader: t19,
+      sx: t20,
+      children: [t21, t22, t27]
+    });
+    $[100] = T1;
+    $[101] = t18;
+    $[102] = t19;
+    $[103] = t20;
+    $[104] = t21;
+    $[105] = t22;
+    $[106] = t27;
+    $[107] = t28;
+  } else {
+    t28 = $[107];
+  }
+  let t29;
+  if ($[108] !== T2 || $[109] !== t23 || $[110] !== t24 || $[111] !== t25 || $[112] !== t28) {
+    t29 = /*#__PURE__*/_jsx(T2, {
+      ref: t23,
+      "data-scroll-root": t24,
+      sx: t25,
+      children: t28
     });
     $[108] = T2;
-    $[109] = t22;
-    $[110] = t23;
-    $[111] = t24;
-    $[112] = t27;
-    $[113] = t28;
+    $[109] = t23;
+    $[110] = t24;
+    $[111] = t25;
+    $[112] = t28;
+    $[113] = t29;
   } else {
-    t28 = $[113];
+    t29 = $[113];
   }
-  return t28;
+  return t29;
 }
 function _temp9(width, index_0) {
   return /*#__PURE__*/_jsx("col", {

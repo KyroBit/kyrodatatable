@@ -152,6 +152,7 @@ export interface DataTableBodyProps<Row> {
   /** Scrolls rows inside a bounded box and loads the next page near its end, in place of page controls. */
   infiniteScroll?: boolean
   pageScroll?: boolean
+  restoreScroll?: boolean
   stickyTop?: string
 }
 
@@ -167,6 +168,7 @@ export function DataTableBody<Row>({
   rowClass,
   infiniteScroll = false,
   pageScroll = false,
+  restoreScroll = true,
   stickyTop,
 }: DataTableBodyProps<Row>) {
   const api = useDataTableContext<Row>()
@@ -181,7 +183,7 @@ export function DataTableBody<Row>({
   const [locked, setLocked] = useState<{ key: string; widths: string[] } | null>(null)
   const lockedWidths = locked?.key === columnsKey ? locked.widths : null
   const intentTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const viewKey = api.cacheKey === undefined ? null : api.listKey
+  const viewKey = api.cacheKey === undefined || !restoreScroll ? null : api.listKey
   const view = viewKey === null ? undefined : views.get(viewKey)
   const snapshot = useRef<() => Snapshot>(() => ({ rows: [], margin: 0 }))
 

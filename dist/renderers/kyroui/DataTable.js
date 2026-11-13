@@ -20,7 +20,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
  * a custom layout compose the exported pieces yourself.
  */
 export function DataTable(t0) {
-  const $ = _c(111);
+  const $ = _c(112);
   const {
     api,
     presets,
@@ -48,7 +48,8 @@ export function DataTable(t0) {
     stickyHeader,
     rowsPerPageOptions,
     groupsPerPageOptions,
-    infiniteScroll
+    infiniteScroll,
+    restoreScroll
   } = t0;
   const createLabel = t1 === undefined ? "Create" : t1;
   let t4;
@@ -509,7 +510,7 @@ export function DataTable(t0) {
     t25 = $[84];
   }
   let t26;
-  if ($[85] !== emptyMessage || $[86] !== errorMessage || $[87] !== infiniteScroll || $[88] !== noResultsMessage || $[89] !== onRowClick || $[90] !== onRowIntent || $[91] !== rowClass || $[92] !== stickyHeader || $[93] !== withSelection) {
+  if ($[85] !== emptyMessage || $[86] !== errorMessage || $[87] !== infiniteScroll || $[88] !== noResultsMessage || $[89] !== onRowClick || $[90] !== onRowIntent || $[91] !== restoreScroll || $[92] !== rowClass || $[93] !== stickyHeader || $[94] !== withSelection) {
     t26 = /*#__PURE__*/_jsx(Card, {
       sx: t25,
       children: /*#__PURE__*/_jsx(DataTableBody, {
@@ -521,7 +522,8 @@ export function DataTable(t0) {
         onRowClick: onRowClick,
         onRowIntent: onRowIntent,
         rowClass: rowClass,
-        infiniteScroll: infiniteScroll
+        infiniteScroll: infiniteScroll,
+        restoreScroll: restoreScroll
       })
     });
     $[85] = emptyMessage;
@@ -530,15 +532,16 @@ export function DataTable(t0) {
     $[88] = noResultsMessage;
     $[89] = onRowClick;
     $[90] = onRowIntent;
-    $[91] = rowClass;
-    $[92] = stickyHeader;
-    $[93] = withSelection;
-    $[94] = t26;
+    $[91] = restoreScroll;
+    $[92] = rowClass;
+    $[93] = stickyHeader;
+    $[94] = withSelection;
+    $[95] = t26;
   } else {
-    t26 = $[94];
+    t26 = $[95];
   }
   let t27;
-  if ($[95] !== api.groupBy.length || $[96] !== api.groupsTotal || $[97] !== api.total || $[98] !== groupsPerPageOptions || $[99] !== infiniteScroll || $[100] !== rowsPerPageOptions) {
+  if ($[96] !== api.groupBy.length || $[97] !== api.groupsTotal || $[98] !== api.total || $[99] !== groupsPerPageOptions || $[100] !== infiniteScroll || $[101] !== rowsPerPageOptions) {
     t27 = (!infiniteScroll || api.groupBy.length > 0) && /*#__PURE__*/_jsxs(Box, {
       "data-table-footer": "",
       sx: _temp3,
@@ -555,33 +558,33 @@ export function DataTable(t0) {
         children: [api.groupsTotal, " groups \xB7 ", api.total, " records"]
       })]
     });
-    $[95] = api.groupBy.length;
-    $[96] = api.groupsTotal;
-    $[97] = api.total;
-    $[98] = groupsPerPageOptions;
-    $[99] = infiniteScroll;
-    $[100] = rowsPerPageOptions;
-    $[101] = t27;
+    $[96] = api.groupBy.length;
+    $[97] = api.groupsTotal;
+    $[98] = api.total;
+    $[99] = groupsPerPageOptions;
+    $[100] = infiniteScroll;
+    $[101] = rowsPerPageOptions;
+    $[102] = t27;
   } else {
-    t27 = $[101];
+    t27 = $[102];
   }
   let t28;
-  if ($[102] !== api || $[103] !== t14 || $[104] !== t21 || $[105] !== t22 || $[106] !== t23 || $[107] !== t24 || $[108] !== t26 || $[109] !== t27) {
+  if ($[103] !== api || $[104] !== t14 || $[105] !== t21 || $[106] !== t22 || $[107] !== t23 || $[108] !== t24 || $[109] !== t26 || $[110] !== t27) {
     t28 = /*#__PURE__*/_jsxs(DataTableRoot, {
       api: api,
       children: [t14, t21, t22, t23, t24, t26, t27]
     });
-    $[102] = api;
-    $[103] = t14;
-    $[104] = t21;
-    $[105] = t22;
-    $[106] = t23;
-    $[107] = t24;
-    $[108] = t26;
-    $[109] = t27;
-    $[110] = t28;
+    $[103] = api;
+    $[104] = t14;
+    $[105] = t21;
+    $[106] = t22;
+    $[107] = t23;
+    $[108] = t24;
+    $[109] = t26;
+    $[110] = t27;
+    $[111] = t28;
   } else {
-    t28 = $[110];
+    t28 = $[111];
   }
   return t28;
 }

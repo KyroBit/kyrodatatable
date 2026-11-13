@@ -60,6 +60,7 @@ export interface DataTableProps<Row, Field extends string = string> {
   groupsPerPageOptions?: number[]
   /** Loads the next page as the end of the table scrolls into view, in place of page controls. */
   infiniteScroll?: boolean
+  restoreScroll?: boolean
 }
 
 /**
@@ -96,6 +97,7 @@ export function DataTable<Row, Field extends string = string>({
   rowsPerPageOptions,
   groupsPerPageOptions,
   infiniteScroll,
+  restoreScroll,
 }: DataTableProps<Row, Field>) {
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
   const [manageOpen, setManageOpen] = useState(false)
@@ -304,6 +306,7 @@ export function DataTable<Row, Field extends string = string>({
           onRowIntent={onRowIntent}
           rowClass={rowClass}
           infiniteScroll={infiniteScroll}
+          restoreScroll={restoreScroll}
         />
       </Card>
       {(!infiniteScroll || api.groupBy.length > 0) && (
