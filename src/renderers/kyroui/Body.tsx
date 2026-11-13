@@ -200,11 +200,12 @@ export function DataTableBody<Row>({
     const container = containerRef.current
     if (!container) return
     const target = pageScroll ? scrollParentOf(container) : container
-    const head = container.querySelector('thead')
-    const pinned = head !== null && head.getBoundingClientRect().top > container.getBoundingClientRect().top + 1
+    const edge = target instanceof Window ? 0 : target.getBoundingClientRect().top
+    const pin = container.querySelector('thead th')?.getBoundingClientRect().top ?? edge
+    const passed = container.getBoundingClientRect().top < Math.max(edge, pin) - 1
     if (view) target.scrollTo({ top: view.top, behavior: 'instant' })
     else if (!pageScroll) container.scrollTop = 0
-    else if (pinned) container.scrollIntoView({ block: 'start', behavior: 'instant' })
+    else if (passed) container.scrollIntoView({ block: 'start', behavior: 'instant' })
     return () => {
       if (viewKey === null) return
       views.set(viewKey, { top: offsetOf(target), rect: rectOf(target), ...snapshot.current() })

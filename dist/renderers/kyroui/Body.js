@@ -398,8 +398,9 @@ export function DataTableBody(t0) {
         return;
       }
       const target = pageScroll ? scrollParentOf(container_0) : container_0;
-      const head = container_0.querySelector("thead");
-      const pinned = head !== null && head.getBoundingClientRect().top > container_0.getBoundingClientRect().top + 1;
+      const edge = target instanceof Window ? 0 : target.getBoundingClientRect().top;
+      const pin = container_0.querySelector("thead th")?.getBoundingClientRect().top ?? edge;
+      const passed = container_0.getBoundingClientRect().top < Math.max(edge, pin) - 1;
       if (view) {
         target.scrollTo({
           top: view.top,
@@ -409,7 +410,7 @@ export function DataTableBody(t0) {
         if (!pageScroll) {
           container_0.scrollTop = 0;
         } else {
-          if (pinned) {
+          if (passed) {
             container_0.scrollIntoView({
               block: "start",
               behavior: "instant"
