@@ -300,7 +300,7 @@ const rectOf = scroller => scroller instanceof Window ? {
 const marginOf = (node, scroller) => node.getBoundingClientRect().top + offsetOf(scroller) - (scroller instanceof Window ? 0 : scroller.getBoundingClientRect().top + scroller.clientTop);
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
 export function DataTableBody(t0) {
-  const $ = _c(99);
+  const $ = _c(102);
   const {
     onRowClick,
     onRowIntent,
@@ -557,7 +557,7 @@ export function DataTableBody(t0) {
   }
   useLayoutEffect(t21, [api.listKey, api.groupBy, drilled]);
   let t22;
-  if ($[28] !== checkboxes || $[29] !== columnsKey || $[30] !== hasExplicitWidths || $[31] !== list || $[32] !== lockedWidths || $[33] !== rowHeight) {
+  if ($[28] !== checkboxes || $[29] !== columnsKey || $[30] !== hasExplicitWidths || $[31] !== list || $[32] !== lockedWidths || $[33] !== rowHeight || $[34] !== sideways) {
     t22 = () => {
       const container_2 = containerRef.current;
       if (!container_2) {
@@ -568,7 +568,7 @@ export function DataTableBody(t0) {
       if (tallest > rowHeight) {
         setRowHeight(tallest);
       }
-      if (list || hasExplicitWidths || lockedWidths || !rows.length) {
+      if (list || sideways || hasExplicitWidths || lockedWidths || !rows.length) {
         return;
       }
       const table = container_2.querySelector("table").getBoundingClientRect().width;
@@ -584,25 +584,26 @@ export function DataTableBody(t0) {
     $[31] = list;
     $[32] = lockedWidths;
     $[33] = rowHeight;
-    $[34] = t22;
+    $[34] = sideways;
+    $[35] = t22;
   } else {
-    t22 = $[34];
+    t22 = $[35];
   }
   useLayoutEffect(t22);
   const fixedWidths = hasExplicitWidths || lockedWidths !== null;
   if (empty) {
     let t23;
-    if ($[35] !== api.filters || $[36] !== api.search) {
+    if ($[36] !== api.filters || $[37] !== api.search) {
       t23 = Boolean(api.search) || countFilterValues(api.filters ?? {}) > 0;
-      $[35] = api.filters;
-      $[36] = api.search;
-      $[37] = t23;
+      $[36] = api.filters;
+      $[37] = api.search;
+      $[38] = t23;
     } else {
-      t23 = $[37];
+      t23 = $[38];
     }
     const filtered = t23;
     let t24;
-    if ($[38] !== api || $[39] !== emptyMessage || $[40] !== errorMessage || $[41] !== filtered || $[42] !== noResultsMessage) {
+    if ($[39] !== api || $[40] !== emptyMessage || $[41] !== errorMessage || $[42] !== filtered || $[43] !== noResultsMessage) {
       t24 = api.error ? errorMessage ?? /*#__PURE__*/_jsxs(Box, {
         sx: {
           display: "flex",
@@ -622,28 +623,28 @@ export function DataTableBody(t0) {
           children: "Try again"
         })]
       }) : filtered ? noResultsMessage : emptyMessage;
-      $[38] = api;
-      $[39] = emptyMessage;
-      $[40] = errorMessage;
-      $[41] = filtered;
-      $[42] = noResultsMessage;
-      $[43] = t24;
+      $[39] = api;
+      $[40] = emptyMessage;
+      $[41] = errorMessage;
+      $[42] = filtered;
+      $[43] = noResultsMessage;
+      $[44] = t24;
     } else {
-      t24 = $[43];
+      t24 = $[44];
     }
     const message = t24;
     let t25;
-    if ($[44] === Symbol.for("react.memo_cache_sentinel")) {
+    if ($[45] === Symbol.for("react.memo_cache_sentinel")) {
       t25 = {
         flex: 1,
         py: "xl"
       };
-      $[44] = t25;
+      $[45] = t25;
     } else {
-      t25 = $[44];
+      t25 = $[45];
     }
     let t26;
-    if ($[45] !== message) {
+    if ($[46] !== message) {
       t26 = typeof message === "string" ? /*#__PURE__*/_jsx(Typography, {
         sx: {
           color: "text.secondary",
@@ -652,22 +653,22 @@ export function DataTableBody(t0) {
         },
         children: message
       }) : message;
-      $[45] = message;
-      $[46] = t26;
+      $[46] = message;
+      $[47] = t26;
     } else {
-      t26 = $[46];
+      t26 = $[47];
     }
     let t27;
-    if ($[47] !== t26) {
+    if ($[48] !== t26) {
       t27 = /*#__PURE__*/_jsx(Box, {
         className: "KyroTable-empty",
         sx: t25,
         children: t26
       });
-      $[47] = t26;
-      $[48] = t27;
+      $[48] = t26;
+      $[49] = t27;
     } else {
-      t27 = $[48];
+      t27 = $[49];
     }
     return t27;
   }
@@ -869,7 +870,7 @@ export function DataTableBody(t0) {
   const T0 = TableContainer;
   const t23 = pageScroll ? undefined : "";
   let t24;
-  if ($[49] !== pageScroll || $[50] !== sideways || $[51] !== stickyTop) {
+  if ($[50] !== pageScroll || $[51] !== sideways || $[52] !== stickyTop) {
     t24 = theme => pageScroll ? {
       ...(sideways ? {
         overflowX: "auto",
@@ -884,77 +885,80 @@ export function DataTableBody(t0) {
       overflowY: "auto",
       contain: "size"
     };
-    $[49] = pageScroll;
-    $[50] = sideways;
-    $[51] = stickyTop;
-    $[52] = t24;
+    $[50] = pageScroll;
+    $[51] = sideways;
+    $[52] = stickyTop;
+    $[53] = t24;
   } else {
-    t24 = $[52];
+    t24 = $[53];
   }
   const T1 = Table;
   const t25 = "small";
   let t26;
-  if ($[53] !== fixedWidths) {
-    t26 = fixedWidths && {
+  if ($[54] !== fixedWidths || $[55] !== sideways) {
+    t26 = fixedWidths && !sideways && {
       tableLayout: "fixed"
     };
-    $[53] = fixedWidths;
-    $[54] = t26;
+    $[54] = fixedWidths;
+    $[55] = sideways;
+    $[56] = t26;
   } else {
-    t26 = $[54];
+    t26 = $[56];
   }
   let t27;
-  if ($[55] !== narrowBelow || $[56] !== sideways) {
+  if ($[57] !== sideways) {
     t27 = sideways && {
-      minWidth: narrowBelow
+      width: "max-content",
+      minWidth: "100%"
     };
-    $[55] = narrowBelow;
-    $[56] = sideways;
-    $[57] = t27;
+    $[57] = sideways;
+    $[58] = t27;
   } else {
-    t27 = $[57];
+    t27 = $[58];
   }
   let t28;
-  if ($[58] !== stickyTop) {
-    t28 = stickyTop && {
+  if ($[59] !== sideways || $[60] !== stickyTop) {
+    t28 = stickyTop && !sideways && {
       "& thead th": {
         top: stickyTop
       }
     };
-    $[58] = stickyTop;
-    $[59] = t28;
+    $[59] = sideways;
+    $[60] = stickyTop;
+    $[61] = t28;
   } else {
-    t28 = $[59];
+    t28 = $[61];
   }
   let t29;
-  if ($[60] !== t26 || $[61] !== t27 || $[62] !== t28) {
+  if ($[62] !== t26 || $[63] !== t27 || $[64] !== t28) {
     t29 = {
       ...t26,
       ...t27,
       ...t28
     };
-    $[60] = t26;
-    $[61] = t27;
-    $[62] = t28;
-    $[63] = t29;
+    $[62] = t26;
+    $[63] = t27;
+    $[64] = t28;
+    $[65] = t29;
   } else {
-    t29 = $[63];
+    t29 = $[65];
   }
   let t30;
-  if ($[64] !== api.visibleColumns || $[65] !== checkboxes || $[66] !== hasExplicitWidths || $[67] !== list || $[68] !== lockedWidths) {
-    t30 = list ? null : hasExplicitWidths ? /*#__PURE__*/_jsxs("colgroup", {
+  if ($[66] !== api.visibleColumns || $[67] !== checkboxes || $[68] !== hasExplicitWidths || $[69] !== list || $[70] !== lockedWidths || $[71] !== sideways) {
+    t30 = list || sideways ? null : hasExplicitWidths ? /*#__PURE__*/_jsxs("colgroup", {
       children: [checkboxes && /*#__PURE__*/_jsx("col", {}), api.visibleColumns.map(_temp1)]
     }) : lockedWidths ? /*#__PURE__*/_jsxs("colgroup", {
       children: [checkboxes && /*#__PURE__*/_jsx("col", {}), lockedWidths.map(_temp10)]
     }) : null;
-    $[64] = api.visibleColumns;
-    $[65] = checkboxes;
-    $[66] = hasExplicitWidths;
-    $[67] = list;
-    $[68] = lockedWidths;
-    $[69] = t30;
+    $[66] = api.visibleColumns;
+    $[67] = checkboxes;
+    $[68] = hasExplicitWidths;
+    $[69] = list;
+    $[70] = lockedWidths;
+    $[71] = sideways;
+    $[72] = t30;
   } else {
-    t30 = $[69];
+    t30 = $[72];
   }
   const t31 = drilledGroup?.type === "group" && /*#__PURE__*/_jsx(TableHead, {
     children: /*#__PURE__*/_jsx(TableRow, {
@@ -1008,7 +1012,7 @@ export function DataTableBody(t0) {
     })
   });
   let t32;
-  if ($[70] !== api || $[71] !== checkboxes || $[72] !== list) {
+  if ($[73] !== api || $[74] !== checkboxes || $[75] !== list) {
     t32 = !list && /*#__PURE__*/_jsx(TableHead, {
       children: /*#__PURE__*/_jsxs(TableRow, {
         children: [checkboxes && /*#__PURE__*/_jsx(TableCell, {
@@ -1056,12 +1060,12 @@ export function DataTableBody(t0) {
         }, col_3.field))]
       })
     });
-    $[70] = api;
-    $[71] = checkboxes;
-    $[72] = list;
-    $[73] = t32;
+    $[73] = api;
+    $[74] = checkboxes;
+    $[75] = list;
+    $[76] = t32;
   } else {
-    t32 = $[73];
+    t32 = $[76];
   }
   const T2 = TableBody;
   const t33 = navigating ? /*#__PURE__*/_jsx(TableRow, {
@@ -1117,7 +1121,7 @@ export function DataTableBody(t0) {
     ...rowsProps
   })) : items.map((_, index_1) => renderItem(index_1));
   let t34;
-  if ($[74] !== checkboxes || $[75] !== colSpan || $[76] !== infiniteScroll || $[77] !== items || $[78] !== more || $[79] !== scroller || $[80] !== skeletonShape) {
+  if ($[77] !== checkboxes || $[78] !== colSpan || $[79] !== infiniteScroll || $[80] !== items || $[81] !== more || $[82] !== scroller || $[83] !== skeletonShape) {
     t34 = infiniteScroll && more.has && scroller && /*#__PURE__*/_jsx(ScrollEnd, {
       scroller: scroller,
       colSpan: colSpan,
@@ -1131,63 +1135,63 @@ export function DataTableBody(t0) {
         colSpan: colSpan
       })
     });
-    $[74] = checkboxes;
-    $[75] = colSpan;
-    $[76] = infiniteScroll;
-    $[77] = items;
-    $[78] = more;
-    $[79] = scroller;
-    $[80] = skeletonShape;
-    $[81] = t34;
+    $[77] = checkboxes;
+    $[78] = colSpan;
+    $[79] = infiniteScroll;
+    $[80] = items;
+    $[81] = more;
+    $[82] = scroller;
+    $[83] = skeletonShape;
+    $[84] = t34;
   } else {
-    t34 = $[81];
+    t34 = $[84];
   }
   let t35;
-  if ($[82] !== T2 || $[83] !== t33 || $[84] !== t34) {
+  if ($[85] !== T2 || $[86] !== t33 || $[87] !== t34) {
     t35 = /*#__PURE__*/_jsxs(T2, {
       children: [t33, t34]
     });
-    $[82] = T2;
-    $[83] = t33;
-    $[84] = t34;
-    $[85] = t35;
+    $[85] = T2;
+    $[86] = t33;
+    $[87] = t34;
+    $[88] = t35;
   } else {
-    t35 = $[85];
+    t35 = $[88];
   }
   let t36;
-  if ($[86] !== T1 || $[87] !== stickyHeader || $[88] !== t29 || $[89] !== t30 || $[90] !== t31 || $[91] !== t32 || $[92] !== t35) {
+  if ($[89] !== T1 || $[90] !== stickyHeader || $[91] !== t29 || $[92] !== t30 || $[93] !== t31 || $[94] !== t32 || $[95] !== t35) {
     t36 = /*#__PURE__*/_jsxs(T1, {
       size: t25,
       stickyHeader: stickyHeader,
       sx: t29,
       children: [t30, t31, t32, t35]
     });
-    $[86] = T1;
-    $[87] = stickyHeader;
-    $[88] = t29;
-    $[89] = t30;
-    $[90] = t31;
-    $[91] = t32;
-    $[92] = t35;
-    $[93] = t36;
+    $[89] = T1;
+    $[90] = stickyHeader;
+    $[91] = t29;
+    $[92] = t30;
+    $[93] = t31;
+    $[94] = t32;
+    $[95] = t35;
+    $[96] = t36;
   } else {
-    t36 = $[93];
+    t36 = $[96];
   }
   let t37;
-  if ($[94] !== T0 || $[95] !== t23 || $[96] !== t24 || $[97] !== t36) {
+  if ($[97] !== T0 || $[98] !== t23 || $[99] !== t24 || $[100] !== t36) {
     t37 = /*#__PURE__*/_jsx(T0, {
       ref: containerRef,
       "data-scroll-root": t23,
       sx: t24,
       children: t36
     });
-    $[94] = T0;
-    $[95] = t23;
-    $[96] = t24;
-    $[97] = t36;
-    $[98] = t37;
+    $[97] = T0;
+    $[98] = t23;
+    $[99] = t24;
+    $[100] = t36;
+    $[101] = t37;
   } else {
-    t37 = $[98];
+    t37 = $[101];
   }
   return t37;
 }

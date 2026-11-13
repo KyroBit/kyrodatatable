@@ -284,7 +284,7 @@ export function DataTableBody<Row>({
     const rows = Array.from(container.querySelectorAll('tbody tr[data-row]'))
     const tallest = Math.max(0, ...rows.map((row) => row.getBoundingClientRect().height))
     if (tallest > rowHeight) setRowHeight(tallest)
-    if (list || hasExplicitWidths || lockedWidths || !rows.length) return
+    if (list || sideways || hasExplicitWidths || lockedWidths || !rows.length) return
     const table = container.querySelector('table')!.getBoundingClientRect().width
     const cells = Array.from(container.querySelectorAll('thead th')).slice(checkboxes ? 1 : 0)
     setLocked({
@@ -471,12 +471,12 @@ export function DataTableBody<Row>({
         size="small"
         stickyHeader={stickyHeader}
         sx={{
-          ...(fixedWidths && { tableLayout: 'fixed' }),
-          ...(sideways && { minWidth: narrowBelow }),
-          ...(stickyTop && { '& thead th': { top: stickyTop } }),
+          ...(fixedWidths && !sideways && { tableLayout: 'fixed' }),
+          ...(sideways && { width: 'max-content', minWidth: '100%' }),
+          ...(stickyTop && !sideways && { '& thead th': { top: stickyTop } }),
         }}
       >
-        {list ? null : hasExplicitWidths ? (
+        {list || sideways ? null : hasExplicitWidths ? (
           <colgroup>
             {checkboxes && <col />}
             {api.visibleColumns.map((col) => (
