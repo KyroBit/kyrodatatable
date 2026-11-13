@@ -44,6 +44,8 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
     groupLoading: (id: string) => boolean;
     groupPagination: (id: string) => PaginationState;
     setGroupPage: (id: string, page: number) => void;
+    groupHasMore: (id: string) => boolean;
+    loadMoreInGroup: (id: string) => void;
     /** Flat + grouped rows in one display-ordered list — see the `VisibleItem` type. What every built-in renderer actually iterates. */
     visibleItems: VisibleItem<Row, Field>[];
     selection: Selection<Field>;

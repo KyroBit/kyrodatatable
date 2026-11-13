@@ -2,7 +2,6 @@ import { useMemo, useState, type ReactElement, type ReactNode } from 'react'
 import {
   Box, Button, Card, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography,
 } from '@mui/material'
-import AddIcon from '@mui/icons-material/Add'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import type {
   DataTableApi, PresetsApi, ExportFormat, ExportRequest, FilterColumnDef, FilterRenderers, FilterValues, ResourceAction,
@@ -27,12 +26,6 @@ export interface DataTableProps<Row, Field extends string = string> {
   filterColumns?: FilterColumnDef[]
   searchPlaceholder?: string
   searchWidth?: number | string
-  createLabel?: string
-  onCreate?: () => void
-  /** Rendered at the trailing end of the views-pill row, alongside the built-in Create
-   * button if `onCreate` is also given. An escape hatch for whatever a consumer needs there
-   * that this component has no opinion on (a different button, a breakpoint-swapped Fab,
-   * more than one action, etc.) — DataTable itself doesn't inspect or care what it is. */
   toolbarEnd?: ReactNode
   /** Receives the full query context; POST it to your export endpoint. */
   onExport?: (request: ExportRequest<Field, FilterValues>) => void | Promise<void>
@@ -83,8 +76,6 @@ export function DataTable<Row, Field extends string = string>({
   filterColumns,
   searchPlaceholder,
   searchWidth,
-  createLabel = 'Create',
-  onCreate,
   toolbarEnd,
   onExport,
   exportFormats = [{ id: 'csv', label: 'CSV' }],
@@ -157,7 +148,7 @@ export function DataTable<Row, Field extends string = string>({
 
   return (
     <DataTableRoot api={api}>
-      {(presets || onCreate || toolbarEnd) && (
+      {(presets || toolbarEnd) && (
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           sx={{ alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 1.5 }}
@@ -182,11 +173,6 @@ export function DataTable<Row, Field extends string = string>({
             )}
           </Stack>
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexShrink: 0 }}>
-            {onCreate && (
-              <Button variant="contained" startIcon={<AddIcon />} onClick={onCreate}>
-                {createLabel}
-              </Button>
-            )}
             {toolbarEnd}
           </Stack>
         </Stack>

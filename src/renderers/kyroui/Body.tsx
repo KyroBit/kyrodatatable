@@ -1,10 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent, type MouseEvent, type ReactNode, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent, type MouseEvent, type PointerEvent, type ReactNode, type RefObject } from 'react'
 import { useVirtualizer, useWindowVirtualizer, type Rect, type VirtualItem, type Virtualizer } from '@tanstack/react-virtual'
 import {
-  Box, Button, Checkbox, IconButton, Skeleton, SvgIcon, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Typography,
+  Box, Button, Card, Checkbox, IconButton, List, ListItemButton, ListItemText, Skeleton, SvgIcon, Table, TableBody,
+  TableCell, TableContainer, TableHead, TableRow, Typography, useTheme,
 } from '@kyrobit/kyroui'
-import { useDataTableContext } from './context.js'
+import { useDataTableContext, useDrillTrail, useSelectMode } from './context.js'
 import { ChevronLeftIcon, ChevronRightIcon, ExpandMoreIcon } from './icons.js'
 import { countFilterValues } from '@kyrobit/datatable'
 import type { DataTableApi, FilterValues, SortDirection } from '@kyrobit/datatable'
@@ -97,6 +97,8 @@ const ESTIMATED_ROW_HEIGHT = 41
 const OVERSCAN = 10
 const ROW_INTENT_DELAY = 80
 const SKELETON_DELAY = 150
+const HOLD_DELAY = 500
+const HOLD_SLOP = 10
 
 interface View {
   top: number
@@ -154,6 +156,9 @@ export interface DataTableBodyProps<Row> {
   pageScroll?: boolean
   restoreScroll?: boolean
   stickyTop?: string
+  renderListItem?: (row: Row) => ReactNode
+  listVariant?: 'plain' | 'cards'
+  variant?: 'auto' | 'list'
 }
 
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
@@ -170,10 +175,11 @@ export function DataTableBody<Row>({
   pageScroll = false,
   restoreScroll = true,
   stickyTop,
+  renderListItem,
+  listVariant = 'plain',
+  variant = 'auto',
 }: DataTableBodyProps<Row>) {
   const api = useDataTableContext<Row>()
-  const items = api.visibleItems
-  const colSpan = api.visibleColumns.length + (selectable ? 1 : 0)
   const fetching = api.loading || api.groupsLoading
   const hasExplicitWidths = api.visibleColumns.some((col) => col.width)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -183,11 +189,71 @@ export function DataTableBody<Row>({
   const [locked, setLocked] = useState<{ key: string; widths: string[] } | null>(null)
   const lockedWidths = locked?.key === columnsKey ? locked.widths : null
   const intentTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const viewKey = api.cacheKey === undefined || !restoreScroll ? null : api.listKey
-  const view = viewKey === null ? undefined : views.get(viewKey)
   const snapshot = useRef<() => Snapshot>(() => ({ rows: [], margin: 0 }))
+  const narrowBelow = useTheme().breakpoints.values.sm
+  const [narrow, setNarrow] = useState(false)
+  const watchWidth = variant === 'auto'
+  const list = renderListItem !== undefined && (variant === 'list' || narrow)
+  const sideways = narrow && !list
+  const cards = list && listVariant === 'cards'
+  const drilling = list && api.groupBy.length > 0
+  const groupsKey = api.groupBy.join('|')
+  const [trailState, setTrailState] = useDrillTrail()
+  const stored = drilling && trailState.key === groupsKey ? trailState.ids : []
+  const shownGroups = new Set(api.visibleItems.flatMap((item) => (item.type === 'group' ? [item.id] : [])))
+  const reachable = stored.findIndex((id) => !shownGroups.has(id))
+  const trail = reachable === -1 ? stored : stored.slice(0, reachable)
+  const setTrail = (ids: string[]) => setTrailState({ key: groupsKey, ids })
+  const drilled = trail.at(-1)
+  const viewKey = api.cacheKey === undefined || !restoreScroll ? null : `${api.listKey}${drilled ?? ''}`
+  const view = viewKey === null ? undefined : views.get(viewKey)
+  const closedOnTrail = trail.find((id) => !api.isGroupExpanded(id))
 
-  useEffect(() => () => clearTimeout(intentTimer.current), [])
+  useEffect(() => {
+    if (closedOnTrail !== undefined) api.toggleGroup(closedOnTrail)
+  }, [closedOnTrail])
+  const drilledGroup = api.visibleItems.find((item) => item.type === 'group' && item.id === drilled)
+  const items = !drilling
+    ? api.visibleItems
+    : api.visibleItems.filter((item) =>
+        drilled === undefined
+          ? item.type === 'group' && item.depth === 0
+          : item.type === 'group'
+            ? item.depth === trail.length && item.id.startsWith(drilled.slice(0, -1))
+            : item.type === 'group-row' && item.groupId === drilled,
+      )
+  const empty = items.length === 0 && !fetching && drilled === undefined
+  const skeletonShape: SkeletonShape = cards ? 'cards' : list ? 'list' : 'table'
+  const more = drilled === undefined
+    ? { has: api.hasMore, load: api.loadMore, loading: api.loadingMore }
+    : { has: api.groupHasMore(drilled), load: () => api.loadMoreInGroup(drilled), loading: api.groupLoading(drilled) }
+  const navigating = drilling && items.length > 0 && items.every((item) => item.type === 'group')
+  const drillInto = (id: string) => {
+    if (!api.isGroupExpanded(id)) api.toggleGroup(id)
+    setTrail([...trail, id])
+  }
+  const holding = list && selectable
+  const [selectMode, setSelectMode] = useSelectMode()
+  const selecting = holding && selectMode
+  const checkboxes = selectable && !list
+  const colSpan = api.visibleColumns.length + (checkboxes ? 1 : 0)
+  const holdTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const holdStart = useRef({ x: 0, y: 0 })
+  const held = useRef(false)
+
+  useEffect(() => () => {
+    clearTimeout(intentTimer.current)
+    clearTimeout(holdTimer.current)
+  }, [])
+
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    if (!container || !watchWidth) return
+    setNarrow(container.clientWidth < narrowBelow)
+    const observer = new ResizeObserver(([entry]) => setNarrow(entry!.contentRect.width < narrowBelow))
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [empty, watchWidth, narrowBelow])
 
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -210,7 +276,7 @@ export function DataTableBody<Row>({
       if (viewKey === null) return
       views.set(viewKey, { top: offsetOf(target), rect: rectOf(target), ...snapshot.current() })
     }
-  }, [api.listKey, api.groupBy])
+  }, [api.listKey, api.groupBy, drilled])
 
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -218,9 +284,9 @@ export function DataTableBody<Row>({
     const rows = Array.from(container.querySelectorAll('tbody tr[data-row]'))
     const tallest = Math.max(0, ...rows.map((row) => row.getBoundingClientRect().height))
     if (tallest > rowHeight) setRowHeight(tallest)
-    if (hasExplicitWidths || lockedWidths || !rows.length) return
+    if (list || hasExplicitWidths || lockedWidths || !rows.length) return
     const table = container.querySelector('table')!.getBoundingClientRect().width
-    const cells = Array.from(container.querySelectorAll('thead th')).slice(selectable ? 1 : 0)
+    const cells = Array.from(container.querySelectorAll('thead th')).slice(checkboxes ? 1 : 0)
     setLocked({
       key: columnsKey,
       widths: cells.map((cell) => `${(cell.getBoundingClientRect().width / table) * 100}%`),
@@ -231,7 +297,7 @@ export function DataTableBody<Row>({
 
   // An empty message describes a finished result, so it never stands in for one still loading:
   // a list with rows keeps them while the next page arrives, an empty one shows placeholders.
-  if (items.length === 0 && !fetching) {
+  if (empty) {
     const filtered = Boolean(api.search) || countFilterValues((api.filters ?? {}) as FilterValues) > 0
     const message = api.error
       ? (errorMessage ?? (
@@ -270,7 +336,7 @@ export function DataTableBody<Row>({
                 {item.expanded
                   ? <ExpandMoreIcon fontSize="small" sx={{ color: 'text.secondary' }} />
                   : <ChevronRightIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
-                {selectable && (
+                {selectable && (!list || selecting) && (
                   <Box component="span" sx={{ display: 'inline-flex' }} onClick={(e: MouseEvent<HTMLElement>) => e.stopPropagation()}>
                     <Checkbox
                       checked={api.groupAllSelected(item.id)}
@@ -310,16 +376,43 @@ export function DataTableBody<Row>({
       item.type === 'group-row' ? 'KyroTable-groupChildRow' : '',
       rowClass ? rowClass(row) : '',
     ].filter(Boolean).join(' ')
+    const hold = holding ? {
+      onPointerDown: (event: PointerEvent<HTMLTableRowElement>) => {
+        held.current = false
+        holdStart.current = { x: event.clientX, y: event.clientY }
+        clearTimeout(holdTimer.current)
+        holdTimer.current = setTimeout(() => {
+          held.current = true
+          setSelectMode(true)
+          api.toggleSelected(rowId)
+        }, HOLD_DELAY)
+      },
+      onPointerMove: (event: PointerEvent<HTMLTableRowElement>) => {
+        if (Math.hypot(event.clientX - holdStart.current.x, event.clientY - holdStart.current.y) > HOLD_SLOP) clearTimeout(holdTimer.current)
+      },
+      onPointerUp: () => clearTimeout(holdTimer.current),
+      onPointerCancel: () => clearTimeout(holdTimer.current),
+      onContextMenu: (event: MouseEvent<HTMLTableRowElement>) => event.preventDefault(),
+    } : {}
     return (
       <TableRow
         key={rowId}
         data-row=""
         {...measured}
+        {...hold}
         hover
         selected={selectable && api.isSelected(rowId)}
         className={classes || undefined}
-        style={{ cursor: onRowClick ? 'pointer' : undefined }}
-        onClick={() => onRowClick?.(row)}
+        style={{
+          cursor: onRowClick || selecting ? 'pointer' : undefined,
+          ...(holding && { WebkitTouchCallout: 'none', userSelect: 'none' }),
+          ...(cards && { background: 'transparent' }),
+        }}
+        onClick={() => {
+          if (held.current) held.current = false
+          else if (selecting) api.toggleSelected(rowId)
+          else onRowClick?.(row)
+        }}
         tabIndex={onRowIntent ? 0 : undefined}
         onPointerEnter={onRowIntent && (() => {
           clearTimeout(intentTimer.current)
@@ -328,7 +421,7 @@ export function DataTableBody<Row>({
         onPointerLeave={onRowIntent && (() => clearTimeout(intentTimer.current))}
         onFocus={onRowIntent && ((event: FocusEvent<HTMLTableRowElement>) => event.target === event.currentTarget && onRowIntent(row))}
       >
-        {selectable && (
+        {checkboxes && (
           <TableCell padding="checkbox" onClick={(e: MouseEvent<HTMLTableCellElement>) => e.stopPropagation()}>
             <Checkbox
               checked={api.isSelected(rowId)}
@@ -337,7 +430,17 @@ export function DataTableBody<Row>({
             />
           </TableCell>
         )}
-        {api.visibleColumns.map((col) => (
+        {list ? (
+          cards ? (
+            <TableCell colSpan={colSpan} sx={{ border: 'none', px: 0, py: 'xs' }}>
+              <Card sx={{ p: 'md', ...(api.isSelected(rowId) && { bgcolor: 'action.selected' }) }}>
+                {renderListItem!(row)}
+              </Card>
+            </TableCell>
+          ) : (
+            <TableCell colSpan={colSpan}>{renderListItem!(row)}</TableCell>
+          )
+        ) : api.visibleColumns.map((col) => (
           <TableCell key={col.field} align={col.align}>
             {(col.render ? col.render(row) : (row as Record<string, unknown>)[col.field]) as ReactNode}
           </TableCell>
@@ -361,30 +464,58 @@ export function DataTableBody<Row>({
       ref={containerRef}
       data-scroll-root={pageScroll ? undefined : ""}
       sx={(theme) => (pageScroll
-        ? { overflow: 'visible', scrollMarginTop: stickyTop }
+        ? { ...(sideways ? { overflowX: 'auto', overflowY: 'hidden' } : { overflow: 'visible' }), scrollMarginTop: stickyTop }
         : { flex: '1 1 0', minHeight: `calc(${theme.vars.size.row} * 4)`, overflowY: 'auto', contain: 'size' })}
     >
       <Table
         size="small"
         stickyHeader={stickyHeader}
-        sx={{ ...(fixedWidths && { tableLayout: 'fixed' }), ...(stickyTop && { '& thead th': { top: stickyTop } }) }}
+        sx={{
+          ...(fixedWidths && { tableLayout: 'fixed' }),
+          ...(sideways && { minWidth: narrowBelow }),
+          ...(stickyTop && { '& thead th': { top: stickyTop } }),
+        }}
       >
-        {hasExplicitWidths ? (
+        {list ? null : hasExplicitWidths ? (
           <colgroup>
-            {selectable && <col />}
+            {checkboxes && <col />}
             {api.visibleColumns.map((col) => (
               <col key={col.field} style={col.width ? { width: col.width } : undefined} />
             ))}
           </colgroup>
         ) : lockedWidths ? (
           <colgroup>
-            {selectable && <col />}
+            {checkboxes && <col />}
             {lockedWidths.map((width, index) => <col key={index} style={{ width }} />)}
           </colgroup>
         ) : null}
+        {drilledGroup?.type === 'group' && (
+          <TableHead>
+            <TableRow>
+              <TableCell variant="head" colSpan={colSpan} sx={{ px: 0, py: 'sm', border: 'none' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 'sm' }}>
+                  <IconButton size="small" edge="start" aria-label="Back" onClick={() => setTrail(trail.slice(0, -1))}>
+                    <ChevronLeftIcon />
+                  </IconButton>
+                  <Typography noWrap sx={{ flex: 1, minWidth: 0, fontSize: 'h5', fontWeight: 600, color: 'text.primary', textTransform: 'none', letterSpacing: 0 }}>
+                    {drilledGroup.group.label}
+                  </Typography>
+                  {!infiniteScroll && api.groupTotal(drilledGroup.id) > api.groupPagination(drilledGroup.id).pageSize ? (
+                    <GroupPager groupId={drilledGroup.id} api={api as DataTableApi<unknown, string, undefined>} />
+                  ) : (
+                    <Typography sx={{ color: 'text.secondary', fontVariantNumeric: 'tabular-nums', textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>
+                      {drilledGroup.group.count}
+                    </Typography>
+                  )}
+                </Box>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+        )}
+        {!list && (
         <TableHead>
           <TableRow>
-            {selectable && (
+            {checkboxes && (
               <TableCell variant="head" padding="checkbox">
                 <Checkbox
                   checked={api.allSelected}
@@ -433,9 +564,34 @@ export function DataTableBody<Row>({
             ))}
           </TableRow>
         </TableHead>
+        )}
         <TableBody>
-          {items.length === 0 ? (
-            <SkeletonRows count={Math.min(api.pagination.pageSize, SKELETON_ROWS)} selectable={selectable} />
+          {navigating ? (
+            <TableRow>
+              <TableCell colSpan={colSpan} sx={{ border: 'none', p: 0 }}>
+                <List variant="grouped">
+                  {items.map((item) => item.type === 'group' && (
+                    <ListItemButton key={item.id} onClick={() => drillInto(item.id)}>
+                      {selectable && selecting && (
+                        <Box component="span" sx={{ display: 'inline-flex' }} onClick={(e: MouseEvent<HTMLElement>) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={api.groupAllSelected(item.id)}
+                            indeterminate={api.groupSomeSelected(item.id) && !api.groupAllSelected(item.id)}
+                            onChange={() => api.toggleSelectGroup(item.id)}
+                            aria-label={`Select all rows in ${item.group.label}`}
+                          />
+                        </Box>
+                      )}
+                      <ListItemText primary={item.group.label} />
+                      <Typography sx={{ color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>{item.group.count}</Typography>
+                      <ChevronRightIcon fontSize="small" sx={{ color: 'text.disabled', flex: 'none' }} />
+                    </ListItemButton>
+                  ))}
+                </List>
+              </TableCell>
+            </TableRow>
+          ) : items.length === 0 ? (
+            <SkeletonRows count={Math.min(api.pagination.pageSize, SKELETON_ROWS)} selectable={checkboxes} shape={skeletonShape} colSpan={colSpan} />
           ) : (
             infiniteScroll ? (
               scroller && (
@@ -449,7 +605,16 @@ export function DataTableBody<Row>({
               items.map((_, index) => renderItem(index))
             )
           )}
-          {infiniteScroll && api.hasMore && scroller && <ScrollEnd scroller={scroller} colSpan={colSpan} selectable={selectable} />}
+          {infiniteScroll && more.has && scroller && (
+            <ScrollEnd
+              scroller={scroller}
+              colSpan={colSpan}
+              load={more.load}
+              loading={more.loading}
+              count={items.length}
+              placeholder={<SkeletonRows count={LOADING_MORE_ROWS} selectable={checkboxes} shape={skeletonShape} colSpan={colSpan} />}
+            />
+          )}
         </TableBody>
       </Table>
     </TableContainer>
@@ -525,7 +690,9 @@ function Spacer({ height, colSpan }: { height: number; colSpan: number }) {
   )
 }
 
-function SkeletonRows({ count, selectable }: { count: number; selectable: boolean }) {
+type SkeletonShape = 'table' | 'list' | 'cards'
+
+function SkeletonRows({ count, selectable, shape, colSpan }: { count: number; selectable: boolean; shape: SkeletonShape; colSpan: number }) {
   const api = useDataTableContext()
   const [shown, setShown] = useState(false)
 
@@ -535,37 +702,60 @@ function SkeletonRows({ count, selectable }: { count: number; selectable: boolea
   }, [])
 
   if (!shown) return null
+  const lines = (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 'sm', py: 'xs' }}>
+      <Skeleton variant="rounded" sx={{ width: '55%', height: 14, borderRadius: 'pill' }} />
+      <Skeleton variant="rounded" sx={{ width: '35%', height: 10, borderRadius: 'pill' }} />
+    </Box>
+  )
   return Array.from({ length: count }, (_, index) => (
     <TableRow key={`skeleton-${index}`} className="KyroTable-skeletonRow">
-      {selectable && <TableCell padding="checkbox" />}
-      {api.visibleColumns.map((col) => (
-        <TableCell key={col.field} align={col.align}>
-          <Skeleton
-            variant="rounded"
-            sx={{ display: 'inline-block', width: '60%', maxWidth: 120, height: 12, borderRadius: 'pill' }}
-          />
+      {shape === 'cards' ? (
+        <TableCell colSpan={colSpan} sx={{ border: 'none', px: 0, py: 'xs' }}>
+          <Card sx={{ p: 'md' }}>{lines}</Card>
         </TableCell>
-      ))}
+      ) : shape === 'list' ? (
+        <TableCell colSpan={colSpan}>{lines}</TableCell>
+      ) : (
+        <>
+          {selectable && <TableCell padding="checkbox" />}
+          {api.visibleColumns.map((col) => (
+            <TableCell key={col.field} align={col.align}>
+              <Skeleton
+                variant="rounded"
+                sx={{ display: 'inline-block', width: '60%', maxWidth: 120, height: 12, borderRadius: 'pill' }}
+              />
+            </TableCell>
+          ))}
+        </>
+      )}
     </TableRow>
   ))
 }
 
-function ScrollEnd({ scroller, colSpan, selectable }: { scroller: Scroller; colSpan: number; selectable: boolean }) {
-  const api = useDataTableContext()
+interface ScrollEndProps {
+  scroller: Scroller
+  colSpan: number
+  load: () => void
+  loading: boolean
+  count: number
+  placeholder: ReactNode
+}
+
+function ScrollEnd({ scroller, colSpan, load, loading, count, placeholder }: ScrollEndProps) {
   const marker = useRef<HTMLTableRowElement>(null)
   const [reached, setReached] = useState(false)
-  const { loadMore, loadingMore, rows } = api
 
   useEffect(() => {
     const node = marker.current
     if (!node) return
-    const observer = new IntersectionObserver(([entry]) => entry?.isIntersecting && loadMore(), {
+    const observer = new IntersectionObserver(([entry]) => entry?.isIntersecting && load(), {
       root: scroller instanceof Window ? null : scroller,
       rootMargin: `0px 0px ${rectOf(scroller).height}px 0px`,
     })
     observer.observe(node)
     return () => observer.disconnect()
-  }, [loadMore, rows.length, scroller])
+  }, [load, count, scroller])
 
   useEffect(() => {
     const node = marker.current
@@ -582,7 +772,7 @@ function ScrollEnd({ scroller, colSpan, selectable }: { scroller: Scroller; colS
       <tr ref={marker} aria-hidden="true">
         <td colSpan={colSpan} style={{ padding: 0, height: 1, border: 0 }} />
       </tr>
-      {reached && loadingMore && <SkeletonRows count={LOADING_MORE_ROWS} selectable={selectable} />}
+      {reached && loading && placeholder}
     </>
   )
 }

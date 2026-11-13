@@ -6,22 +6,25 @@ import { useDataTableContext } from './context.js';
 import { SortableList, SortableRow } from './Sortable.js';
 import { CloseIcon, ExpandMoreIcon, GroupIcon } from './icons.js';
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-export function DataTableGroupMenu() {
-  const $ = _c(93);
+export function DataTableGroupPanel(t0) {
+  const $ = _c(80);
+  const {
+    anchor,
+    onClose
+  } = t0;
   const api = useDataTableContext();
-  const [anchor, setAnchor] = useState(null);
-  let t0;
+  let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t0 = [];
-    $[0] = t0;
+    t1 = [];
+    $[0] = t1;
   } else {
-    t0 = $[0];
+    t1 = $[0];
   }
-  const [draft, setDraft] = useState(t0);
+  const [draft, setDraft] = useState(t1);
+  const [openedFor, setOpenedFor] = useState(null);
   let T0;
   let T1;
   let changed;
-  let t1;
   let t10;
   let t11;
   let t12;
@@ -33,115 +36,65 @@ export function DataTableGroupMenu() {
   let t7;
   let t8;
   let t9;
-  if ($[1] !== anchor || $[2] !== api.groupBy || $[3] !== api.groupByColumns || $[4] !== draft) {
+  if ($[1] !== anchor || $[2] !== api.groupBy || $[3] !== api.groupByColumns || $[4] !== draft || $[5] !== onClose || $[6] !== openedFor) {
     const columns = api.groupByColumns ?? [];
     const levels = api.groupBy;
     let t13;
-    if ($[20] !== draft) {
+    if ($[21] !== draft) {
       t13 = c => !draft.includes(c.field);
-      $[20] = draft;
-      $[21] = t13;
+      $[21] = draft;
+      $[22] = t13;
     } else {
-      t13 = $[21];
+      t13 = $[22];
     }
     const unused = columns.filter(t13);
     const labelOf = field => columns.find(c_0 => c_0.field === field)?.label ?? field;
     let t14;
-    if ($[22] !== draft || $[23] !== levels) {
+    if ($[23] !== draft || $[24] !== levels) {
       t14 = draft.length !== levels.length || draft.some((field_0, i) => field_0 !== levels[i]);
-      $[22] = draft;
-      $[23] = levels;
-      $[24] = t14;
+      $[23] = draft;
+      $[24] = levels;
+      $[25] = t14;
     } else {
-      t14 = $[24];
+      t14 = $[25];
     }
     changed = t14;
-    let t15;
-    if ($[25] !== labelOf || $[26] !== levels[0] || $[27] !== levels.length) {
-      t15 = levels.length === 0 ? "Group" : `Group: ${labelOf(levels[0])}${levels.length > 1 ? ` +${levels.length - 1}` : ""}`;
-      $[25] = labelOf;
-      $[26] = levels[0];
-      $[27] = levels.length;
-      $[28] = t15;
-    } else {
-      t15 = $[28];
-    }
-    const label = t15;
-    let t16;
-    let t17;
-    if ($[29] === Symbol.for("react.memo_cache_sentinel")) {
-      t16 = /*#__PURE__*/_jsx(GroupIcon, {});
-      t17 = /*#__PURE__*/_jsx(ExpandMoreIcon, {});
-      $[29] = t16;
-      $[30] = t17;
-    } else {
-      t16 = $[29];
-      t17 = $[30];
-    }
-    const t18 = Boolean(anchor);
-    let t19;
-    if ($[31] !== levels) {
-      t19 = e => {
+    if (anchor !== openedFor) {
+      setOpenedFor(anchor);
+      if (anchor) {
         setDraft(levels);
-        setAnchor(e.currentTarget);
-      };
-      $[31] = levels;
-      $[32] = t19;
-    } else {
-      t19 = $[32];
-    }
-    if ($[33] !== label || $[34] !== t18 || $[35] !== t19) {
-      t12 = /*#__PURE__*/_jsx(Button, {
-        variant: "outlined",
-        startIcon: t16,
-        endIcon: t17,
-        "aria-haspopup": "dialog",
-        "aria-expanded": t18,
-        onClick: t19,
-        children: label
-      });
-      $[33] = label;
-      $[34] = t18;
-      $[35] = t19;
-      $[36] = t12;
-    } else {
-      t12 = $[36];
+      }
     }
     T1 = Popover;
-    t6 = anchor;
-    t7 = Boolean(anchor);
-    if ($[37] === Symbol.for("react.memo_cache_sentinel")) {
-      t8 = () => setAnchor(null);
-      $[37] = t8;
-    } else {
-      t8 = $[37];
-    }
-    t9 = "bottom-start";
-    t10 = "Group rows";
-    t11 = _temp;
+    t7 = anchor;
+    t8 = Boolean(anchor);
+    t9 = onClose;
+    t10 = "bottom-start";
+    t11 = "Group rows";
+    t12 = _temp;
     T0 = Box;
-    if ($[38] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = {
+    if ($[26] === Symbol.for("react.memo_cache_sentinel")) {
+      t2 = {
         px: "lg",
         pt: "md",
         pb: "lg"
       };
-      $[38] = t1;
+      $[26] = t2;
     } else {
-      t1 = $[38];
+      t2 = $[26];
     }
-    let t20;
-    if ($[39] === Symbol.for("react.memo_cache_sentinel")) {
-      t20 = {
+    let t15;
+    if ($[27] === Symbol.for("react.memo_cache_sentinel")) {
+      t15 = {
         mb: "md"
       };
-      $[39] = t20;
+      $[27] = t15;
     } else {
-      t20 = $[39];
+      t15 = $[27];
     }
-    let t21;
-    if ($[40] === Symbol.for("react.memo_cache_sentinel")) {
-      t21 = /*#__PURE__*/_jsx(Typography, {
+    let t16;
+    if ($[28] === Symbol.for("react.memo_cache_sentinel")) {
+      t16 = /*#__PURE__*/_jsx(Typography, {
         sx: {
           fontSize: "h5",
           fontWeight: 600,
@@ -149,52 +102,56 @@ export function DataTableGroupMenu() {
         },
         children: "Group"
       });
-      $[40] = t21;
+      $[28] = t16;
     } else {
-      t21 = $[40];
+      t16 = $[28];
     }
-    let t22;
-    if ($[41] === Symbol.for("react.memo_cache_sentinel")) {
-      t22 = () => setAnchor(null);
-      $[41] = t22;
+    let t17;
+    if ($[29] === Symbol.for("react.memo_cache_sentinel")) {
+      t17 = /*#__PURE__*/_jsx(CloseIcon, {
+        fontSize: "small"
+      });
+      $[29] = t17;
     } else {
-      t22 = $[41];
+      t17 = $[29];
     }
-    if ($[42] === Symbol.for("react.memo_cache_sentinel")) {
-      t2 = /*#__PURE__*/_jsxs(Stack, {
+    if ($[30] !== onClose) {
+      t3 = /*#__PURE__*/_jsxs(Stack, {
         direction: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        sx: t20,
-        children: [t21, /*#__PURE__*/_jsx(IconButton, {
+        sx: t15,
+        children: [t16, /*#__PURE__*/_jsx(IconButton, {
           variant: "tonal",
           size: "small",
-          onClick: t22,
+          onClick: onClose,
           "aria-label": "Close grouping",
-          children: /*#__PURE__*/_jsx(CloseIcon, {
-            fontSize: "small"
-          })
+          children: t17
         })]
       });
-      t3 = /*#__PURE__*/_jsx(Divider, {});
-      $[42] = t2;
-      $[43] = t3;
+      $[30] = onClose;
+      $[31] = t3;
     } else {
-      t2 = $[42];
-      t3 = $[43];
+      t3 = $[31];
     }
-    let t23;
-    if ($[44] === Symbol.for("react.memo_cache_sentinel")) {
-      t23 = {
+    if ($[32] === Symbol.for("react.memo_cache_sentinel")) {
+      t4 = /*#__PURE__*/_jsx(Divider, {});
+      $[32] = t4;
+    } else {
+      t4 = $[32];
+    }
+    let t18;
+    if ($[33] === Symbol.for("react.memo_cache_sentinel")) {
+      t18 = {
         mt: "sm"
       };
-      $[44] = t23;
+      $[33] = t18;
     } else {
-      t23 = $[44];
+      t18 = $[33];
     }
-    let t24;
-    if ($[45] !== draft.length) {
-      t24 = draft.length === 0 && /*#__PURE__*/_jsx(Typography, {
+    let t19;
+    if ($[34] !== draft.length) {
+      t19 = draft.length === 0 && /*#__PURE__*/_jsx(Typography, {
         sx: {
           fontSize: "md",
           color: "text.secondary",
@@ -203,22 +160,22 @@ export function DataTableGroupMenu() {
         },
         children: "Not grouped"
       });
-      $[45] = draft.length;
-      $[46] = t24;
+      $[34] = draft.length;
+      $[35] = t19;
     } else {
-      t24 = $[46];
+      t19 = $[35];
     }
-    let t25;
-    if ($[47] !== draft) {
-      t25 = (from, to) => setDraft(arrayMove(draft, from, to));
-      $[47] = draft;
-      $[48] = t25;
+    let t20;
+    if ($[36] !== draft) {
+      t20 = (from, to) => setDraft(arrayMove(draft, from, to));
+      $[36] = draft;
+      $[37] = t20;
     } else {
-      t25 = $[48];
+      t20 = $[37];
     }
-    let t26;
-    if ($[49] !== draft || $[50] !== labelOf) {
-      t26 = draft.map(field_1 => /*#__PURE__*/_jsxs(SortableRow, {
+    let t21;
+    if ($[38] !== draft || $[39] !== labelOf) {
+      t21 = draft.map(field_1 => /*#__PURE__*/_jsxs(SortableRow, {
         id: field_1,
         children: [/*#__PURE__*/_jsx(Typography, {
           noWrap: true,
@@ -238,38 +195,38 @@ export function DataTableGroupMenu() {
           })
         })]
       }, field_1));
-      $[49] = draft;
-      $[50] = labelOf;
-      $[51] = t26;
+      $[38] = draft;
+      $[39] = labelOf;
+      $[40] = t21;
     } else {
-      t26 = $[51];
+      t21 = $[40];
     }
-    let t27;
-    if ($[52] !== draft || $[53] !== t25 || $[54] !== t26) {
-      t27 = /*#__PURE__*/_jsx(SortableList, {
+    let t22;
+    if ($[41] !== draft || $[42] !== t20 || $[43] !== t21) {
+      t22 = /*#__PURE__*/_jsx(SortableList, {
         ids: draft,
-        onMove: t25,
-        children: t26
+        onMove: t20,
+        children: t21
       });
-      $[52] = draft;
-      $[53] = t25;
-      $[54] = t26;
-      $[55] = t27;
+      $[41] = draft;
+      $[42] = t20;
+      $[43] = t21;
+      $[44] = t22;
     } else {
-      t27 = $[55];
+      t22 = $[44];
     }
-    if ($[56] !== t24 || $[57] !== t27) {
-      t4 = /*#__PURE__*/_jsxs(Box, {
-        sx: t23,
-        children: [t24, t27]
+    if ($[45] !== t19 || $[46] !== t22) {
+      t5 = /*#__PURE__*/_jsxs(Box, {
+        sx: t18,
+        children: [t19, t22]
       });
-      $[56] = t24;
-      $[57] = t27;
-      $[58] = t4;
+      $[45] = t19;
+      $[46] = t22;
+      $[47] = t5;
     } else {
-      t4 = $[58];
+      t5 = $[47];
     }
-    t5 = unused.length > 0 && /*#__PURE__*/_jsx(Stack, {
+    t6 = unused.length > 0 && /*#__PURE__*/_jsx(Stack, {
       direction: "row",
       role: "group",
       "aria-label": "Add a level",
@@ -297,108 +254,109 @@ export function DataTableGroupMenu() {
     $[2] = api.groupBy;
     $[3] = api.groupByColumns;
     $[4] = draft;
-    $[5] = T0;
-    $[6] = T1;
-    $[7] = changed;
-    $[8] = t1;
-    $[9] = t10;
-    $[10] = t11;
-    $[11] = t12;
-    $[12] = t2;
-    $[13] = t3;
-    $[14] = t4;
-    $[15] = t5;
-    $[16] = t6;
-    $[17] = t7;
-    $[18] = t8;
-    $[19] = t9;
+    $[5] = onClose;
+    $[6] = openedFor;
+    $[7] = T0;
+    $[8] = T1;
+    $[9] = changed;
+    $[10] = t10;
+    $[11] = t11;
+    $[12] = t12;
+    $[13] = t2;
+    $[14] = t3;
+    $[15] = t4;
+    $[16] = t5;
+    $[17] = t6;
+    $[18] = t7;
+    $[19] = t8;
+    $[20] = t9;
   } else {
-    T0 = $[5];
-    T1 = $[6];
-    changed = $[7];
-    t1 = $[8];
-    t10 = $[9];
-    t11 = $[10];
-    t12 = $[11];
-    t2 = $[12];
-    t3 = $[13];
-    t4 = $[14];
-    t5 = $[15];
-    t6 = $[16];
-    t7 = $[17];
-    t8 = $[18];
-    t9 = $[19];
+    T0 = $[7];
+    T1 = $[8];
+    changed = $[9];
+    t10 = $[10];
+    t11 = $[11];
+    t12 = $[12];
+    t2 = $[13];
+    t3 = $[14];
+    t4 = $[15];
+    t5 = $[16];
+    t6 = $[17];
+    t7 = $[18];
+    t8 = $[19];
+    t9 = $[20];
   }
   let t13;
-  if ($[59] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[48] === Symbol.for("react.memo_cache_sentinel")) {
     t13 = /*#__PURE__*/_jsx(Divider, {
       sx: {
         mt: "md"
       }
     });
-    $[59] = t13;
+    $[48] = t13;
   } else {
-    t13 = $[59];
+    t13 = $[48];
   }
   let t14;
-  if ($[60] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[49] === Symbol.for("react.memo_cache_sentinel")) {
     t14 = {
       mt: "md"
     };
-    $[60] = t14;
+    $[49] = t14;
   } else {
-    t14 = $[60];
+    t14 = $[49];
   }
   const t15 = draft.length === 0;
   let t16;
-  if ($[61] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[50] === Symbol.for("react.memo_cache_sentinel")) {
     t16 = () => setDraft([]);
-    $[61] = t16;
+    $[50] = t16;
   } else {
-    t16 = $[61];
+    t16 = $[50];
   }
   let t17;
-  if ($[62] !== t15) {
+  if ($[51] !== t15) {
     t17 = /*#__PURE__*/_jsx(Button, {
       variant: "text",
       disabled: t15,
       onClick: t16,
       children: "Clear"
     });
-    $[62] = t15;
-    $[63] = t17;
+    $[51] = t15;
+    $[52] = t17;
   } else {
-    t17 = $[63];
+    t17 = $[52];
   }
   const t18 = !changed;
   let t19;
-  if ($[64] !== api || $[65] !== draft) {
+  if ($[53] !== api || $[54] !== draft || $[55] !== onClose) {
     t19 = () => {
       api.setGroupBy(draft);
-      setAnchor(null);
+      onClose();
     };
-    $[64] = api;
-    $[65] = draft;
-    $[66] = t19;
+    $[53] = api;
+    $[54] = draft;
+    $[55] = onClose;
+    $[56] = t19;
   } else {
-    t19 = $[66];
+    t19 = $[56];
   }
   let t20;
-  if ($[67] !== t18 || $[68] !== t19) {
+  if ($[57] !== t18 || $[58] !== t19) {
     t20 = /*#__PURE__*/_jsx(Button, {
       variant: "contained",
       disabled: t18,
       onClick: t19,
       children: "Apply"
     });
-    $[67] = t18;
-    $[68] = t19;
-    $[69] = t20;
+    $[57] = t18;
+    $[58] = t19;
+    $[59] = t20;
   } else {
-    t20 = $[69];
+    t20 = $[59];
   }
   let t21;
-  if ($[70] !== t17 || $[71] !== t20) {
+  if ($[60] !== t17 || $[61] !== t20) {
     t21 = /*#__PURE__*/_jsxs(Stack, {
       direction: "row",
       alignItems: "center",
@@ -406,68 +364,149 @@ export function DataTableGroupMenu() {
       sx: t14,
       children: [t17, t20]
     });
-    $[70] = t17;
-    $[71] = t20;
-    $[72] = t21;
+    $[60] = t17;
+    $[61] = t20;
+    $[62] = t21;
   } else {
-    t21 = $[72];
+    t21 = $[62];
   }
   let t22;
-  if ($[73] !== T0 || $[74] !== t1 || $[75] !== t2 || $[76] !== t21 || $[77] !== t3 || $[78] !== t4 || $[79] !== t5) {
+  if ($[63] !== T0 || $[64] !== t2 || $[65] !== t21 || $[66] !== t3 || $[67] !== t4 || $[68] !== t5 || $[69] !== t6) {
     t22 = /*#__PURE__*/_jsxs(T0, {
-      sx: t1,
-      children: [t2, t3, t4, t5, t13, t21]
+      sx: t2,
+      children: [t3, t4, t5, t6, t13, t21]
     });
-    $[73] = T0;
-    $[74] = t1;
-    $[75] = t2;
-    $[76] = t21;
-    $[77] = t3;
-    $[78] = t4;
-    $[79] = t5;
-    $[80] = t22;
+    $[63] = T0;
+    $[64] = t2;
+    $[65] = t21;
+    $[66] = t3;
+    $[67] = t4;
+    $[68] = t5;
+    $[69] = t6;
+    $[70] = t22;
   } else {
-    t22 = $[80];
+    t22 = $[70];
   }
   let t23;
-  if ($[81] !== T1 || $[82] !== t10 || $[83] !== t11 || $[84] !== t22 || $[85] !== t6 || $[86] !== t7 || $[87] !== t8 || $[88] !== t9) {
+  if ($[71] !== T1 || $[72] !== t10 || $[73] !== t11 || $[74] !== t12 || $[75] !== t22 || $[76] !== t7 || $[77] !== t8 || $[78] !== t9) {
     t23 = /*#__PURE__*/_jsx(T1, {
-      anchorEl: t6,
-      open: t7,
-      onClose: t8,
-      placement: t9,
-      "aria-label": t10,
-      sx: t11,
+      anchorEl: t7,
+      open: t8,
+      onClose: t9,
+      placement: t10,
+      "aria-label": t11,
+      sx: t12,
       children: t22
     });
-    $[81] = T1;
-    $[82] = t10;
-    $[83] = t11;
-    $[84] = t22;
-    $[85] = t6;
-    $[86] = t7;
-    $[87] = t8;
-    $[88] = t9;
-    $[89] = t23;
+    $[71] = T1;
+    $[72] = t10;
+    $[73] = t11;
+    $[74] = t12;
+    $[75] = t22;
+    $[76] = t7;
+    $[77] = t8;
+    $[78] = t9;
+    $[79] = t23;
   } else {
-    t23 = $[89];
+    t23 = $[79];
   }
-  let t24;
-  if ($[90] !== t12 || $[91] !== t23) {
-    t24 = /*#__PURE__*/_jsxs(_Fragment, {
-      children: [t12, t23]
-    });
-    $[90] = t12;
-    $[91] = t23;
-    $[92] = t24;
-  } else {
-    t24 = $[92];
-  }
-  return t24;
+  return t23;
 }
 function _temp(theme) {
   return {
     width: 320,
     maxWidth: `calc(100vw - 2 * ${theme.spacing("lg")})`
   };
+}
+export function DataTableGroupMenu() {
+  const $ = _c(18);
+  const api = useDataTableContext();
+  const [anchor, setAnchor] = useState(null);
+  const levels = api.groupBy;
+  let t0;
+  if ($[0] !== api.groupByColumns) {
+    t0 = field => api.groupByColumns?.find(c => c.field === field)?.label ?? field;
+    $[0] = api.groupByColumns;
+    $[1] = t0;
+  } else {
+    t0 = $[1];
+  }
+  const labelOf = t0;
+  let t1;
+  if ($[2] !== labelOf || $[3] !== levels[0] || $[4] !== levels.length) {
+    t1 = levels.length === 0 ? "Group" : `Group: ${labelOf(levels[0])}${levels.length > 1 ? ` +${levels.length - 1}` : ""}`;
+    $[2] = labelOf;
+    $[3] = levels[0];
+    $[4] = levels.length;
+    $[5] = t1;
+  } else {
+    t1 = $[5];
+  }
+  const label = t1;
+  let t2;
+  let t3;
+  if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
+    t2 = /*#__PURE__*/_jsx(GroupIcon, {});
+    t3 = /*#__PURE__*/_jsx(ExpandMoreIcon, {});
+    $[6] = t2;
+    $[7] = t3;
+  } else {
+    t2 = $[6];
+    t3 = $[7];
+  }
+  const t4 = Boolean(anchor);
+  let t5;
+  if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
+    t5 = e => setAnchor(e.currentTarget);
+    $[8] = t5;
+  } else {
+    t5 = $[8];
+  }
+  let t6;
+  if ($[9] !== label || $[10] !== t4) {
+    t6 = /*#__PURE__*/_jsx(Button, {
+      variant: "outlined",
+      startIcon: t2,
+      endIcon: t3,
+      "aria-haspopup": "dialog",
+      "aria-expanded": t4,
+      onClick: t5,
+      children: label
+    });
+    $[9] = label;
+    $[10] = t4;
+    $[11] = t6;
+  } else {
+    t6 = $[11];
+  }
+  let t7;
+  if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
+    t7 = () => setAnchor(null);
+    $[12] = t7;
+  } else {
+    t7 = $[12];
+  }
+  let t8;
+  if ($[13] !== anchor) {
+    t8 = /*#__PURE__*/_jsx(DataTableGroupPanel, {
+      anchor: anchor,
+      onClose: t7
+    });
+    $[13] = anchor;
+    $[14] = t8;
+  } else {
+    t8 = $[14];
+  }
+  let t9;
+  if ($[15] !== t6 || $[16] !== t8) {
+    t9 = /*#__PURE__*/_jsxs(_Fragment, {
+      children: [t6, t8]
+    });
+    $[15] = t6;
+    $[16] = t8;
+    $[17] = t9;
+  } else {
+    t9 = $[17];
+  }
+  return t9;
 }

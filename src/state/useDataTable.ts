@@ -70,6 +70,8 @@ export interface DataTableApi<Row, Field extends string = string, Filters = Filt
   groupLoading: (id: string) => boolean
   groupPagination: (id: string) => PaginationState
   setGroupPage: (id: string, page: number) => void
+  groupHasMore: (id: string) => boolean
+  loadMoreInGroup: (id: string) => void
 
   /** Flat + grouped rows in one display-ordered list — see the `VisibleItem` type. What every built-in renderer actually iterates. */
   visibleItems: VisibleItem<Row, Field>[]
@@ -210,7 +212,6 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const setFilters = (next: Filters) =>
     startTransition(() => {
       setFiltersInternal(next)
-      setPicked(nothingPicked)
       setPagination((p) => ({ ...p, page: 1 }))
     })
 
@@ -354,6 +355,8 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
           setGroupsTotal(result.total)
           setTotal(result.records)
           setGroupsPage(params.page)
+          setExpanded({})
+          setGroupState({})
         })
       })
       .catch((err) => {
@@ -457,12 +460,12 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
   const updateGroup = (id: string, patch: Partial<GroupRuntime<Row, Field>>) =>
     setGroupState((prev) => ({
       ...prev,
-      [id]: { rows: [], groups: [], total: 0, pagination: { page: 1, pageSize: pagination.pageSize }, loading: false, ...prev[id], ...patch },
+      [id]: { ...(prev[id] ?? { rows: [], groups: [], total: 0, pagination: { page: 1, pageSize: pagination.pageSize }, loading: false }), ...patch },
     }))
 
-  const fetchChildren = (id: string, page: number) => {
+  const requestChildren = (id: string, page: number) => {
     const node = nodes.get(id)
-    if (!node) return
+    if (!node) return undefined
     const pageSize = node.leaf ? pagination.pageSize : groupPageSize
     const params: FetchParams<Field, Filters> = {
       page, pageSize, search: debouncedSearch, sort, filters: filters as Filters, groupPath: node.path,
@@ -470,10 +473,48 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     const pending: Promise<Partial<GroupRuntime<Row, Field>>> | undefined = node.leaf
       ? fetchRecords?.(params).then((result) => ({ rows: result.rows, total: result.total }))
       : fetchGroups?.({ ...params, groupBy: groupBy[node.path.length] }).then((result) => ({ groups: result.groups, total: result.total }))
-    if (!pending) return
-    updateGroup(id, { pagination: { page, pageSize }, loading: true })
-    pending
+    return pending && { pending, pageSize }
+  }
+
+  const fetchChildren = (id: string, page: number) => {
+    const request = requestChildren(id, page)
+    if (!request) return
+    updateGroup(id, { pagination: { page, pageSize: request.pageSize }, loading: true })
+    request.pending
       .then((patch) => startTransition(() => updateGroup(id, { ...patch, loading: false })))
+      .catch((err) => {
+        setError(err)
+        updateGroup(id, { loading: false })
+      })
+  }
+
+  const groupHasMore = (id: string) => {
+    const state = groupState[id]
+    return state !== undefined && state.pagination.page * state.pagination.pageSize < state.total
+  }
+
+  const loadMoreInGroup = (id: string) => {
+    const state = groupState[id]
+    if (!state || state.loading || !groupHasMore(id)) return
+    const page = state.pagination.page + 1
+    const request = requestChildren(id, page)
+    if (!request) return
+    updateGroup(id, { loading: true })
+    request.pending
+      .then((patch) => startTransition(() => setGroupState((prev) => {
+        const current = prev[id]!
+        return {
+          ...prev,
+          [id]: {
+            ...current,
+            rows: [...current.rows, ...(patch.rows ?? [])],
+            groups: [...current.groups, ...(patch.groups ?? [])],
+            total: patch.total ?? current.total,
+            pagination: { page, pageSize: request.pageSize },
+            loading: false,
+          },
+        }
+      })))
       .catch((err) => {
         setError(err)
         updateGroup(id, { loading: false })
@@ -576,7 +617,6 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     search,
     setSearch: (value: string) => {
       setSearch(value)
-      setPicked(nothingPicked)
       setPagination((p) => ({ ...p, page: 1 }))
     },
 
@@ -618,6 +658,8 @@ export function useDataTable<Row, Field extends string = string, Filters = Filte
     groupLoading: groupLoadingFor,
     groupPagination: groupPaginationFor,
     setGroupPage: fetchChildren,
+    groupHasMore,
+    loadMoreInGroup,
 
     visibleItems,
 

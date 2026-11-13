@@ -1,1 +1,1 @@
-{"version":3,"file":"GroupMenu.d.ts","sourceRoot":"","sources":["../../../src/renderers/kyroui/GroupMenu.tsx"],"names":[],"mappings":"AAOA,wBAAgB,kBAAkB,gCA4FjC"}
+{"version":3,"file":"GroupMenu.d.ts","sourceRoot":"","sources":["../../../src/renderers/kyroui/GroupMenu.tsx"],"names":[],"mappings":"AAOA,MAAM,WAAW,wBAAwB;IACvC,MAAM,EAAE,WAAW,GAAG,IAAI,CAAA;IAC1B,OAAO,EAAE,MAAM,IAAI,CAAA;CACpB;AAED,wBAAgB,mBAAmB,CAAC,EAAE,MAAM,EAAE,OAAO,EAAE,EAAE,wBAAwB,+BAiFhF;AAED,wBAAgB,kBAAkB,gCAsBjC"}

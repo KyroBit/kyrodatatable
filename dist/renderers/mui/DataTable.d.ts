@@ -12,12 +12,6 @@ export interface DataTableProps<Row, Field extends string = string> {
     filterColumns?: FilterColumnDef[];
     searchPlaceholder?: string;
     searchWidth?: number | string;
-    createLabel?: string;
-    onCreate?: () => void;
-    /** Rendered at the trailing end of the views-pill row, alongside the built-in Create
-     * button if `onCreate` is also given. An escape hatch for whatever a consumer needs there
-     * that this component has no opinion on (a different button, a breakpoint-swapped Fab,
-     * more than one action, etc.) — DataTable itself doesn't inspect or care what it is. */
     toolbarEnd?: ReactNode;
     /** Receives the full query context; POST it to your export endpoint. */
     onExport?: (request: ExportRequest<Field, FilterValues>) => void | Promise<void>;
@@ -46,7 +40,7 @@ export interface DataTableProps<Row, Field extends string = string> {
     rowsPerPageOptions?: number[];
     groupsPerPageOptions?: number[];
 }
-export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, searchPlaceholder, searchWidth, createLabel, onCreate, toolbarEnd, onExport, exportFormats, filterRenderers, onImport, exportTooltip, importTooltip, actions, selectable, settings, onRowClick, onRowIntent, rowClass, emptyMessage, noResultsMessage, errorMessage, stickyHeader, rowsPerPageOptions, groupsPerPageOptions, }: DataTableProps<Row, Field>): import("react").JSX.Element;
+export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, searchPlaceholder, searchWidth, toolbarEnd, onExport, exportFormats, filterRenderers, onImport, exportTooltip, importTooltip, actions, selectable, settings, onRowClick, onRowIntent, rowClass, emptyMessage, noResultsMessage, errorMessage, stickyHeader, rowsPerPageOptions, groupsPerPageOptions, }: DataTableProps<Row, Field>): import("react").JSX.Element;
 export declare namespace DataTable {
     var Root: typeof DataTableRoot;
     var SearchField: typeof DataTableSearchField;

@@ -12,12 +12,6 @@ export interface DataTableProps<Row, Field extends string = string> {
     filterColumns?: FilterColumnDef[];
     searchPlaceholder?: string;
     searchWidth?: number | string;
-    createLabel?: string;
-    onCreate?: () => void;
-    /** Rendered at the trailing end of the views-pill row, alongside the built-in Create
-     * button if `onCreate` is also given. An escape hatch for whatever a consumer needs there
-     * that this component has no opinion on (a different button, a breakpoint-swapped Fab,
-     * more than one action, etc.) — DataTable itself doesn't inspect or care what it is. */
     toolbarEnd?: ReactNode;
     /** Receives the full query context; POST it to your export endpoint. */
     onExport?: (request: ExportRequest<Field, FilterValues>) => void | Promise<void>;
@@ -48,6 +42,9 @@ export interface DataTableProps<Row, Field extends string = string> {
     /** Loads the next page as the end of the table scrolls into view, in place of page controls. */
     infiniteScroll?: boolean;
     restoreScroll?: boolean;
+    renderListItem?: (row: Row) => ReactNode;
+    listVariant?: 'plain' | 'cards';
+    variant?: 'auto' | 'list';
 }
 /**
  * The full list-page assembly: views pills + manage, create, search with the
@@ -55,7 +52,7 @@ export interface DataTableProps<Row, Field extends string = string> {
  * card, and top-right pagination. Every section is opt-in through props; for
  * a custom layout compose the exported pieces yourself.
  */
-export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, searchPlaceholder, searchWidth, createLabel, onCreate, toolbarEnd, onExport, exportFormats, filterRenderers, onImport, exportTooltip, importTooltip, actions, selectable, settings, onRowClick, onRowIntent, rowClass, emptyMessage, noResultsMessage, errorMessage, stickyHeader, rowsPerPageOptions, groupsPerPageOptions, infiniteScroll, restoreScroll, }: DataTableProps<Row, Field>): import("react").JSX.Element;
+export declare function DataTable<Row, Field extends string = string>({ api, presets, filterColumns, searchPlaceholder, searchWidth, toolbarEnd, onExport, exportFormats, filterRenderers, onImport, exportTooltip, importTooltip, actions, selectable, settings, onRowClick, onRowIntent, rowClass, emptyMessage, noResultsMessage, errorMessage, stickyHeader, rowsPerPageOptions, groupsPerPageOptions, infiniteScroll, restoreScroll, renderListItem, listVariant, variant, }: DataTableProps<Row, Field>): import("react").JSX.Element;
 export declare namespace DataTable {
     var Root: typeof DataTableRoot;
     var SearchField: typeof DataTableSearchField;

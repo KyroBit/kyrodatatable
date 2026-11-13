@@ -27,7 +27,7 @@ const enqueue = (queue, request) => {
   return next;
 };
 export function useDataTable(config) {
-  const $ = _c(248);
+  const $ = _c(259);
   const {
     columns,
     getRowId,
@@ -267,7 +267,6 @@ export function useDataTable(config) {
   if ($[43] === Symbol.for("react.memo_cache_sentinel")) {
     t19 = next => startTransition(() => {
       setFiltersInternal(next);
-      setPicked(nothingPicked);
       setPagination(_temp);
     });
     $[43] = t19;
@@ -589,6 +588,8 @@ export function useDataTable(config) {
           setGroupsTotal(result.total);
           setTotal(result.records);
           setGroupsPage(params_2.page);
+          setExpanded({});
+          setGroupState({});
         });
       }).catch(err_0 => {
         if (!cancelled_0) {
@@ -813,15 +814,16 @@ export function useDataTable(config) {
     t40 = (id_1, patch) => setGroupState(prev_2 => ({
       ...prev_2,
       [id_1]: {
-        rows: [],
-        groups: [],
-        total: 0,
-        pagination: {
-          page: 1,
-          pageSize: pagination.pageSize
-        },
-        loading: false,
-        ...prev_2[id_1],
+        ...(prev_2[id_1] ?? {
+          rows: [],
+          groups: [],
+          total: 0,
+          pagination: {
+            page: 1,
+            pageSize: pagination.pageSize
+          },
+          loading: false
+        }),
         ...patch
       }
     }));
@@ -832,7 +834,7 @@ export function useDataTable(config) {
   }
   const updateGroup = t40;
   let t41;
-  if ($[131] !== debouncedSearch || $[132] !== fetchGroups || $[133] !== fetchRecords || $[134] !== filters || $[135] !== groupBy || $[136] !== groupPageSize || $[137] !== nodes || $[138] !== pagination || $[139] !== sort || $[140] !== updateGroup) {
+  if ($[131] !== debouncedSearch || $[132] !== fetchGroups || $[133] !== fetchRecords || $[134] !== filters || $[135] !== groupBy || $[136] !== groupPageSize || $[137] !== nodes || $[138] !== pagination || $[139] !== sort) {
     t41 = (id_2, page_3) => {
       const node = nodes.get(id_2);
       if (!node) {
@@ -851,25 +853,10 @@ export function useDataTable(config) {
         ...params_4,
         groupBy: groupBy[node.path.length]
       }).then(_temp1);
-      if (!pending_2) {
-        return;
-      }
-      updateGroup(id_2, {
-        pagination: {
-          page: page_3,
-          pageSize: pageSize_0
-        },
-        loading: true
-      });
-      pending_2.then(patch_0 => startTransition(() => updateGroup(id_2, {
-        ...patch_0,
-        loading: false
-      }))).catch(err_3 => {
-        setError(err_3);
-        updateGroup(id_2, {
-          loading: false
-        });
-      });
+      return pending_2 && {
+        pending: pending_2,
+        pageSize: pageSize_0
+      };
     };
     $[131] = debouncedSearch;
     $[132] = fetchGroups;
@@ -880,143 +867,232 @@ export function useDataTable(config) {
     $[137] = nodes;
     $[138] = pagination;
     $[139] = sort;
-    $[140] = updateGroup;
-    $[141] = t41;
+    $[140] = t41;
   } else {
-    t41 = $[141];
+    t41 = $[140];
   }
-  const fetchChildren = t41;
+  const requestChildren = t41;
   let t42;
-  if ($[142] !== expanded || $[143] !== fetchChildren || $[144] !== groupState) {
-    t42 = id_3 => {
-      setExpanded(prev_3 => ({
-        ...prev_3,
-        [id_3]: !prev_3[id_3]
+  if ($[141] !== requestChildren || $[142] !== updateGroup) {
+    t42 = (id_3, page_4) => {
+      const request = requestChildren(id_3, page_4);
+      if (!request) {
+        return;
+      }
+      updateGroup(id_3, {
+        pagination: {
+          page: page_4,
+          pageSize: request.pageSize
+        },
+        loading: true
+      });
+      request.pending.then(patch_0 => startTransition(() => updateGroup(id_3, {
+        ...patch_0,
+        loading: false
+      }))).catch(err_3 => {
+        setError(err_3);
+        updateGroup(id_3, {
+          loading: false
+        });
+      });
+    };
+    $[141] = requestChildren;
+    $[142] = updateGroup;
+    $[143] = t42;
+  } else {
+    t42 = $[143];
+  }
+  const fetchChildren = t42;
+  let t43;
+  if ($[144] !== groupState) {
+    t43 = id_4 => {
+      const state = groupState[id_4];
+      return state !== undefined && state.pagination.page * state.pagination.pageSize < state.total;
+    };
+    $[144] = groupState;
+    $[145] = t43;
+  } else {
+    t43 = $[145];
+  }
+  const groupHasMore = t43;
+  let t44;
+  if ($[146] !== groupHasMore || $[147] !== groupState || $[148] !== requestChildren || $[149] !== updateGroup) {
+    t44 = id_5 => {
+      const state_0 = groupState[id_5];
+      if (!state_0 || state_0.loading || !groupHasMore(id_5)) {
+        return;
+      }
+      const page_5 = state_0.pagination.page + 1;
+      const request_0 = requestChildren(id_5, page_5);
+      if (!request_0) {
+        return;
+      }
+      updateGroup(id_5, {
+        loading: true
+      });
+      request_0.pending.then(patch_1 => startTransition(() => setGroupState(prev_3 => {
+        const current_1 = prev_3[id_5];
+        return {
+          ...prev_3,
+          [id_5]: {
+            ...current_1,
+            rows: [...current_1.rows, ...(patch_1.rows ?? [])],
+            groups: [...current_1.groups, ...(patch_1.groups ?? [])],
+            total: patch_1.total ?? current_1.total,
+            pagination: {
+              page: page_5,
+              pageSize: request_0.pageSize
+            },
+            loading: false
+          }
+        };
+      }))).catch(err_4 => {
+        setError(err_4);
+        updateGroup(id_5, {
+          loading: false
+        });
+      });
+    };
+    $[146] = groupHasMore;
+    $[147] = groupState;
+    $[148] = requestChildren;
+    $[149] = updateGroup;
+    $[150] = t44;
+  } else {
+    t44 = $[150];
+  }
+  const loadMoreInGroup = t44;
+  let t45;
+  if ($[151] !== expanded || $[152] !== fetchChildren || $[153] !== groupState) {
+    t45 = id_6 => {
+      setExpanded(prev_4 => ({
+        ...prev_4,
+        [id_6]: !prev_4[id_6]
       }));
-      if (!expanded[id_3] && !groupState[id_3]) {
-        fetchChildren(id_3, 1);
+      if (!expanded[id_6] && !groupState[id_6]) {
+        fetchChildren(id_6, 1);
       }
     };
-    $[142] = expanded;
-    $[143] = fetchChildren;
-    $[144] = groupState;
-    $[145] = t42;
+    $[151] = expanded;
+    $[152] = fetchChildren;
+    $[153] = groupState;
+    $[154] = t45;
   } else {
-    t42 = $[145];
+    t45 = $[154];
   }
-  const toggleGroup = t42;
-  let t43;
-  if ($[146] !== expanded) {
-    t43 = id_4 => Boolean(expanded[id_4]);
-    $[146] = expanded;
-    $[147] = t43;
-  } else {
-    t43 = $[147];
-  }
-  const isGroupExpanded = t43;
-  let t44;
-  if ($[148] !== groupState) {
-    t44 = id_5 => groupState[id_5]?.rows ?? [];
-    $[148] = groupState;
-    $[149] = t44;
-  } else {
-    t44 = $[149];
-  }
-  const groupRowsFor = t44;
-  let t45;
-  if ($[150] !== groupState) {
-    t45 = id_6 => groupState[id_6]?.total ?? 0;
-    $[150] = groupState;
-    $[151] = t45;
-  } else {
-    t45 = $[151];
-  }
-  const groupTotalFor = t45;
+  const toggleGroup = t45;
   let t46;
-  if ($[152] !== groupState) {
-    t46 = id_7 => groupState[id_7]?.loading ?? false;
-    $[152] = groupState;
-    $[153] = t46;
+  if ($[155] !== expanded) {
+    t46 = id_7 => Boolean(expanded[id_7]);
+    $[155] = expanded;
+    $[156] = t46;
   } else {
-    t46 = $[153];
+    t46 = $[156];
   }
-  const groupLoadingFor = t46;
+  const isGroupExpanded = t46;
   let t47;
-  if ($[154] !== groupState || $[155] !== pagination) {
-    t47 = id_8 => groupState[id_8]?.pagination ?? {
+  if ($[157] !== groupState) {
+    t47 = id_8 => groupState[id_8]?.rows ?? [];
+    $[157] = groupState;
+    $[158] = t47;
+  } else {
+    t47 = $[158];
+  }
+  const groupRowsFor = t47;
+  let t48;
+  if ($[159] !== groupState) {
+    t48 = id_9 => groupState[id_9]?.total ?? 0;
+    $[159] = groupState;
+    $[160] = t48;
+  } else {
+    t48 = $[160];
+  }
+  const groupTotalFor = t48;
+  let t49;
+  if ($[161] !== groupState) {
+    t49 = id_10 => groupState[id_10]?.loading ?? false;
+    $[161] = groupState;
+    $[162] = t49;
+  } else {
+    t49 = $[162];
+  }
+  const groupLoadingFor = t49;
+  let t50;
+  if ($[163] !== groupState || $[164] !== pagination) {
+    t50 = id_11 => groupState[id_11]?.pagination ?? {
       page: 1,
       pageSize: pagination.pageSize
     };
-    $[154] = groupState;
-    $[155] = pagination;
-    $[156] = t47;
+    $[163] = groupState;
+    $[164] = pagination;
+    $[165] = t50;
   } else {
-    t47 = $[156];
+    t50 = $[165];
   }
-  const groupPaginationFor = t47;
+  const groupPaginationFor = t50;
   const pathOf = _temp11;
   let groupAllSelected;
   let groupSomeSelected;
   let rowPath;
   let selection;
-  let t48;
-  if ($[157] !== groupBy || $[158] !== groupState || $[159] !== grouped || $[160] !== groups || $[161] !== picked.all || $[162] !== picked.groups || $[163] !== picked.rows || $[164] !== rowGroups || $[165] !== total) {
+  let t51;
+  if ($[166] !== groupBy || $[167] !== groupState || $[168] !== grouped || $[169] !== groups || $[170] !== picked.all || $[171] !== picked.groups || $[172] !== picked.rows || $[173] !== rowGroups || $[174] !== total) {
     selection = {
       all: picked.all,
-      groups: Object.entries(picked.groups).map(t49 => {
-        const [id_10, selected] = t49;
+      groups: Object.entries(picked.groups).map(t52 => {
+        const [id_13, selected] = t52;
         return {
-          path: pathOf(id_10),
+          path: pathOf(id_13),
           selected
         };
       }),
       rows: Object.entries(picked.rows).map(_temp12)
     };
-    let t50;
-    if ($[171] !== rowGroups) {
-      t50 = id_12 => {
-        const group_0 = rowGroups.get(id_12);
+    let t53;
+    if ($[180] !== rowGroups) {
+      t53 = id_15 => {
+        const group_0 = rowGroups.get(id_15);
         return group_0 === undefined ? [] : pathOf(group_0);
       };
-      $[171] = rowGroups;
-      $[172] = t50;
+      $[180] = rowGroups;
+      $[181] = t53;
     } else {
-      t50 = $[172];
+      t53 = $[181];
     }
-    rowPath = t50;
-    let t51;
-    if ($[173] !== picked.groups || $[174] !== picked.rows) {
-      t51 = (id_13, selected_0) => Object.entries(picked.groups).some(t52 => {
-        const [key_1, value_0] = t52;
-        return key_1 !== id_13 && contains(id_13, key_1) && value_0 === selected_0;
-      }) || Object.values(picked.rows).some(row_2 => row_2.group !== null && contains(id_13, row_2.group) && row_2.selected === selected_0);
-      $[173] = picked.groups;
-      $[174] = picked.rows;
-      $[175] = t51;
+    rowPath = t53;
+    let t54;
+    if ($[182] !== picked.groups || $[183] !== picked.rows) {
+      t54 = (id_16, selected_0) => Object.entries(picked.groups).some(t55 => {
+        const [key_1, value_0] = t55;
+        return key_1 !== id_16 && contains(id_16, key_1) && value_0 === selected_0;
+      }) || Object.values(picked.rows).some(row_2 => row_2.group !== null && contains(id_16, row_2.group) && row_2.selected === selected_0);
+      $[182] = picked.groups;
+      $[183] = picked.rows;
+      $[184] = t54;
     } else {
-      t51 = $[175];
+      t54 = $[184];
     }
-    const decidedBeneath = t51;
-    groupAllSelected = id_14 => isPathSelected(selection, pathOf(id_14)) && !decidedBeneath(id_14, false);
-    groupSomeSelected = id_15 => isPathSelected(selection, pathOf(id_15)) || decidedBeneath(id_15, true);
-    let t52;
-    if ($[176] !== picked.rows) {
-      t52 = Object.values(picked.rows);
-      $[176] = picked.rows;
-      $[177] = t52;
+    const decidedBeneath = t54;
+    groupAllSelected = id_17 => isPathSelected(selection, pathOf(id_17)) && !decidedBeneath(id_17, false);
+    groupSomeSelected = id_18 => isPathSelected(selection, pathOf(id_18)) || decidedBeneath(id_18, true);
+    let t55;
+    if ($[185] !== picked.rows) {
+      t55 = Object.values(picked.rows);
+      $[185] = picked.rows;
+      $[186] = t55;
     } else {
-      t52 = $[177];
+      t55 = $[186];
     }
-    let t53;
-    if ($[178] !== picked.all || $[179] !== t52) {
-      t53 = t52.filter(row_3 => row_3.selected !== picked.all);
-      $[178] = picked.all;
-      $[179] = t52;
-      $[180] = t53;
+    let t56;
+    if ($[187] !== picked.all || $[188] !== t55) {
+      t56 = t55.filter(row_3 => row_3.selected !== picked.all);
+      $[187] = picked.all;
+      $[188] = t55;
+      $[189] = t56;
     } else {
-      t53 = $[180];
+      t56 = $[189];
     }
-    const exceptions = t53.length;
+    const exceptions = t56.length;
     const countIn = (list_2, parent_0, records) => {
       const unloaded = records - list_2.reduce(_temp13, 0);
       return list_2.reduce((sum_0, group_2) => {
@@ -1024,184 +1100,183 @@ export function useDataTable(config) {
           field: groupBy[parent_0.length],
           key: group_2.key
         }];
-        const id_16 = groupIdOf(path_0);
+        const id_19 = groupIdOf(path_0);
         const on = isPathSelected(selection, path_0);
-        const children = groupState[id_16]?.groups;
-        if (!decidedBeneath(id_16, !on)) {
+        const children = groupState[id_19]?.groups;
+        if (!decidedBeneath(id_19, !on)) {
           return sum_0 + (on ? group_2.count : 0);
         }
         if (path_0.length < groupBy.length && children) {
           return sum_0 + countIn(children, path_0, group_2.count);
         }
-        const flipped = Object.values(picked.rows).filter(row_4 => row_4.group === id_16 && row_4.selected !== on).length;
+        const flipped = Object.values(picked.rows).filter(row_4 => row_4.group === id_19 && row_4.selected !== on).length;
         return sum_0 + (on ? group_2.count - flipped : flipped);
       }, isPathSelected(selection, parent_0) ? unloaded : 0);
     };
-    t48 = grouped ? countIn(groups, [], total) : picked.all ? total - exceptions : exceptions;
-    $[157] = groupBy;
-    $[158] = groupState;
-    $[159] = grouped;
-    $[160] = groups;
-    $[161] = picked.all;
-    $[162] = picked.groups;
-    $[163] = picked.rows;
-    $[164] = rowGroups;
-    $[165] = total;
-    $[166] = groupAllSelected;
-    $[167] = groupSomeSelected;
-    $[168] = rowPath;
-    $[169] = selection;
-    $[170] = t48;
+    t51 = grouped ? countIn(groups, [], total) : picked.all ? total - exceptions : exceptions;
+    $[166] = groupBy;
+    $[167] = groupState;
+    $[168] = grouped;
+    $[169] = groups;
+    $[170] = picked.all;
+    $[171] = picked.groups;
+    $[172] = picked.rows;
+    $[173] = rowGroups;
+    $[174] = total;
+    $[175] = groupAllSelected;
+    $[176] = groupSomeSelected;
+    $[177] = rowPath;
+    $[178] = selection;
+    $[179] = t51;
   } else {
-    groupAllSelected = $[166];
-    groupSomeSelected = $[167];
-    rowPath = $[168];
-    selection = $[169];
-    t48 = $[170];
+    groupAllSelected = $[175];
+    groupSomeSelected = $[176];
+    rowPath = $[177];
+    selection = $[178];
+    t51 = $[179];
   }
-  const selectedCount = t48;
-  let t49;
-  if ($[181] !== picked.all || $[182] !== picked.groups || $[183] !== picked.rows) {
-    t49 = picked.all && !Object.values(picked.groups).includes(false) && !Object.values(picked.rows).some(_temp14);
-    $[181] = picked.all;
-    $[182] = picked.groups;
-    $[183] = picked.rows;
-    $[184] = t49;
-  } else {
-    t49 = $[184];
-  }
-  const allSelected = t49;
-  let t50;
-  if ($[185] !== picked.all || $[186] !== picked.groups || $[187] !== picked.rows) {
-    t50 = picked.all || Object.values(picked.groups).includes(true) || Object.values(picked.rows).some(_temp15);
-    $[185] = picked.all;
-    $[186] = picked.groups;
-    $[187] = picked.rows;
-    $[188] = t50;
-  } else {
-    t50 = $[188];
-  }
-  const someSelected = t50;
-  let t51;
-  if ($[189] !== rowPath || $[190] !== selection) {
-    t51 = id_17 => isRowSelected(selection, id_17, rowPath(id_17));
-    $[189] = rowPath;
-    $[190] = selection;
-    $[191] = t51;
-  } else {
-    t51 = $[191];
-  }
-  const isSelected = t51;
+  const selectedCount = t51;
   let t52;
-  if ($[192] !== isSelected || $[193] !== rowGroups || $[194] !== rowPath || $[195] !== selection) {
-    t52 = id_18 => {
-      const group_3 = rowGroups.get(id_18) ?? null;
-      const next_1 = !isSelected(id_18);
-      const inherited = isPathSelected(selection, rowPath(id_18));
-      setPicked(prev_4 => {
+  if ($[190] !== picked.all || $[191] !== picked.groups || $[192] !== picked.rows) {
+    t52 = picked.all && !Object.values(picked.groups).includes(false) && !Object.values(picked.rows).some(_temp14);
+    $[190] = picked.all;
+    $[191] = picked.groups;
+    $[192] = picked.rows;
+    $[193] = t52;
+  } else {
+    t52 = $[193];
+  }
+  const allSelected = t52;
+  let t53;
+  if ($[194] !== picked.all || $[195] !== picked.groups || $[196] !== picked.rows) {
+    t53 = picked.all || Object.values(picked.groups).includes(true) || Object.values(picked.rows).some(_temp15);
+    $[194] = picked.all;
+    $[195] = picked.groups;
+    $[196] = picked.rows;
+    $[197] = t53;
+  } else {
+    t53 = $[197];
+  }
+  const someSelected = t53;
+  let t54;
+  if ($[198] !== rowPath || $[199] !== selection) {
+    t54 = id_20 => isRowSelected(selection, id_20, rowPath(id_20));
+    $[198] = rowPath;
+    $[199] = selection;
+    $[200] = t54;
+  } else {
+    t54 = $[200];
+  }
+  const isSelected = t54;
+  let t55;
+  if ($[201] !== isSelected || $[202] !== rowGroups || $[203] !== rowPath || $[204] !== selection) {
+    t55 = id_21 => {
+      const group_3 = rowGroups.get(id_21) ?? null;
+      const next_1 = !isSelected(id_21);
+      const inherited = isPathSelected(selection, rowPath(id_21));
+      setPicked(prev_5 => {
         const rows_0 = {
-          ...prev_4.rows
+          ...prev_5.rows
         };
         if (next_1 === inherited) {
-          delete rows_0[id_18];
+          delete rows_0[id_21];
         } else {
-          rows_0[id_18] = {
+          rows_0[id_21] = {
             selected: next_1,
             group: group_3
           };
         }
         return {
-          ...prev_4,
+          ...prev_5,
           rows: rows_0
         };
       });
     };
-    $[192] = isSelected;
-    $[193] = rowGroups;
-    $[194] = rowPath;
-    $[195] = selection;
-    $[196] = t52;
+    $[201] = isSelected;
+    $[202] = rowGroups;
+    $[203] = rowPath;
+    $[204] = selection;
+    $[205] = t55;
   } else {
-    t52 = $[196];
+    t55 = $[205];
   }
-  const toggleSelected = t52;
-  let t53;
-  if ($[197] !== groupAllSelected || $[198] !== selection) {
-    t53 = id_19 => {
-      const path_1 = pathOf(id_19);
-      const next_2 = !groupAllSelected(id_19);
+  const toggleSelected = t55;
+  let t56;
+  if ($[206] !== groupAllSelected || $[207] !== selection) {
+    t56 = id_22 => {
+      const path_1 = pathOf(id_22);
+      const next_2 = !groupAllSelected(id_22);
       const inherited_0 = isPathSelected(selection, path_1.slice(0, -1));
-      setPicked(prev_5 => {
-        const groups_0 = Object.fromEntries(Object.entries(prev_5.groups).filter(t54 => {
-          const [key_2] = t54;
-          return !contains(id_19, key_2);
+      setPicked(prev_6 => {
+        const groups_0 = Object.fromEntries(Object.entries(prev_6.groups).filter(t57 => {
+          const [key_2] = t57;
+          return !contains(id_22, key_2);
         }));
-        const rows_1 = Object.fromEntries(Object.entries(prev_5.rows).filter(t55 => {
-          const [, row_7] = t55;
-          return row_7.group === null || !contains(id_19, row_7.group);
+        const rows_1 = Object.fromEntries(Object.entries(prev_6.rows).filter(t58 => {
+          const [, row_7] = t58;
+          return row_7.group === null || !contains(id_22, row_7.group);
         }));
         if (next_2 !== inherited_0) {
-          groups_0[id_19] = next_2;
+          groups_0[id_22] = next_2;
         }
         return {
-          ...prev_5,
+          ...prev_6,
           groups: groups_0,
           rows: rows_1
         };
       });
     };
-    $[197] = groupAllSelected;
-    $[198] = selection;
-    $[199] = t53;
+    $[206] = groupAllSelected;
+    $[207] = selection;
+    $[208] = t56;
   } else {
-    t53 = $[199];
+    t56 = $[208];
   }
-  const toggleSelectGroup = t53;
-  let t54;
-  if ($[200] === Symbol.for("react.memo_cache_sentinel")) {
-    t54 = next_3 => setPicked({
+  const toggleSelectGroup = t56;
+  let t57;
+  if ($[209] === Symbol.for("react.memo_cache_sentinel")) {
+    t57 = next_3 => setPicked({
       all: next_3.all,
       groups: Object.fromEntries(next_3.groups.map(_temp16)),
       rows: Object.fromEntries(next_3.rows.map(_temp17))
     });
-    $[200] = t54;
+    $[209] = t57;
   } else {
-    t54 = $[200];
+    t57 = $[209];
   }
-  const setSelection = t54;
-  let t55;
-  if ($[201] === Symbol.for("react.memo_cache_sentinel")) {
-    t55 = value_1 => {
+  const setSelection = t57;
+  let t58;
+  if ($[210] === Symbol.for("react.memo_cache_sentinel")) {
+    t58 = value_1 => {
       setSearch(value_1);
-      setPicked(nothingPicked);
       setPagination(_temp18);
     };
-    $[201] = t55;
+    $[210] = t58;
   } else {
-    t55 = $[201];
+    t58 = $[210];
   }
-  let t56;
-  if ($[202] === Symbol.for("react.memo_cache_sentinel")) {
-    t56 = () => setPicked(nothingPicked);
-    $[202] = t56;
+  let t59;
+  if ($[211] === Symbol.for("react.memo_cache_sentinel")) {
+    t59 = () => setPicked(nothingPicked);
+    $[211] = t59;
   } else {
-    t56 = $[202];
+    t59 = $[211];
   }
-  let t57;
-  if ($[203] !== allSelected) {
-    t57 = () => setPicked({
+  let t60;
+  if ($[212] !== allSelected) {
+    t60 = () => setPicked({
       all: !allSelected,
       groups: {},
       rows: {}
     });
-    $[203] = allSelected;
-    $[204] = t57;
+    $[212] = allSelected;
+    $[213] = t60;
   } else {
-    t57 = $[204];
+    t60 = $[213];
   }
-  let t58;
-  if ($[205] !== allSelected || $[206] !== cacheKey || $[207] !== columns || $[208] !== error || $[209] !== fetchChildren || $[210] !== filterLabel || $[211] !== filters || $[212] !== getRowId || $[213] !== groupAllSelected || $[214] !== groupBy || $[215] !== groupByColumns || $[216] !== groupLoadingFor || $[217] !== groupPageSize || $[218] !== groupPaginationFor || $[219] !== groupRowsFor || $[220] !== groupSomeSelected || $[221] !== groupTotalFor || $[222] !== groups || $[223] !== groupsLoading || $[224] !== groupsTotal || $[225] !== hasMore || $[226] !== hiddenColumns || $[227] !== isGroupExpanded || $[228] !== isSelected || $[229] !== listKey || $[230] !== loadMore || $[231] !== loading || $[232] !== loadingMore || $[233] !== pagination || $[234] !== rows || $[235] !== search || $[236] !== selectedCount || $[237] !== selection || $[238] !== someSelected || $[239] !== sort || $[240] !== t57 || $[241] !== toggleGroup || $[242] !== toggleSelectGroup || $[243] !== toggleSelected || $[244] !== total || $[245] !== visibleColumns || $[246] !== visibleItems) {
-    t58 = {
+  let t61;
+  if ($[214] !== allSelected || $[215] !== cacheKey || $[216] !== columns || $[217] !== error || $[218] !== fetchChildren || $[219] !== filterLabel || $[220] !== filters || $[221] !== getRowId || $[222] !== groupAllSelected || $[223] !== groupBy || $[224] !== groupByColumns || $[225] !== groupHasMore || $[226] !== groupLoadingFor || $[227] !== groupPageSize || $[228] !== groupPaginationFor || $[229] !== groupRowsFor || $[230] !== groupSomeSelected || $[231] !== groupTotalFor || $[232] !== groups || $[233] !== groupsLoading || $[234] !== groupsTotal || $[235] !== hasMore || $[236] !== hiddenColumns || $[237] !== isGroupExpanded || $[238] !== isSelected || $[239] !== listKey || $[240] !== loadMore || $[241] !== loadMoreInGroup || $[242] !== loading || $[243] !== loadingMore || $[244] !== pagination || $[245] !== rows || $[246] !== search || $[247] !== selectedCount || $[248] !== selection || $[249] !== someSelected || $[250] !== sort || $[251] !== t60 || $[252] !== toggleGroup || $[253] !== toggleSelectGroup || $[254] !== toggleSelected || $[255] !== total || $[256] !== visibleColumns || $[257] !== visibleItems) {
+    t61 = {
       columns,
       getRowId,
       groupByColumns,
@@ -1210,7 +1285,7 @@ export function useDataTable(config) {
       hiddenColumns,
       setColumnHidden,
       search,
-      setSearch: t55,
+      setSearch: t58,
       filters,
       setFilters,
       filterLabel,
@@ -1243,14 +1318,16 @@ export function useDataTable(config) {
       groupLoading: groupLoadingFor,
       groupPagination: groupPaginationFor,
       setGroupPage: fetchChildren,
+      groupHasMore,
+      loadMoreInGroup,
       visibleItems,
       selection,
       selectedCount,
       isSelected,
       toggleSelected,
       setSelection,
-      clearSelection: t56,
-      toggleSelectAll: t57,
+      clearSelection: t59,
+      toggleSelectAll: t60,
       allSelected,
       someSelected,
       groupAllSelected,
@@ -1258,53 +1335,55 @@ export function useDataTable(config) {
       toggleSelectGroup,
       refetch
     };
-    $[205] = allSelected;
-    $[206] = cacheKey;
-    $[207] = columns;
-    $[208] = error;
-    $[209] = fetchChildren;
-    $[210] = filterLabel;
-    $[211] = filters;
-    $[212] = getRowId;
-    $[213] = groupAllSelected;
-    $[214] = groupBy;
-    $[215] = groupByColumns;
-    $[216] = groupLoadingFor;
-    $[217] = groupPageSize;
-    $[218] = groupPaginationFor;
-    $[219] = groupRowsFor;
-    $[220] = groupSomeSelected;
-    $[221] = groupTotalFor;
-    $[222] = groups;
-    $[223] = groupsLoading;
-    $[224] = groupsTotal;
-    $[225] = hasMore;
-    $[226] = hiddenColumns;
-    $[227] = isGroupExpanded;
-    $[228] = isSelected;
-    $[229] = listKey;
-    $[230] = loadMore;
-    $[231] = loading;
-    $[232] = loadingMore;
-    $[233] = pagination;
-    $[234] = rows;
-    $[235] = search;
-    $[236] = selectedCount;
-    $[237] = selection;
-    $[238] = someSelected;
-    $[239] = sort;
-    $[240] = t57;
-    $[241] = toggleGroup;
-    $[242] = toggleSelectGroup;
-    $[243] = toggleSelected;
-    $[244] = total;
-    $[245] = visibleColumns;
-    $[246] = visibleItems;
-    $[247] = t58;
+    $[214] = allSelected;
+    $[215] = cacheKey;
+    $[216] = columns;
+    $[217] = error;
+    $[218] = fetchChildren;
+    $[219] = filterLabel;
+    $[220] = filters;
+    $[221] = getRowId;
+    $[222] = groupAllSelected;
+    $[223] = groupBy;
+    $[224] = groupByColumns;
+    $[225] = groupHasMore;
+    $[226] = groupLoadingFor;
+    $[227] = groupPageSize;
+    $[228] = groupPaginationFor;
+    $[229] = groupRowsFor;
+    $[230] = groupSomeSelected;
+    $[231] = groupTotalFor;
+    $[232] = groups;
+    $[233] = groupsLoading;
+    $[234] = groupsTotal;
+    $[235] = hasMore;
+    $[236] = hiddenColumns;
+    $[237] = isGroupExpanded;
+    $[238] = isSelected;
+    $[239] = listKey;
+    $[240] = loadMore;
+    $[241] = loadMoreInGroup;
+    $[242] = loading;
+    $[243] = loadingMore;
+    $[244] = pagination;
+    $[245] = rows;
+    $[246] = search;
+    $[247] = selectedCount;
+    $[248] = selection;
+    $[249] = someSelected;
+    $[250] = sort;
+    $[251] = t60;
+    $[252] = toggleGroup;
+    $[253] = toggleSelectGroup;
+    $[254] = toggleSelected;
+    $[255] = total;
+    $[256] = visibleColumns;
+    $[257] = visibleItems;
+    $[258] = t61;
   } else {
-    t58 = $[247];
+    t61 = $[258];
   }
-  return t58;
+  return t61;
 }
 function _temp18(p_5) {
   return {
@@ -1331,14 +1410,14 @@ function _temp13(sum, group_1) {
   return sum + group_1.count;
 }
 function _temp12(t0) {
-  const [id_11, row_1] = t0;
+  const [id_14, row_1] = t0;
   return {
-    id: id_11,
+    id: id_14,
     selected: row_1.selected
   };
 }
-function _temp11(id_9) {
-  return JSON.parse(id_9).map(_temp10);
+function _temp11(id_12) {
+  return JSON.parse(id_12).map(_temp10);
 }
 function _temp10(t0) {
   const [field_4, key_0] = t0;

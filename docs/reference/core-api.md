@@ -134,6 +134,36 @@ Returns `(column, value) => string`: the label for a selected value, falling bac
 | `searchable` | `boolean` | optional | Default `true`. Set `false` to exclude this column from client-mode search matching — see [Searching](/guide/searching). |
 | `align` | `'left' \| 'right' \| 'center'` | optional | Cell and header alignment. |
 
+## Narrow screens
+
+On a phone a wide table shows one column and scrolls sideways. Give the KyroUI `<DataTable>` (or `<DataTable.Body>`) a `renderListItem` and, once the table itself is narrower than the theme's `sm` breakpoint, each row becomes one full-width cell holding whatever it returns:
+
+```tsx
+<DataTable
+  api={table}
+  renderListItem={(row) => (
+    <Stack>
+      <Typography sx={{ fontWeight: 600 }}>{row.name}</Typography>
+      <Typography sx={{ color: 'text.secondary' }}>{row.country}</Typography>
+    </Stack>
+  )}
+/>
+```
+
+The row keeps its click, grouping and infinite scroll. `listVariant="cards"` draws each row as its own KyroUI `Card`, the way most mobile apps show records.
+
+A grouped table in the list drills down instead of expanding in place, the way iOS Settings and Mail do: each level of groups is one rounded grouped list (KyroUI's `List variant="grouped"`) with the count and a › on every row; opening one shows a header row — a plain ‹ chevron, the group's name and its count — over that group's sub-groups or its records. Each level opens at the top and remembers its scroll when you come back. The table measures its own width, not the window's, so it switches inside a narrow panel too. `variant="list"` shows the list at every width.
+
+Selection in the list works the way iOS Mail does: rows have no checkboxes until someone holds a row for half a second. That selects it and enters select mode, where picked rows are shaded and a tap selects or unselects a row instead of opening it. Select mode lasts until ✕ is pressed; unselecting every row keeps it open. Moving the finger more than a few pixels during the hold cancels it, so scrolling never selects.
+
+Below `sm`, the full `<DataTable>` also switches to a phone toolbar: search with a Group icon and a ⋯ menu (Import, Export, Settings) on one row, the views as a sideways-scrolling row under it. In select mode the views row becomes a selection bar — ✕, the count, Select all / Deselect all, and the bulk actions under ⋯ — while search and filters stay and the toolbar's own ⋯ steps aside. The pager drops its rows-per-page select. A layout composed from `DataTable.Body` builds its own bar from `api.selectedCount`, `api.toggleSelectAll`, `api.clearSelection` and `useSelectMode()`; `DataTableGroupPanel` opens the group editor from any anchor.
+
+Search and filters keep the selection; changing the grouping clears it.
+
+On a phone the full `<DataTable>` scrolls with the page instead of a box of its own. Actions are the product's: `toolbarEnd` renders on wider screens only, and a product that wants an action on phones — a button, a menu, a floating button with room for its own bottom bar — composes its own layout from `DataTable.Root`, `DataTable.Body` and the other exported pieces. Inside a drilled group, infinite scroll loads the group's next page as its end comes into view (`api.loadMoreInGroup`, `api.groupHasMore`). Search and filters narrow the records: the group list shows only groups with matches, their counts are the matching records, and an open group shows its matching records.
+
+Without `renderListItem`, a table narrower than `sm` keeps its columns at `sm` width and scrolls sideways.
+
 ## Selection
 
 Selection records what the reader picked, not which records were loaded, so a whole group or everything matching the search can be selected without fetching a row. A server resolves it into records when an action runs.

@@ -1,8 +1,8 @@
 import { c as _c } from "react/compiler-runtime";
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useVirtualizer, useWindowVirtualizer } from '@tanstack/react-virtual';
-import { Box, Button, Checkbox, IconButton, Skeleton, SvgIcon, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@kyrobit/kyroui';
-import { useDataTableContext } from './context.js';
+import { Box, Button, Card, Checkbox, IconButton, List, ListItemButton, ListItemText, Skeleton, SvgIcon, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useTheme } from '@kyrobit/kyroui';
+import { useDataTableContext, useDrillTrail, useSelectMode } from './context.js';
 import { ChevronLeftIcon, ChevronRightIcon, ExpandMoreIcon } from './icons.js';
 import { countFilterValues } from '@kyrobit/datatable';
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
@@ -280,6 +280,8 @@ const ESTIMATED_ROW_HEIGHT = 41;
 const OVERSCAN = 10;
 const ROW_INTENT_DELAY = 80;
 const SKELETON_DELAY = 150;
+const HOLD_DELAY = 500;
+const HOLD_SLOP = 10;
 const views = new Map();
 const scrollParentOf = node => {
   for (let el = node.parentElement; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
@@ -298,7 +300,7 @@ const rectOf = scroller => scroller instanceof Window ? {
 const marginOf = (node, scroller) => node.getBoundingClientRect().top + offsetOf(scroller) - (scroller instanceof Window ? 0 : scroller.getBoundingClientRect().top + scroller.clientTop);
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
 export function DataTableBody(t0) {
-  const $ = _c(114);
+  const $ = _c(99);
   const {
     onRowClick,
     onRowIntent,
@@ -311,7 +313,10 @@ export function DataTableBody(t0) {
     infiniteScroll: t5,
     pageScroll: t6,
     restoreScroll: t7,
-    stickyTop
+    stickyTop,
+    renderListItem,
+    listVariant: t8,
+    variant: t9
   } = t0;
   const emptyMessage = t1 === undefined ? "No records found." : t1;
   const noResultsMessage = t2 === undefined ? "No records match your search." : t2;
@@ -320,87 +325,201 @@ export function DataTableBody(t0) {
   const infiniteScroll = t5 === undefined ? false : t5;
   const pageScroll = t6 === undefined ? false : t6;
   const restoreScroll = t7 === undefined ? true : t7;
+  const listVariant = t8 === undefined ? "plain" : t8;
+  const variant = t9 === undefined ? "auto" : t9;
   const api = useDataTableContext();
-  const items = api.visibleItems;
-  const colSpan = api.visibleColumns.length + (selectable ? 1 : 0);
   const fetching = api.loading || api.groupsLoading;
-  let t8;
+  let t10;
   if ($[0] !== api.visibleColumns) {
-    t8 = api.visibleColumns.some(_temp2);
+    t10 = api.visibleColumns.some(_temp2);
     $[0] = api.visibleColumns;
-    $[1] = t8;
+    $[1] = t10;
   } else {
-    t8 = $[1];
+    t10 = $[1];
   }
-  const hasExplicitWidths = t8;
+  const hasExplicitWidths = t10;
   const containerRef = useRef(null);
   const [scroller, setScroller] = useState(null);
   const [rowHeight, setRowHeight] = useState(0);
-  let t9;
+  let t11;
   if ($[2] !== api.visibleColumns) {
-    t9 = api.visibleColumns.map(_temp3).join("|");
+    t11 = api.visibleColumns.map(_temp3).join("|");
     $[2] = api.visibleColumns;
-    $[3] = t9;
+    $[3] = t11;
   } else {
-    t9 = $[3];
+    t11 = $[3];
   }
-  const columnsKey = t9;
+  const columnsKey = t11;
   const [locked, setLocked] = useState(null);
   const lockedWidths = locked?.key === columnsKey ? locked.widths : null;
   const intentTimer = useRef(undefined);
-  const viewKey = api.cacheKey === undefined || !restoreScroll ? null : api.listKey;
-  let t10;
-  if ($[4] !== viewKey) {
-    t10 = viewKey === null ? undefined : views.get(viewKey);
-    $[4] = viewKey;
-    $[5] = t10;
-  } else {
-    t10 = $[5];
-  }
-  const view = t10;
   const snapshot = useRef(_temp4);
-  let t11;
+  const narrowBelow = useTheme().breakpoints.values.sm;
+  const [narrow, setNarrow] = useState(false);
+  const watchWidth = variant === "auto";
+  const list = renderListItem !== undefined && (variant === "list" || narrow);
+  const sideways = narrow && !list;
+  const cards = list && listVariant === "cards";
+  const drilling = list && api.groupBy.length > 0;
+  const groupsKey = api.groupBy.join("|");
+  const [trailState, setTrailState] = useDrillTrail();
+  const stored = drilling && trailState.key === groupsKey ? trailState.ids : [];
   let t12;
-  if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t11 = () => () => clearTimeout(intentTimer.current);
-    t12 = [];
-    $[6] = t11;
-    $[7] = t12;
+  if ($[4] !== api.visibleItems) {
+    t12 = new Set(api.visibleItems.flatMap(_temp5));
+    $[4] = api.visibleItems;
+    $[5] = t12;
   } else {
-    t11 = $[6];
-    t12 = $[7];
+    t12 = $[5];
   }
-  useEffect(t11, t12);
+  const shownGroups = t12;
   let t13;
-  if ($[8] !== pageScroll || $[9] !== scroller) {
-    t13 = () => {
+  if ($[6] !== shownGroups) {
+    t13 = id => !shownGroups.has(id);
+    $[6] = shownGroups;
+    $[7] = t13;
+  } else {
+    t13 = $[7];
+  }
+  const reachable = stored.findIndex(t13);
+  const trail = reachable === -1 ? stored : stored.slice(0, reachable);
+  const setTrail = ids => setTrailState({
+    key: groupsKey,
+    ids
+  });
+  const drilled = trail.at(-1);
+  const viewKey = api.cacheKey === undefined || !restoreScroll ? null : `${api.listKey}${drilled ?? ""}`;
+  let t14;
+  if ($[8] !== viewKey) {
+    t14 = viewKey === null ? undefined : views.get(viewKey);
+    $[8] = viewKey;
+    $[9] = t14;
+  } else {
+    t14 = $[9];
+  }
+  const view = t14;
+  let t15;
+  if ($[10] !== api) {
+    t15 = id_0 => !api.isGroupExpanded(id_0);
+    $[10] = api;
+    $[11] = t15;
+  } else {
+    t15 = $[11];
+  }
+  const closedOnTrail = trail.find(t15);
+  useEffect(() => {
+    if (closedOnTrail !== undefined) {
+      api.toggleGroup(closedOnTrail);
+    }
+  }, [closedOnTrail]);
+  const drilledGroup = api.visibleItems.find(item_0 => item_0.type === "group" && item_0.id === drilled);
+  const items = !drilling ? api.visibleItems : api.visibleItems.filter(item_1 => drilled === undefined ? item_1.type === "group" && item_1.depth === 0 : item_1.type === "group" ? item_1.depth === trail.length && item_1.id.startsWith(drilled.slice(0, -1)) : item_1.type === "group-row" && item_1.groupId === drilled);
+  const empty = items.length === 0 && !fetching && drilled === undefined;
+  const skeletonShape = cards ? "cards" : list ? "list" : "table";
+  const more = drilled === undefined ? {
+    has: api.hasMore,
+    load: api.loadMore,
+    loading: api.loadingMore
+  } : {
+    has: api.groupHasMore(drilled),
+    load: () => api.loadMoreInGroup(drilled),
+    loading: api.groupLoading(drilled)
+  };
+  const navigating = drilling && items.length > 0 && items.every(_temp6);
+  const drillInto = id_1 => {
+    if (!api.isGroupExpanded(id_1)) {
+      api.toggleGroup(id_1);
+    }
+    setTrail([...trail, id_1]);
+  };
+  const holding = list && selectable;
+  const [selectMode, setSelectMode] = useSelectMode();
+  const selecting = holding && selectMode;
+  const checkboxes = selectable && !list;
+  const colSpan = api.visibleColumns.length + (checkboxes ? 1 : 0);
+  const holdTimer = useRef(undefined);
+  const holdStart = useRef({
+    x: 0,
+    y: 0
+  });
+  const held = useRef(false);
+  let t16;
+  let t17;
+  if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
+    t16 = () => () => {
+      clearTimeout(intentTimer.current);
+      clearTimeout(holdTimer.current);
+    };
+    t17 = [];
+    $[12] = t16;
+    $[13] = t17;
+  } else {
+    t16 = $[12];
+    t17 = $[13];
+  }
+  useEffect(t16, t17);
+  let t18;
+  if ($[14] !== narrowBelow || $[15] !== watchWidth) {
+    t18 = () => {
       const container = containerRef.current;
-      if (!container) {
+      if (!container || !watchWidth) {
         return;
       }
-      const next = pageScroll ? scrollParentOf(container) : container;
-      if (next !== scroller) {
-        setScroller(next);
-      }
+      setNarrow(container.clientWidth < narrowBelow);
+      const observer = new ResizeObserver(t19 => {
+        const [entry] = t19;
+        return setNarrow(entry.contentRect.width < narrowBelow);
+      });
+      observer.observe(container);
+      return () => observer.disconnect();
     };
-    $[8] = pageScroll;
-    $[9] = scroller;
-    $[10] = t13;
+    $[14] = narrowBelow;
+    $[15] = watchWidth;
+    $[16] = t18;
   } else {
-    t13 = $[10];
+    t18 = $[16];
   }
-  useLayoutEffect(t13);
-  let t14;
-  if ($[11] !== pageScroll || $[12] !== view || $[13] !== viewKey) {
-    t14 = () => {
+  let t19;
+  if ($[17] !== empty || $[18] !== narrowBelow || $[19] !== watchWidth) {
+    t19 = [empty, watchWidth, narrowBelow];
+    $[17] = empty;
+    $[18] = narrowBelow;
+    $[19] = watchWidth;
+    $[20] = t19;
+  } else {
+    t19 = $[20];
+  }
+  useLayoutEffect(t18, t19);
+  let t20;
+  if ($[21] !== pageScroll || $[22] !== scroller) {
+    t20 = () => {
       const container_0 = containerRef.current;
       if (!container_0) {
         return;
       }
-      const target = pageScroll ? scrollParentOf(container_0) : container_0;
+      const next = pageScroll ? scrollParentOf(container_0) : container_0;
+      if (next !== scroller) {
+        setScroller(next);
+      }
+    };
+    $[21] = pageScroll;
+    $[22] = scroller;
+    $[23] = t20;
+  } else {
+    t20 = $[23];
+  }
+  useLayoutEffect(t20);
+  let t21;
+  if ($[24] !== pageScroll || $[25] !== view || $[26] !== viewKey) {
+    t21 = () => {
+      const container_1 = containerRef.current;
+      if (!container_1) {
+        return;
+      }
+      const target = pageScroll ? scrollParentOf(container_1) : container_1;
       const edge = target instanceof Window ? 0 : target.getBoundingClientRect().top;
-      const pin = container_0.querySelector("thead th")?.getBoundingClientRect().top ?? edge;
-      const passed = container_0.getBoundingClientRect().top < Math.max(edge, pin) - 1;
+      const pin = container_1.querySelector("thead th")?.getBoundingClientRect().top ?? edge;
+      const passed = container_1.getBoundingClientRect().top < Math.max(edge, pin) - 1;
       if (view) {
         target.scrollTo({
           top: view.top,
@@ -408,10 +527,10 @@ export function DataTableBody(t0) {
         });
       } else {
         if (!pageScroll) {
-          container_0.scrollTop = 0;
+          container_1.scrollTop = 0;
         } else {
           if (passed) {
-            container_0.scrollIntoView({
+            container_1.scrollIntoView({
               block: "start",
               behavior: "instant"
             });
@@ -429,70 +548,62 @@ export function DataTableBody(t0) {
         });
       };
     };
-    $[11] = pageScroll;
-    $[12] = view;
-    $[13] = viewKey;
-    $[14] = t14;
+    $[24] = pageScroll;
+    $[25] = view;
+    $[26] = viewKey;
+    $[27] = t21;
   } else {
-    t14 = $[14];
+    t21 = $[27];
   }
-  let t15;
-  if ($[15] !== api.groupBy || $[16] !== api.listKey) {
-    t15 = [api.listKey, api.groupBy];
-    $[15] = api.groupBy;
-    $[16] = api.listKey;
-    $[17] = t15;
-  } else {
-    t15 = $[17];
-  }
-  useLayoutEffect(t14, t15);
-  let t16;
-  if ($[18] !== columnsKey || $[19] !== hasExplicitWidths || $[20] !== lockedWidths || $[21] !== rowHeight || $[22] !== selectable) {
-    t16 = () => {
-      const container_1 = containerRef.current;
-      if (!container_1) {
+  useLayoutEffect(t21, [api.listKey, api.groupBy, drilled]);
+  let t22;
+  if ($[28] !== checkboxes || $[29] !== columnsKey || $[30] !== hasExplicitWidths || $[31] !== list || $[32] !== lockedWidths || $[33] !== rowHeight) {
+    t22 = () => {
+      const container_2 = containerRef.current;
+      if (!container_2) {
         return;
       }
-      const rows = Array.from(container_1.querySelectorAll("tbody tr[data-row]"));
-      const tallest = Math.max(0, ...rows.map(_temp5));
+      const rows = Array.from(container_2.querySelectorAll("tbody tr[data-row]"));
+      const tallest = Math.max(0, ...rows.map(_temp7));
       if (tallest > rowHeight) {
         setRowHeight(tallest);
       }
-      if (hasExplicitWidths || lockedWidths || !rows.length) {
+      if (list || hasExplicitWidths || lockedWidths || !rows.length) {
         return;
       }
-      const table = container_1.querySelector("table").getBoundingClientRect().width;
-      const cells = Array.from(container_1.querySelectorAll("thead th")).slice(selectable ? 1 : 0);
+      const table = container_2.querySelector("table").getBoundingClientRect().width;
+      const cells = Array.from(container_2.querySelectorAll("thead th")).slice(checkboxes ? 1 : 0);
       setLocked({
         key: columnsKey,
         widths: cells.map(cell => `${cell.getBoundingClientRect().width / table * 100}%`)
       });
     };
-    $[18] = columnsKey;
-    $[19] = hasExplicitWidths;
-    $[20] = lockedWidths;
-    $[21] = rowHeight;
-    $[22] = selectable;
-    $[23] = t16;
+    $[28] = checkboxes;
+    $[29] = columnsKey;
+    $[30] = hasExplicitWidths;
+    $[31] = list;
+    $[32] = lockedWidths;
+    $[33] = rowHeight;
+    $[34] = t22;
   } else {
-    t16 = $[23];
+    t22 = $[34];
   }
-  useLayoutEffect(t16);
+  useLayoutEffect(t22);
   const fixedWidths = hasExplicitWidths || lockedWidths !== null;
-  if (items.length === 0 && !fetching) {
-    let t17;
-    if ($[24] !== api.filters || $[25] !== api.search) {
-      t17 = Boolean(api.search) || countFilterValues(api.filters ?? {}) > 0;
-      $[24] = api.filters;
-      $[25] = api.search;
-      $[26] = t17;
+  if (empty) {
+    let t23;
+    if ($[35] !== api.filters || $[36] !== api.search) {
+      t23 = Boolean(api.search) || countFilterValues(api.filters ?? {}) > 0;
+      $[35] = api.filters;
+      $[36] = api.search;
+      $[37] = t23;
     } else {
-      t17 = $[26];
+      t23 = $[37];
     }
-    const filtered = t17;
-    let t18;
-    if ($[27] !== api || $[28] !== emptyMessage || $[29] !== errorMessage || $[30] !== filtered || $[31] !== noResultsMessage) {
-      t18 = api.error ? errorMessage ?? /*#__PURE__*/_jsxs(Box, {
+    const filtered = t23;
+    let t24;
+    if ($[38] !== api || $[39] !== emptyMessage || $[40] !== errorMessage || $[41] !== filtered || $[42] !== noResultsMessage) {
+      t24 = api.error ? errorMessage ?? /*#__PURE__*/_jsxs(Box, {
         sx: {
           display: "flex",
           flexDirection: "column",
@@ -511,29 +622,29 @@ export function DataTableBody(t0) {
           children: "Try again"
         })]
       }) : filtered ? noResultsMessage : emptyMessage;
-      $[27] = api;
-      $[28] = emptyMessage;
-      $[29] = errorMessage;
-      $[30] = filtered;
-      $[31] = noResultsMessage;
-      $[32] = t18;
+      $[38] = api;
+      $[39] = emptyMessage;
+      $[40] = errorMessage;
+      $[41] = filtered;
+      $[42] = noResultsMessage;
+      $[43] = t24;
     } else {
-      t18 = $[32];
+      t24 = $[43];
     }
-    const message = t18;
-    let t19;
-    if ($[33] === Symbol.for("react.memo_cache_sentinel")) {
-      t19 = {
+    const message = t24;
+    let t25;
+    if ($[44] === Symbol.for("react.memo_cache_sentinel")) {
+      t25 = {
         flex: 1,
         py: "xl"
       };
-      $[33] = t19;
+      $[44] = t25;
     } else {
-      t19 = $[33];
+      t25 = $[44];
     }
-    let t20;
-    if ($[34] !== message) {
-      t20 = typeof message === "string" ? /*#__PURE__*/_jsx(Typography, {
+    let t26;
+    if ($[45] !== message) {
+      t26 = typeof message === "string" ? /*#__PURE__*/_jsx(Typography, {
         sx: {
           color: "text.secondary",
           textAlign: "center",
@@ -541,454 +652,579 @@ export function DataTableBody(t0) {
         },
         children: message
       }) : message;
-      $[34] = message;
-      $[35] = t20;
+      $[45] = message;
+      $[46] = t26;
     } else {
-      t20 = $[35];
+      t26 = $[46];
     }
-    let t21;
-    if ($[36] !== t20) {
-      t21 = /*#__PURE__*/_jsx(Box, {
+    let t27;
+    if ($[47] !== t26) {
+      t27 = /*#__PURE__*/_jsx(Box, {
         className: "KyroTable-empty",
-        sx: t19,
-        children: t20
+        sx: t25,
+        children: t26
       });
-      $[36] = t20;
-      $[37] = t21;
+      $[47] = t26;
+      $[48] = t27;
     } else {
-      t21 = $[37];
+      t27 = $[48];
     }
-    return t21;
+    return t27;
   }
-  let T0;
-  let T1;
-  let T2;
-  let t17;
-  let t18;
-  let t19;
-  let t20;
-  let t21;
-  let t22;
-  let t23;
-  let t24;
-  let t25;
-  if ($[38] !== api || $[39] !== colSpan || $[40] !== fixedWidths || $[41] !== hasExplicitWidths || $[42] !== infiniteScroll || $[43] !== items || $[44] !== lockedWidths || $[45] !== onRowClick || $[46] !== onRowIntent || $[47] !== pageScroll || $[48] !== rowClass || $[49] !== rowHeight || $[50] !== scroller || $[51] !== selectable || $[52] !== stickyHeader || $[53] !== stickyTop || $[54] !== view) {
-    const renderItem = (index, measure) => {
-      const item = items[index];
-      const measured = measure ? {
-        "data-index": index,
-        ref: measure
-      } : {};
-      if (item.type === "group") {
-        return /*#__PURE__*/_jsx(TableRow, {
-          "data-row": "",
-          ...measured,
-          className: "KyroTable-groupRow",
-          onClick: () => api.toggleGroup(item.id),
-          style: {
-            cursor: "pointer"
-          },
-          children: /*#__PURE__*/_jsx(TableCell, {
-            className: "KyroTable-groupCell",
-            colSpan: colSpan,
-            children: /*#__PURE__*/_jsxs(Box, {
+  const renderItem = (index, measure) => {
+    const item_3 = items[index];
+    const measured = measure ? {
+      "data-index": index,
+      ref: measure
+    } : {};
+    if (item_3.type === "group") {
+      return /*#__PURE__*/_jsx(TableRow, {
+        "data-row": "",
+        ...measured,
+        className: "KyroTable-groupRow",
+        onClick: () => api.toggleGroup(item_3.id),
+        style: {
+          cursor: "pointer"
+        },
+        children: /*#__PURE__*/_jsx(TableCell, {
+          className: "KyroTable-groupCell",
+          colSpan: colSpan,
+          children: /*#__PURE__*/_jsxs(Box, {
+            sx: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "sm",
+              pl: item_3.depth * 3
+            },
+            children: [/*#__PURE__*/_jsxs(Box, {
               sx: {
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
                 gap: "sm",
-                pl: item.depth * 3
+                minWidth: 0
               },
-              children: [/*#__PURE__*/_jsxs(Box, {
+              children: [item_3.expanded ? /*#__PURE__*/_jsx(ExpandMoreIcon, {
+                fontSize: "small",
                 sx: {
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "sm",
-                  minWidth: 0
+                  color: "text.secondary"
+                }
+              }) : /*#__PURE__*/_jsx(ChevronRightIcon, {
+                fontSize: "small",
+                sx: {
+                  color: "text.secondary"
+                }
+              }), selectable && (!list || selecting) && /*#__PURE__*/_jsx(Box, {
+                component: "span",
+                sx: {
+                  display: "inline-flex"
                 },
-                children: [item.expanded ? /*#__PURE__*/_jsx(ExpandMoreIcon, {
-                  fontSize: "small",
-                  sx: {
-                    color: "text.secondary"
-                  }
-                }) : /*#__PURE__*/_jsx(ChevronRightIcon, {
-                  fontSize: "small",
-                  sx: {
-                    color: "text.secondary"
-                  }
-                }), selectable && /*#__PURE__*/_jsx(Box, {
-                  component: "span",
-                  sx: {
-                    display: "inline-flex"
-                  },
-                  onClick: _temp6,
-                  children: /*#__PURE__*/_jsx(Checkbox, {
-                    checked: api.groupAllSelected(item.id),
-                    indeterminate: api.groupSomeSelected(item.id) && !api.groupAllSelected(item.id),
-                    onChange: () => api.toggleSelectGroup(item.id),
-                    "aria-label": `Select all rows in ${item.group.label}`
-                  })
-                }), /*#__PURE__*/_jsx(Box, {
-                  component: "span",
-                  sx: {
-                    fontWeight: 600,
-                    color: "text.primary"
-                  },
-                  children: item.group.label
-                }), /*#__PURE__*/_jsx(Box, {
-                  component: "span",
-                  className: "KyroTable-groupCount",
-                  sx: {
-                    fontSize: "sm",
-                    fontWeight: 600,
-                    lineHeight: 1,
-                    px: "sm",
-                    py: "xs",
-                    borderRadius: "pill",
-                    bgcolor: "action.hover",
-                    color: "text.secondary"
-                  },
-                  children: item.group.count
-                }), api.groupLoading(item.id) && api.groupRows(item.id).length === 0 && /*#__PURE__*/_jsx(Box, {
-                  component: "span",
-                  sx: {
-                    color: "text.secondary",
-                    fontSize: "sm"
-                  },
-                  children: "loading\u2026"
-                })]
-              }), item.expanded && /*#__PURE__*/_jsx(GroupPager, {
-                groupId: item.id,
-                api: api
+                onClick: _temp8,
+                children: /*#__PURE__*/_jsx(Checkbox, {
+                  checked: api.groupAllSelected(item_3.id),
+                  indeterminate: api.groupSomeSelected(item_3.id) && !api.groupAllSelected(item_3.id),
+                  onChange: () => api.toggleSelectGroup(item_3.id),
+                  "aria-label": `Select all rows in ${item_3.group.label}`
+                })
+              }), /*#__PURE__*/_jsx(Box, {
+                component: "span",
+                sx: {
+                  fontWeight: 600,
+                  color: "text.primary"
+                },
+                children: item_3.group.label
+              }), /*#__PURE__*/_jsx(Box, {
+                component: "span",
+                className: "KyroTable-groupCount",
+                sx: {
+                  fontSize: "sm",
+                  fontWeight: 600,
+                  lineHeight: 1,
+                  px: "sm",
+                  py: "xs",
+                  borderRadius: "pill",
+                  bgcolor: "action.hover",
+                  color: "text.secondary"
+                },
+                children: item_3.group.count
+              }), api.groupLoading(item_3.id) && api.groupRows(item_3.id).length === 0 && /*#__PURE__*/_jsx(Box, {
+                component: "span",
+                sx: {
+                  color: "text.secondary",
+                  fontSize: "sm"
+                },
+                children: "loading\u2026"
               })]
-            })
+            }), item_3.expanded && /*#__PURE__*/_jsx(GroupPager, {
+              groupId: item_3.id,
+              api: api
+            })]
           })
-        }, `group-${item.id}`);
-      }
-      const row_0 = item.row;
-      const rowId = api.getRowId(row_0);
-      const classes = [item.type === "group-row" ? "KyroTable-groupChildRow" : "", rowClass ? rowClass(row_0) : ""].filter(Boolean).join(" ");
-      return /*#__PURE__*/_jsxs(TableRow, {
-        "data-row": "",
-        ...measured,
-        hover: true,
-        selected: selectable && api.isSelected(rowId),
-        className: classes || undefined,
-        style: {
-          cursor: onRowClick ? "pointer" : undefined
-        },
-        onClick: () => onRowClick?.(row_0),
-        tabIndex: onRowIntent ? 0 : undefined,
-        onPointerEnter: onRowIntent && (() => {
-          clearTimeout(intentTimer.current);
-          intentTimer.current = setTimeout(() => onRowIntent(row_0), ROW_INTENT_DELAY);
-        }),
-        onPointerLeave: onRowIntent && (() => clearTimeout(intentTimer.current)),
-        onFocus: onRowIntent && (event => event.target === event.currentTarget && onRowIntent(row_0)),
-        children: [selectable && /*#__PURE__*/_jsx(TableCell, {
-          padding: "checkbox",
-          onClick: _temp7,
-          children: /*#__PURE__*/_jsx(Checkbox, {
-            checked: api.isSelected(rowId),
-            onChange: () => api.toggleSelected(rowId),
-            "aria-label": "Select row"
-          })
-        }), api.visibleColumns.map(col_1 => /*#__PURE__*/_jsx(TableCell, {
-          align: col_1.align,
-          children: col_1.render ? col_1.render(row_0) : row_0[col_1.field]
-        }, col_1.field))]
-      }, rowId);
-    };
-    const rowsProps = {
-      count: items.length,
-      body: () => containerRef.current?.querySelector("tbody") ?? null,
-      view,
-      snapshot,
-      rowHeight: rowHeight || ESTIMATED_ROW_HEIGHT,
-      colSpan,
-      render: renderItem
-    };
-    T2 = TableContainer;
-    t23 = containerRef;
-    t24 = pageScroll ? undefined : "";
-    if ($[67] !== pageScroll || $[68] !== stickyTop) {
-      t25 = theme => pageScroll ? {
-        overflow: "visible",
-        scrollMarginTop: stickyTop
-      } : {
-        flex: "1 1 0",
-        minHeight: `calc(${theme.vars.size.row} * 4)`,
-        overflowY: "auto",
-        contain: "size"
-      };
-      $[67] = pageScroll;
-      $[68] = stickyTop;
-      $[69] = t25;
-    } else {
-      t25 = $[69];
+        })
+      }, `group-${item_3.id}`);
     }
-    T1 = Table;
-    t18 = "small";
-    t19 = stickyHeader;
-    let t26;
-    if ($[70] !== fixedWidths) {
-      t26 = fixedWidths && {
-        tableLayout: "fixed"
-      };
-      $[70] = fixedWidths;
-      $[71] = t26;
-    } else {
-      t26 = $[71];
-    }
-    let t27;
-    if ($[72] !== stickyTop) {
-      t27 = stickyTop && {
-        "& thead th": {
-          top: stickyTop
+    const row_0 = item_3.row;
+    const rowId = api.getRowId(row_0);
+    const classes = [item_3.type === "group-row" ? "KyroTable-groupChildRow" : "", rowClass ? rowClass(row_0) : ""].filter(Boolean).join(" ");
+    const hold = holding ? {
+      onPointerDown: event => {
+        held.current = false;
+        holdStart.current = {
+          x: event.clientX,
+          y: event.clientY
+        };
+        clearTimeout(holdTimer.current);
+        holdTimer.current = setTimeout(() => {
+          held.current = true;
+          setSelectMode(true);
+          api.toggleSelected(rowId);
+        }, HOLD_DELAY);
+      },
+      onPointerMove: event_0 => {
+        if (Math.hypot(event_0.clientX - holdStart.current.x, event_0.clientY - holdStart.current.y) > HOLD_SLOP) {
+          clearTimeout(holdTimer.current);
         }
-      };
-      $[72] = stickyTop;
-      $[73] = t27;
-    } else {
-      t27 = $[73];
-    }
-    if ($[74] !== t26 || $[75] !== t27) {
-      t20 = {
-        ...t26,
-        ...t27
-      };
-      $[74] = t26;
-      $[75] = t27;
-      $[76] = t20;
-    } else {
-      t20 = $[76];
-    }
-    if ($[77] !== api.visibleColumns || $[78] !== hasExplicitWidths || $[79] !== lockedWidths || $[80] !== selectable) {
-      t21 = hasExplicitWidths ? /*#__PURE__*/_jsxs("colgroup", {
-        children: [selectable && /*#__PURE__*/_jsx("col", {}), api.visibleColumns.map(_temp8)]
-      }) : lockedWidths ? /*#__PURE__*/_jsxs("colgroup", {
-        children: [selectable && /*#__PURE__*/_jsx("col", {}), lockedWidths.map(_temp9)]
-      }) : null;
-      $[77] = api.visibleColumns;
-      $[78] = hasExplicitWidths;
-      $[79] = lockedWidths;
-      $[80] = selectable;
-      $[81] = t21;
-    } else {
-      t21 = $[81];
-    }
-    let t28;
-    if ($[82] !== api || $[83] !== selectable) {
-      t28 = selectable && /*#__PURE__*/_jsx(TableCell, {
-        variant: "head",
-        padding: "checkbox",
-        children: /*#__PURE__*/_jsx(Checkbox, {
-          checked: api.allSelected,
-          indeterminate: api.someSelected && !api.allSelected,
-          onChange: () => api.toggleSelectAll(),
-          "aria-label": "Select all rows"
-        })
-      });
-      $[82] = api;
-      $[83] = selectable;
-      $[84] = t28;
-    } else {
-      t28 = $[84];
-    }
-    let t29;
-    if ($[85] !== api) {
-      t29 = api.visibleColumns.map(col_3 => /*#__PURE__*/_jsx(TableCell, {
-        variant: "head",
-        align: col_3.align,
-        sortDirection: api.sort?.field === col_3.field ? api.sort.direction : false,
-        onClick: col_3.sortable === false ? undefined : () => api.toggleSort(col_3.field),
-        sx: col_3.sortable === false ? undefined : {
-          cursor: "pointer",
+      },
+      onPointerUp: () => clearTimeout(holdTimer.current),
+      onPointerCancel: () => clearTimeout(holdTimer.current),
+      onContextMenu: _temp9
+    } : {};
+    return /*#__PURE__*/_jsxs(TableRow, {
+      "data-row": "",
+      ...measured,
+      ...hold,
+      hover: true,
+      selected: selectable && api.isSelected(rowId),
+      className: classes || undefined,
+      style: {
+        cursor: onRowClick || selecting ? "pointer" : undefined,
+        ...(holding && {
+          WebkitTouchCallout: "none",
           userSelect: "none"
+        }),
+        ...(cards && {
+          background: "transparent"
+        })
+      },
+      onClick: () => {
+        if (held.current) {
+          held.current = false;
+        } else {
+          if (selecting) {
+            api.toggleSelected(rowId);
+          } else {
+            onRowClick?.(row_0);
+          }
+        }
+      },
+      tabIndex: onRowIntent ? 0 : undefined,
+      onPointerEnter: onRowIntent && (() => {
+        clearTimeout(intentTimer.current);
+        intentTimer.current = setTimeout(() => onRowIntent(row_0), ROW_INTENT_DELAY);
+      }),
+      onPointerLeave: onRowIntent && (() => clearTimeout(intentTimer.current)),
+      onFocus: onRowIntent && (event_2 => event_2.target === event_2.currentTarget && onRowIntent(row_0)),
+      children: [checkboxes && /*#__PURE__*/_jsx(TableCell, {
+        padding: "checkbox",
+        onClick: _temp0,
+        children: /*#__PURE__*/_jsx(Checkbox, {
+          checked: api.isSelected(rowId),
+          onChange: () => api.toggleSelected(rowId),
+          "aria-label": "Select row"
+        })
+      }), list ? cards ? /*#__PURE__*/_jsx(TableCell, {
+        colSpan: colSpan,
+        sx: {
+          border: "none",
+          px: 0,
+          py: "xs"
         },
-        children: col_3.sortable === false ? col_3.headerName : /*#__PURE__*/_jsxs("button", {
-          type: "button",
-          className: "KyroTable-sortButton",
-          style: {
-            display: "flex",
-            width: "100%",
-            alignItems: "center",
-            justifyContent: "space-between",
-            background: "none",
-            border: "none",
-            padding: 0,
-            margin: 0,
-            font: "inherit",
-            textTransform: "inherit",
-            letterSpacing: "inherit",
-            color: "inherit",
-            cursor: "pointer",
-            userSelect: "none",
-            whiteSpace: "nowrap"
+        children: /*#__PURE__*/_jsx(Card, {
+          sx: {
+            p: "md",
+            ...(api.isSelected(rowId) && {
+              bgcolor: "action.selected"
+            })
           },
-          children: [col_3.headerName, /*#__PURE__*/_jsx(SortArrows, {
-            direction: api.sort?.field === col_3.field ? api.sort.direction : null
-          })]
+          children: renderListItem(row_0)
         })
-      }, col_3.field));
-      $[85] = api;
-      $[86] = t29;
-    } else {
-      t29 = $[86];
-    }
-    if ($[87] !== t28 || $[88] !== t29) {
-      t22 = /*#__PURE__*/_jsx(TableHead, {
-        children: /*#__PURE__*/_jsxs(TableRow, {
-          children: [t28, t29]
-        })
-      });
-      $[87] = t28;
-      $[88] = t29;
-      $[89] = t22;
-    } else {
-      t22 = $[89];
-    }
-    T0 = TableBody;
-    t17 = items.length === 0 ? /*#__PURE__*/_jsx(SkeletonRows, {
-      count: Math.min(api.pagination.pageSize, SKELETON_ROWS),
-      selectable: selectable
-    }) : infiniteScroll ? scroller && (scroller instanceof Window ? /*#__PURE__*/_jsx(WindowRows, {
-      ...rowsProps
-    }) : /*#__PURE__*/_jsx(ElementRows, {
-      scroller: scroller,
-      ...rowsProps
-    })) : items.map((_, index_1) => renderItem(index_1));
-    $[38] = api;
-    $[39] = colSpan;
-    $[40] = fixedWidths;
-    $[41] = hasExplicitWidths;
-    $[42] = infiniteScroll;
-    $[43] = items;
-    $[44] = lockedWidths;
-    $[45] = onRowClick;
-    $[46] = onRowIntent;
-    $[47] = pageScroll;
-    $[48] = rowClass;
-    $[49] = rowHeight;
-    $[50] = scroller;
-    $[51] = selectable;
-    $[52] = stickyHeader;
-    $[53] = stickyTop;
-    $[54] = view;
-    $[55] = T0;
-    $[56] = T1;
-    $[57] = T2;
-    $[58] = t17;
-    $[59] = t18;
-    $[60] = t19;
-    $[61] = t20;
-    $[62] = t21;
-    $[63] = t22;
-    $[64] = t23;
-    $[65] = t24;
-    $[66] = t25;
+      }) : /*#__PURE__*/_jsx(TableCell, {
+        colSpan: colSpan,
+        children: renderListItem(row_0)
+      }) : api.visibleColumns.map(col_1 => /*#__PURE__*/_jsx(TableCell, {
+        align: col_1.align,
+        children: col_1.render ? col_1.render(row_0) : row_0[col_1.field]
+      }, col_1.field))]
+    }, rowId);
+  };
+  const rowsProps = {
+    count: items.length,
+    body: () => containerRef.current?.querySelector("tbody") ?? null,
+    view,
+    snapshot,
+    rowHeight: rowHeight || ESTIMATED_ROW_HEIGHT,
+    colSpan,
+    render: renderItem
+  };
+  const T0 = TableContainer;
+  const t23 = pageScroll ? undefined : "";
+  let t24;
+  if ($[49] !== pageScroll || $[50] !== sideways || $[51] !== stickyTop) {
+    t24 = theme => pageScroll ? {
+      ...(sideways ? {
+        overflowX: "auto",
+        overflowY: "hidden"
+      } : {
+        overflow: "visible"
+      }),
+      scrollMarginTop: stickyTop
+    } : {
+      flex: "1 1 0",
+      minHeight: `calc(${theme.vars.size.row} * 4)`,
+      overflowY: "auto",
+      contain: "size"
+    };
+    $[49] = pageScroll;
+    $[50] = sideways;
+    $[51] = stickyTop;
+    $[52] = t24;
   } else {
-    T0 = $[55];
-    T1 = $[56];
-    T2 = $[57];
-    t17 = $[58];
-    t18 = $[59];
-    t19 = $[60];
-    t20 = $[61];
-    t21 = $[62];
-    t22 = $[63];
-    t23 = $[64];
-    t24 = $[65];
-    t25 = $[66];
+    t24 = $[52];
   }
+  const T1 = Table;
+  const t25 = "small";
   let t26;
-  if ($[90] !== api.hasMore || $[91] !== colSpan || $[92] !== infiniteScroll || $[93] !== scroller || $[94] !== selectable) {
-    t26 = infiniteScroll && api.hasMore && scroller && /*#__PURE__*/_jsx(ScrollEnd, {
-      scroller: scroller,
-      colSpan: colSpan,
-      selectable: selectable
-    });
-    $[90] = api.hasMore;
-    $[91] = colSpan;
-    $[92] = infiniteScroll;
-    $[93] = scroller;
-    $[94] = selectable;
-    $[95] = t26;
+  if ($[53] !== fixedWidths) {
+    t26 = fixedWidths && {
+      tableLayout: "fixed"
+    };
+    $[53] = fixedWidths;
+    $[54] = t26;
   } else {
-    t26 = $[95];
+    t26 = $[54];
   }
   let t27;
-  if ($[96] !== T0 || $[97] !== t17 || $[98] !== t26) {
-    t27 = /*#__PURE__*/_jsxs(T0, {
-      children: [t17, t26]
-    });
-    $[96] = T0;
-    $[97] = t17;
-    $[98] = t26;
-    $[99] = t27;
+  if ($[55] !== narrowBelow || $[56] !== sideways) {
+    t27 = sideways && {
+      minWidth: narrowBelow
+    };
+    $[55] = narrowBelow;
+    $[56] = sideways;
+    $[57] = t27;
   } else {
-    t27 = $[99];
+    t27 = $[57];
   }
   let t28;
-  if ($[100] !== T1 || $[101] !== t18 || $[102] !== t19 || $[103] !== t20 || $[104] !== t21 || $[105] !== t22 || $[106] !== t27) {
-    t28 = /*#__PURE__*/_jsxs(T1, {
-      size: t18,
-      stickyHeader: t19,
-      sx: t20,
-      children: [t21, t22, t27]
-    });
-    $[100] = T1;
-    $[101] = t18;
-    $[102] = t19;
-    $[103] = t20;
-    $[104] = t21;
-    $[105] = t22;
-    $[106] = t27;
-    $[107] = t28;
+  if ($[58] !== stickyTop) {
+    t28 = stickyTop && {
+      "& thead th": {
+        top: stickyTop
+      }
+    };
+    $[58] = stickyTop;
+    $[59] = t28;
   } else {
-    t28 = $[107];
+    t28 = $[59];
   }
   let t29;
-  if ($[108] !== T2 || $[109] !== t23 || $[110] !== t24 || $[111] !== t25 || $[112] !== t28) {
-    t29 = /*#__PURE__*/_jsx(T2, {
-      ref: t23,
-      "data-scroll-root": t24,
-      sx: t25,
-      children: t28
-    });
-    $[108] = T2;
-    $[109] = t23;
-    $[110] = t24;
-    $[111] = t25;
-    $[112] = t28;
-    $[113] = t29;
+  if ($[60] !== t26 || $[61] !== t27 || $[62] !== t28) {
+    t29 = {
+      ...t26,
+      ...t27,
+      ...t28
+    };
+    $[60] = t26;
+    $[61] = t27;
+    $[62] = t28;
+    $[63] = t29;
   } else {
-    t29 = $[113];
+    t29 = $[63];
   }
-  return t29;
+  let t30;
+  if ($[64] !== api.visibleColumns || $[65] !== checkboxes || $[66] !== hasExplicitWidths || $[67] !== list || $[68] !== lockedWidths) {
+    t30 = list ? null : hasExplicitWidths ? /*#__PURE__*/_jsxs("colgroup", {
+      children: [checkboxes && /*#__PURE__*/_jsx("col", {}), api.visibleColumns.map(_temp1)]
+    }) : lockedWidths ? /*#__PURE__*/_jsxs("colgroup", {
+      children: [checkboxes && /*#__PURE__*/_jsx("col", {}), lockedWidths.map(_temp10)]
+    }) : null;
+    $[64] = api.visibleColumns;
+    $[65] = checkboxes;
+    $[66] = hasExplicitWidths;
+    $[67] = list;
+    $[68] = lockedWidths;
+    $[69] = t30;
+  } else {
+    t30 = $[69];
+  }
+  const t31 = drilledGroup?.type === "group" && /*#__PURE__*/_jsx(TableHead, {
+    children: /*#__PURE__*/_jsx(TableRow, {
+      children: /*#__PURE__*/_jsx(TableCell, {
+        variant: "head",
+        colSpan: colSpan,
+        sx: {
+          px: 0,
+          py: "sm",
+          border: "none"
+        },
+        children: /*#__PURE__*/_jsxs(Box, {
+          sx: {
+            display: "flex",
+            alignItems: "center",
+            gap: "sm"
+          },
+          children: [/*#__PURE__*/_jsx(IconButton, {
+            size: "small",
+            edge: "start",
+            "aria-label": "Back",
+            onClick: () => setTrail(trail.slice(0, -1)),
+            children: /*#__PURE__*/_jsx(ChevronLeftIcon, {})
+          }), /*#__PURE__*/_jsx(Typography, {
+            noWrap: true,
+            sx: {
+              flex: 1,
+              minWidth: 0,
+              fontSize: "h5",
+              fontWeight: 600,
+              color: "text.primary",
+              textTransform: "none",
+              letterSpacing: 0
+            },
+            children: drilledGroup.group.label
+          }), !infiniteScroll && api.groupTotal(drilledGroup.id) > api.groupPagination(drilledGroup.id).pageSize ? /*#__PURE__*/_jsx(GroupPager, {
+            groupId: drilledGroup.id,
+            api: api
+          }) : /*#__PURE__*/_jsx(Typography, {
+            sx: {
+              color: "text.secondary",
+              fontVariantNumeric: "tabular-nums",
+              textTransform: "none",
+              letterSpacing: 0,
+              fontWeight: 400
+            },
+            children: drilledGroup.group.count
+          })]
+        })
+      })
+    })
+  });
+  let t32;
+  if ($[70] !== api || $[71] !== checkboxes || $[72] !== list) {
+    t32 = !list && /*#__PURE__*/_jsx(TableHead, {
+      children: /*#__PURE__*/_jsxs(TableRow, {
+        children: [checkboxes && /*#__PURE__*/_jsx(TableCell, {
+          variant: "head",
+          padding: "checkbox",
+          children: /*#__PURE__*/_jsx(Checkbox, {
+            checked: api.allSelected,
+            indeterminate: api.someSelected && !api.allSelected,
+            onChange: () => api.toggleSelectAll(),
+            "aria-label": "Select all rows"
+          })
+        }), api.visibleColumns.map(col_3 => /*#__PURE__*/_jsx(TableCell, {
+          variant: "head",
+          align: col_3.align,
+          sortDirection: api.sort?.field === col_3.field ? api.sort.direction : false,
+          onClick: col_3.sortable === false ? undefined : () => api.toggleSort(col_3.field),
+          sx: col_3.sortable === false ? undefined : {
+            cursor: "pointer",
+            userSelect: "none"
+          },
+          children: col_3.sortable === false ? col_3.headerName : /*#__PURE__*/_jsxs("button", {
+            type: "button",
+            className: "KyroTable-sortButton",
+            style: {
+              display: "flex",
+              width: "100%",
+              alignItems: "center",
+              justifyContent: "space-between",
+              background: "none",
+              border: "none",
+              padding: 0,
+              margin: 0,
+              font: "inherit",
+              textTransform: "inherit",
+              letterSpacing: "inherit",
+              color: "inherit",
+              cursor: "pointer",
+              userSelect: "none",
+              whiteSpace: "nowrap"
+            },
+            children: [col_3.headerName, /*#__PURE__*/_jsx(SortArrows, {
+              direction: api.sort?.field === col_3.field ? api.sort.direction : null
+            })]
+          })
+        }, col_3.field))]
+      })
+    });
+    $[70] = api;
+    $[71] = checkboxes;
+    $[72] = list;
+    $[73] = t32;
+  } else {
+    t32 = $[73];
+  }
+  const T2 = TableBody;
+  const t33 = navigating ? /*#__PURE__*/_jsx(TableRow, {
+    children: /*#__PURE__*/_jsx(TableCell, {
+      colSpan: colSpan,
+      sx: {
+        border: "none",
+        p: 0
+      },
+      children: /*#__PURE__*/_jsx(List, {
+        variant: "grouped",
+        children: items.map(item_4 => item_4.type === "group" && /*#__PURE__*/_jsxs(ListItemButton, {
+          onClick: () => drillInto(item_4.id),
+          children: [selectable && selecting && /*#__PURE__*/_jsx(Box, {
+            component: "span",
+            sx: {
+              display: "inline-flex"
+            },
+            onClick: _temp11,
+            children: /*#__PURE__*/_jsx(Checkbox, {
+              checked: api.groupAllSelected(item_4.id),
+              indeterminate: api.groupSomeSelected(item_4.id) && !api.groupAllSelected(item_4.id),
+              onChange: () => api.toggleSelectGroup(item_4.id),
+              "aria-label": `Select all rows in ${item_4.group.label}`
+            })
+          }), /*#__PURE__*/_jsx(ListItemText, {
+            primary: item_4.group.label
+          }), /*#__PURE__*/_jsx(Typography, {
+            sx: {
+              color: "text.secondary",
+              fontVariantNumeric: "tabular-nums"
+            },
+            children: item_4.group.count
+          }), /*#__PURE__*/_jsx(ChevronRightIcon, {
+            fontSize: "small",
+            sx: {
+              color: "text.disabled",
+              flex: "none"
+            }
+          })]
+        }, item_4.id))
+      })
+    })
+  }) : items.length === 0 ? /*#__PURE__*/_jsx(SkeletonRows, {
+    count: Math.min(api.pagination.pageSize, SKELETON_ROWS),
+    selectable: checkboxes,
+    shape: skeletonShape,
+    colSpan: colSpan
+  }) : infiniteScroll ? scroller && (scroller instanceof Window ? /*#__PURE__*/_jsx(WindowRows, {
+    ...rowsProps
+  }) : /*#__PURE__*/_jsx(ElementRows, {
+    scroller: scroller,
+    ...rowsProps
+  })) : items.map((_, index_1) => renderItem(index_1));
+  let t34;
+  if ($[74] !== checkboxes || $[75] !== colSpan || $[76] !== infiniteScroll || $[77] !== items || $[78] !== more || $[79] !== scroller || $[80] !== skeletonShape) {
+    t34 = infiniteScroll && more.has && scroller && /*#__PURE__*/_jsx(ScrollEnd, {
+      scroller: scroller,
+      colSpan: colSpan,
+      load: more.load,
+      loading: more.loading,
+      count: items.length,
+      placeholder: /*#__PURE__*/_jsx(SkeletonRows, {
+        count: LOADING_MORE_ROWS,
+        selectable: checkboxes,
+        shape: skeletonShape,
+        colSpan: colSpan
+      })
+    });
+    $[74] = checkboxes;
+    $[75] = colSpan;
+    $[76] = infiniteScroll;
+    $[77] = items;
+    $[78] = more;
+    $[79] = scroller;
+    $[80] = skeletonShape;
+    $[81] = t34;
+  } else {
+    t34 = $[81];
+  }
+  let t35;
+  if ($[82] !== T2 || $[83] !== t33 || $[84] !== t34) {
+    t35 = /*#__PURE__*/_jsxs(T2, {
+      children: [t33, t34]
+    });
+    $[82] = T2;
+    $[83] = t33;
+    $[84] = t34;
+    $[85] = t35;
+  } else {
+    t35 = $[85];
+  }
+  let t36;
+  if ($[86] !== T1 || $[87] !== stickyHeader || $[88] !== t29 || $[89] !== t30 || $[90] !== t31 || $[91] !== t32 || $[92] !== t35) {
+    t36 = /*#__PURE__*/_jsxs(T1, {
+      size: t25,
+      stickyHeader: stickyHeader,
+      sx: t29,
+      children: [t30, t31, t32, t35]
+    });
+    $[86] = T1;
+    $[87] = stickyHeader;
+    $[88] = t29;
+    $[89] = t30;
+    $[90] = t31;
+    $[91] = t32;
+    $[92] = t35;
+    $[93] = t36;
+  } else {
+    t36 = $[93];
+  }
+  let t37;
+  if ($[94] !== T0 || $[95] !== t23 || $[96] !== t24 || $[97] !== t36) {
+    t37 = /*#__PURE__*/_jsx(T0, {
+      ref: containerRef,
+      "data-scroll-root": t23,
+      sx: t24,
+      children: t36
+    });
+    $[94] = T0;
+    $[95] = t23;
+    $[96] = t24;
+    $[97] = t36;
+    $[98] = t37;
+  } else {
+    t37 = $[98];
+  }
+  return t37;
 }
-function _temp9(width, index_0) {
+function _temp11(e_1) {
+  return e_1.stopPropagation();
+}
+function _temp10(width, index_0) {
   return /*#__PURE__*/_jsx("col", {
     style: {
       width
     }
   }, index_0);
 }
-function _temp8(col_2) {
+function _temp1(col_2) {
   return /*#__PURE__*/_jsx("col", {
     style: col_2.width ? {
       width: col_2.width
     } : undefined
   }, col_2.field);
 }
-function _temp7(e_0) {
+function _temp0(e_0) {
   return e_0.stopPropagation();
 }
-function _temp6(e) {
+function _temp9(event_1) {
+  return event_1.preventDefault();
+}
+function _temp8(e) {
   return e.stopPropagation();
 }
-function _temp5(row) {
+function _temp7(row) {
   return row.getBoundingClientRect().height;
+}
+function _temp6(item_2) {
+  return item_2.type === "group";
+}
+function _temp5(item) {
+  return item.type === "group" ? [item.id] : [];
 }
 function _temp4() {
   return {
@@ -1128,10 +1364,12 @@ function Spacer(t0) {
   return t2;
 }
 function SkeletonRows(t0) {
-  const $ = _c(9);
+  const $ = _c(16);
   const {
     count,
-    selectable
+    selectable,
+    shape,
+    colSpan
   } = t0;
   const api = useDataTableContext();
   const [shown, setShown] = useState(false);
@@ -1154,34 +1392,100 @@ function SkeletonRows(t0) {
     return null;
   }
   let t3;
-  if ($[2] !== api || $[3] !== count || $[4] !== selectable) {
-    let t4;
-    if ($[6] !== api || $[7] !== selectable) {
-      t4 = (_, index) => /*#__PURE__*/_jsxs(TableRow, {
-        className: "KyroTable-skeletonRow",
-        children: [selectable && /*#__PURE__*/_jsx(TableCell, {
-          padding: "checkbox"
-        }), api.visibleColumns.map(_temp0)]
-      }, `skeleton-${index}`);
-      $[6] = api;
-      $[7] = selectable;
-      $[8] = t4;
-    } else {
-      t4 = $[8];
-    }
-    t3 = Array.from({
-      length: count
-    }, t4);
-    $[2] = api;
-    $[3] = count;
-    $[4] = selectable;
-    $[5] = t3;
+  if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+    t3 = {
+      display: "flex",
+      flexDirection: "column",
+      gap: "sm",
+      py: "xs"
+    };
+    $[2] = t3;
   } else {
-    t3 = $[5];
+    t3 = $[2];
   }
-  return t3;
+  let t4;
+  if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
+    t4 = /*#__PURE__*/_jsx(Skeleton, {
+      variant: "rounded",
+      sx: {
+        width: "55%",
+        height: 14,
+        borderRadius: "pill"
+      }
+    });
+    $[3] = t4;
+  } else {
+    t4 = $[3];
+  }
+  let t5;
+  if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
+    t5 = /*#__PURE__*/_jsxs(Box, {
+      sx: t3,
+      children: [t4, /*#__PURE__*/_jsx(Skeleton, {
+        variant: "rounded",
+        sx: {
+          width: "35%",
+          height: 10,
+          borderRadius: "pill"
+        }
+      })]
+    });
+    $[4] = t5;
+  } else {
+    t5 = $[4];
+  }
+  const lines = t5;
+  let t6;
+  if ($[5] !== api || $[6] !== colSpan || $[7] !== count || $[8] !== selectable || $[9] !== shape) {
+    let t7;
+    if ($[11] !== api || $[12] !== colSpan || $[13] !== selectable || $[14] !== shape) {
+      t7 = (_, index) => /*#__PURE__*/_jsx(TableRow, {
+        className: "KyroTable-skeletonRow",
+        children: shape === "cards" ? /*#__PURE__*/_jsx(TableCell, {
+          colSpan: colSpan,
+          sx: {
+            border: "none",
+            px: 0,
+            py: "xs"
+          },
+          children: /*#__PURE__*/_jsx(Card, {
+            sx: {
+              p: "md"
+            },
+            children: lines
+          })
+        }) : shape === "list" ? /*#__PURE__*/_jsx(TableCell, {
+          colSpan: colSpan,
+          children: lines
+        }) : /*#__PURE__*/_jsxs(_Fragment, {
+          children: [selectable && /*#__PURE__*/_jsx(TableCell, {
+            padding: "checkbox"
+          }), api.visibleColumns.map(_temp12)]
+        })
+      }, `skeleton-${index}`);
+      $[11] = api;
+      $[12] = colSpan;
+      $[13] = selectable;
+      $[14] = shape;
+      $[15] = t7;
+    } else {
+      t7 = $[15];
+    }
+    t6 = Array.from({
+      length: count
+    }, t7);
+    $[5] = api;
+    $[6] = colSpan;
+    $[7] = count;
+    $[8] = selectable;
+    $[9] = shape;
+    $[10] = t6;
+  } else {
+    t6 = $[10];
+  }
+  return t6;
 }
-function _temp0(col) {
+function _temp12(col) {
   return /*#__PURE__*/_jsx(TableCell, {
     align: col.align,
     children: /*#__PURE__*/_jsx(Skeleton, {
@@ -1197,22 +1501,19 @@ function _temp0(col) {
   }, col.field);
 }
 function ScrollEnd(t0) {
-  const $ = _c(20);
+  const $ = _c(16);
   const {
     scroller,
     colSpan,
-    selectable
+    load,
+    loading,
+    count,
+    placeholder
   } = t0;
-  const api = useDataTableContext();
   const marker = useRef(null);
   const [reached, setReached] = useState(false);
-  const {
-    loadMore,
-    loadingMore,
-    rows
-  } = api;
   let t1;
-  if ($[0] !== loadMore || $[1] !== scroller) {
+  if ($[0] !== load || $[1] !== scroller) {
     t1 = () => {
       const node = marker.current;
       if (!node) {
@@ -1220,7 +1521,7 @@ function ScrollEnd(t0) {
       }
       const observer = new IntersectionObserver(t2 => {
         const [entry] = t2;
-        return entry?.isIntersecting && loadMore();
+        return entry?.isIntersecting && load();
       }, {
         root: scroller instanceof Window ? null : scroller,
         rootMargin: `0px 0px ${rectOf(scroller).height}px 0px`
@@ -1228,17 +1529,17 @@ function ScrollEnd(t0) {
       observer.observe(node);
       return () => observer.disconnect();
     };
-    $[0] = loadMore;
+    $[0] = load;
     $[1] = scroller;
     $[2] = t1;
   } else {
     t1 = $[2];
   }
   let t2;
-  if ($[3] !== loadMore || $[4] !== rows.length || $[5] !== scroller) {
-    t2 = [loadMore, rows.length, scroller];
-    $[3] = loadMore;
-    $[4] = rows.length;
+  if ($[3] !== count || $[4] !== load || $[5] !== scroller) {
+    t2 = [load, count, scroller];
+    $[3] = count;
+    $[4] = load;
     $[5] = scroller;
     $[6] = t2;
   } else {
@@ -1297,29 +1598,17 @@ function ScrollEnd(t0) {
   } else {
     t6 = $[12];
   }
-  let t7;
-  if ($[13] !== loadingMore || $[14] !== reached || $[15] !== selectable) {
-    t7 = reached && loadingMore && /*#__PURE__*/_jsx(SkeletonRows, {
-      count: LOADING_MORE_ROWS,
-      selectable: selectable
-    });
-    $[13] = loadingMore;
-    $[14] = reached;
-    $[15] = selectable;
-    $[16] = t7;
-  } else {
-    t7 = $[16];
-  }
+  const t7 = reached && loading && placeholder;
   let t8;
-  if ($[17] !== t6 || $[18] !== t7) {
+  if ($[13] !== t6 || $[14] !== t7) {
     t8 = /*#__PURE__*/_jsxs(_Fragment, {
       children: [t6, t7]
     });
-    $[17] = t6;
-    $[18] = t7;
-    $[19] = t8;
+    $[13] = t6;
+    $[14] = t7;
+    $[15] = t8;
   } else {
-    t8 = $[19];
+    t8 = $[15];
   }
   return t8;
 }
