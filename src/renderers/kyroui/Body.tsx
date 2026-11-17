@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent, type MouseEvent, type PointerEvent, type ReactNode, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FocusEvent, type MouseEvent, type PointerEvent, type ReactNode, type RefObject } from 'react'
 import { useVirtualizer, useWindowVirtualizer, type Rect, type VirtualItem, type Virtualizer } from '@tanstack/react-virtual'
 import {
   Box, Button, Card, Checkbox, IconButton, List, ListItemButton, ListItemText, Skeleton, SvgIcon, Table, TableBody,
@@ -95,6 +95,7 @@ const SKELETON_ROWS = 10
 const LOADING_MORE_ROWS = 3
 const ESTIMATED_ROW_HEIGHT = 41
 const OVERSCAN = 10
+const PREFETCH_SCREENS = 3
 const ROW_INTENT_DELAY = 80
 const SKELETON_DELAY = 150
 const HOLD_DELAY = 500
@@ -591,7 +592,7 @@ export function DataTableBody<Row>({
               </TableCell>
             </TableRow>
           ) : items.length === 0 ? (
-            <SkeletonRows count={Math.min(api.pagination.pageSize, SKELETON_ROWS)} selectable={checkboxes} shape={skeletonShape} colSpan={colSpan} />
+            <SkeletonRows count={Math.min(api.pagination.pageSize, SKELETON_ROWS)} selectable={checkboxes} shape={skeletonShape} colSpan={colSpan} delay={SKELETON_DELAY} />
           ) : (
             infiniteScroll ? (
               scroller && (
@@ -612,7 +613,7 @@ export function DataTableBody<Row>({
               load={more.load}
               loading={more.loading}
               count={items.length}
-              placeholder={<SkeletonRows count={LOADING_MORE_ROWS} selectable={checkboxes} shape={skeletonShape} colSpan={colSpan} />}
+              placeholder={<SkeletonRows count={LOADING_MORE_ROWS} selectable={checkboxes} shape={skeletonShape} colSpan={colSpan} delay={0} />}
             />
           )}
         </TableBody>
@@ -648,7 +649,7 @@ const virtualOptions = (props: RowsProps, scroller: Scroller, margin: number) =>
   initialRect: props.view?.rect ?? rectOf(scroller),
   initialMeasurementsCache: props.view?.rows,
   estimateSize: () => props.rowHeight,
-  overscan: OVERSCAN,
+  overscan: Math.max(OVERSCAN, Math.ceil(rectOf(scroller).height / props.rowHeight)),
   scrollMargin: margin,
 })
 
@@ -670,13 +671,17 @@ function WindowRows(props: RowsProps) {
 function Windowed({ virtualizer, margin, snapshot, colSpan, render }: RowsProps & { virtualizer: Windowing; margin: number }) {
   'use no memo'
   snapshot.current = () => ({ rows: virtualizer.takeSnapshot(), margin })
+  const drawn = useMemo(() => new Map<number, ReactNode>(), [render])
   const windowed = virtualizer.getVirtualItems()
   const above = windowed.length ? windowed[0]!.start - margin : 0
   const below = virtualizer.getTotalSize() - (windowed.length ? windowed.at(-1)!.end - margin : 0)
+  const shown = new Set(windowed.map((entry) => entry.index))
+  for (const index of drawn.keys()) if (!shown.has(index)) drawn.delete(index)
+  for (const index of shown) if (!drawn.has(index)) drawn.set(index, render(index, virtualizer.measureElement))
   return (
     <>
       {above > 0 && <Spacer height={above} colSpan={colSpan} />}
-      {windowed.map((entry) => render(entry.index, virtualizer.measureElement))}
+      {windowed.map((entry) => drawn.get(entry.index))}
       {below > 0 && <Spacer height={below} colSpan={colSpan} />}
     </>
   )
@@ -692,14 +697,14 @@ function Spacer({ height, colSpan }: { height: number; colSpan: number }) {
 
 type SkeletonShape = 'table' | 'list' | 'cards'
 
-function SkeletonRows({ count, selectable, shape, colSpan }: { count: number; selectable: boolean; shape: SkeletonShape; colSpan: number }) {
+function SkeletonRows({ count, selectable, shape, colSpan, delay }: { count: number; selectable: boolean; shape: SkeletonShape; colSpan: number; delay: number }) {
   const api = useDataTableContext()
-  const [shown, setShown] = useState(false)
+  const [shown, setShown] = useState(delay === 0)
 
   useEffect(() => {
-    const timer = setTimeout(() => setShown(true), SKELETON_DELAY)
+    const timer = setTimeout(() => setShown(true), delay)
     return () => clearTimeout(timer)
-  }, [])
+  }, [delay])
 
   if (!shown) return null
   const lines = (
@@ -750,8 +755,8 @@ function ScrollEnd({ scroller, colSpan, load, loading, count, placeholder }: Scr
     const node = marker.current
     if (!node) return
     const observer = new IntersectionObserver(([entry]) => entry?.isIntersecting && load(), {
-      root: scroller instanceof Window ? null : scroller,
-      rootMargin: `0px 0px ${rectOf(scroller).height}px 0px`,
+      root: scroller instanceof Window ? scroller.document : scroller,
+      rootMargin: `0px 0px ${rectOf(scroller).height * PREFETCH_SCREENS}px 0px`,
     })
     observer.observe(node)
     return () => observer.disconnect()
@@ -761,7 +766,7 @@ function ScrollEnd({ scroller, colSpan, load, loading, count, placeholder }: Scr
     const node = marker.current
     if (!node) return
     const observer = new IntersectionObserver(([entry]) => setReached(Boolean(entry?.isIntersecting)), {
-      root: scroller instanceof Window ? null : scroller,
+      root: scroller instanceof Window ? scroller.document : scroller,
     })
     observer.observe(node)
     return () => observer.disconnect()
