@@ -92,7 +92,6 @@ function GroupPager({ groupId, api }: { groupId: string; api: DataTableApi<unkno
 }
 
 const SKELETON_ROWS = 10
-const LOADING_MORE_ROWS = 3
 const ESTIMATED_ROW_HEIGHT = 41
 const OVERSCAN = 10
 const PREFETCH_SCREENS = 3
@@ -289,7 +288,8 @@ export function DataTableBody<Row>({
     else if (passed) container.scrollIntoView({ block: 'start', behavior: 'instant' })
     return () => {
       if (viewKey === null) return
-      views.set(viewKey, { top: offsetOf(target), rect: rectOf(target), ...snapshot.current() })
+      const saved = snapshot.current()
+      views.set(viewKey, { ...saved, top: saved.top ?? offsetOf(target), rect: rectOf(target) })
     }
   }, [api.listKey, api.groupBy, drilled])
 
@@ -306,6 +306,7 @@ export function DataTableBody<Row>({
   })
 
   const fixedWidths = hasExplicitWidths || lockedWidths !== null
+  const estimate = rowHeight || ESTIMATED_ROW_HEIGHT
 
   // An empty message describes a finished result, so it never stands in for one still loading:
   // a list with rows keeps them while the next page arrives, an empty one shows placeholders.
@@ -402,7 +403,7 @@ export function DataTableBody<Row>({
     body: () => containerRef.current?.querySelector('tbody') ?? null,
     view,
     snapshot,
-    rowHeight: rowHeight || ESTIMATED_ROW_HEIGHT,
+    rowHeight: estimate,
     onRowSize: (size) => setRowHeight((tallest) => Math.max(tallest, size)),
     colSpan,
     render: renderItem,
@@ -559,7 +560,7 @@ export function DataTableBody<Row>({
               scroller={scroller}
               colSpan={colSpan}
               load={more.load}
-              rowHeight={rowHeight || ESTIMATED_ROW_HEIGHT}
+              rowHeight={estimate}
               count={items.length}
               placeholder={(count) => !api.error && <SkeletonRows count={count} selectable={checkboxes} shape={skeletonShape} colSpan={colSpan} delay={0} />}
             />
@@ -601,7 +602,7 @@ const virtualOptions = (props: RowsProps, scroller: Scroller, frame: Frame) => (
   scrollMargin: frame.margin,
   measureElement: (...args: Parameters<typeof measureElement<Element>>) => {
     const size = measureElement(...args)
-    props.onRowSize(size)
+    if (size > props.rowHeight) props.onRowSize(size)
     return size
   },
 })
@@ -630,8 +631,7 @@ interface WindowedProps extends RowsProps {
 /** Only the rows in view, plus a margin, are in the document; spacer rows stand in for the rest so the scrollbar stays true. */
 function Windowed({ virtualizer, scroller, frame, setFrame, body, snapshot, colSpan, render }: WindowedProps) {
   'use no memo'
-  const margin = frame.margin
-  snapshot.current = () => ({ rows: virtualizer.takeSnapshot(), margin, top: virtualizer.scrollOffset ?? 0 })
+  snapshot.current = () => ({ rows: virtualizer.takeSnapshot(), margin: frame.margin, top: virtualizer.scrollOffset ?? 0 })
 
   useLayoutEffect(() => {
     const node = body()
@@ -641,8 +641,8 @@ function Windowed({ virtualizer, scroller, frame, setFrame, body, snapshot, colS
   })
 
   const windowed = virtualizer.getVirtualItems()
-  const above = windowed.length ? windowed[0]!.start - margin : 0
-  const below = virtualizer.getTotalSize() - (windowed.length ? windowed.at(-1)!.end - margin : 0)
+  const above = windowed.length ? windowed[0]!.start - frame.margin : 0
+  const below = virtualizer.getTotalSize() - (windowed.length ? windowed.at(-1)!.end - frame.margin : 0)
   return (
     <>
       {above > 0 && <Spacer height={above} colSpan={colSpan} />}
@@ -863,7 +863,7 @@ function ScrollEnd({ scroller, colSpan, load, rowHeight, count, placeholder }: S
       <tr ref={marker} aria-hidden="true">
         <td colSpan={colSpan} style={{ padding: 0, height: 1, border: 0 }} />
       </tr>
-      {placeholder(Math.max(LOADING_MORE_ROWS, Math.ceil(screen / rowHeight)))}
+      {placeholder(Math.ceil(screen / rowHeight))}
     </>
   )
 }

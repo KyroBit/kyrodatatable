@@ -275,7 +275,6 @@ function _temp(e) {
   return e.stopPropagation();
 }
 const SKELETON_ROWS = 10;
-const LOADING_MORE_ROWS = 3;
 const ESTIMATED_ROW_HEIGHT = 41;
 const OVERSCAN = 10;
 const PREFETCH_SCREENS = 3;
@@ -595,10 +594,11 @@ export function DataTableBody(t0) {
         if (viewKey === null) {
           return;
         }
+        const saved = snapshot.current();
         views.set(viewKey, {
-          top: offsetOf(target),
-          rect: rectOf(target),
-          ...snapshot.current()
+          ...saved,
+          top: saved.top ?? offsetOf(target),
+          rect: rectOf(target)
         });
       };
     };
@@ -639,6 +639,7 @@ export function DataTableBody(t0) {
   }
   useLayoutEffect(t26);
   const fixedWidths = hasExplicitWidths || lockedWidths !== null;
+  const estimate = rowHeight || ESTIMATED_ROW_HEIGHT;
   if (empty) {
     let t27;
     if ($[57] !== api.filters || $[58] !== api.search) {
@@ -835,7 +836,7 @@ export function DataTableBody(t0) {
     body: () => containerRef.current?.querySelector("tbody") ?? null,
     view,
     snapshot,
-    rowHeight: rowHeight || ESTIMATED_ROW_HEIGHT,
+    rowHeight: estimate,
     onRowSize: t27,
     colSpan,
     render: renderItem
@@ -1095,12 +1096,12 @@ export function DataTableBody(t0) {
     ...rowsProps
   })) : items.map((_, index_1) => renderItem(index_1));
   let t39;
-  if ($[99] !== api.error || $[100] !== checkboxes || $[101] !== colSpan || $[102] !== infiniteScroll || $[103] !== items || $[104] !== more || $[105] !== rowHeight || $[106] !== scroller || $[107] !== skeletonShape) {
+  if ($[99] !== api.error || $[100] !== checkboxes || $[101] !== colSpan || $[102] !== estimate || $[103] !== infiniteScroll || $[104] !== items || $[105] !== more || $[106] !== scroller || $[107] !== skeletonShape) {
     t39 = infiniteScroll && more.has && scroller && /*#__PURE__*/_jsx(ScrollEnd, {
       scroller: scroller,
       colSpan: colSpan,
       load: more.load,
-      rowHeight: rowHeight || ESTIMATED_ROW_HEIGHT,
+      rowHeight: estimate,
       count: items.length,
       placeholder: count => !api.error && /*#__PURE__*/_jsx(SkeletonRows, {
         count: count,
@@ -1113,10 +1114,10 @@ export function DataTableBody(t0) {
     $[99] = api.error;
     $[100] = checkboxes;
     $[101] = colSpan;
-    $[102] = infiniteScroll;
-    $[103] = items;
-    $[104] = more;
-    $[105] = rowHeight;
+    $[102] = estimate;
+    $[103] = infiniteScroll;
+    $[104] = items;
+    $[105] = more;
     $[106] = scroller;
     $[107] = skeletonShape;
     $[108] = t39;
@@ -1224,7 +1225,7 @@ const virtualOptions = (props, scroller, frame) => ({
   scrollMargin: frame.margin,
   measureElement: (...args) => {
     const size = measureElement(...args);
-    props.onRowSize(size);
+    if (size > props.rowHeight) props.onRowSize(size);
     return size;
   }
 });
@@ -1273,10 +1274,9 @@ function Windowed({
 }) {
   'use no memo';
 
-  const margin = frame.margin;
   snapshot.current = () => ({
     rows: virtualizer.takeSnapshot(),
-    margin,
+    margin: frame.margin,
     top: virtualizer.scrollOffset ?? 0
   });
   useLayoutEffect(() => {
@@ -1289,8 +1289,8 @@ function Windowed({
     if (Math.abs(next.margin - frame.margin) > 0.5 || next.rect.height !== frame.rect.height) setFrame(next);
   });
   const windowed = virtualizer.getVirtualItems();
-  const above = windowed.length ? windowed[0].start - margin : 0;
-  const below = virtualizer.getTotalSize() - (windowed.length ? windowed.at(-1).end - margin : 0);
+  const above = windowed.length ? windowed[0].start - frame.margin : 0;
+  const below = virtualizer.getTotalSize() - (windowed.length ? windowed.at(-1).end - frame.margin : 0);
   return /*#__PURE__*/_jsxs(_Fragment, {
     children: [above > 0 && /*#__PURE__*/_jsx(Spacer, {
       height: above,
@@ -1841,7 +1841,7 @@ function ScrollEnd(t0) {
   } else {
     t5 = $[13];
   }
-  const t6 = Math.max(LOADING_MORE_ROWS, Math.ceil(screen / rowHeight));
+  const t6 = Math.ceil(screen / rowHeight);
   let t7;
   if ($[14] !== placeholder || $[15] !== t6) {
     t7 = placeholder(t6);
