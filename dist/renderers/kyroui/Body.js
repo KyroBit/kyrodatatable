@@ -1,6 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useVirtualizer, useWindowVirtualizer } from '@tanstack/react-virtual';
+import { measureElement, useVirtualizer, useWindowVirtualizer } from '@tanstack/react-virtual';
 import { Box, Button, Card, Checkbox, IconButton, List, ListItemButton, ListItemText, Skeleton, SvgIcon, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useTheme } from '@kyrobit/kyroui';
 import { useDataTableContext, useDrillTrail, useSelectMode } from './context.js';
 import { ChevronLeftIcon, ChevronRightIcon, ExpandMoreIcon } from './icons.js';
@@ -301,7 +301,7 @@ const rectOf = scroller => scroller instanceof Window ? {
 const marginOf = (node, scroller) => node.getBoundingClientRect().top + offsetOf(scroller) - (scroller instanceof Window ? 0 : scroller.getBoundingClientRect().top + scroller.clientTop);
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
 export function DataTableBody(t0) {
-  const $ = _c(124);
+  const $ = _c(126);
   const {
     onRowClick,
     onRowIntent,
@@ -611,18 +611,13 @@ export function DataTableBody(t0) {
   }
   useLayoutEffect(t25, [api.listKey, api.groupBy, drilled]);
   let t26;
-  if ($[50] !== checkboxes || $[51] !== columnsKey || $[52] !== hasExplicitWidths || $[53] !== list || $[54] !== lockedWidths || $[55] !== rowHeight || $[56] !== sideways) {
+  if ($[50] !== checkboxes || $[51] !== columnsKey || $[52] !== hasExplicitWidths || $[53] !== list || $[54] !== lockedWidths || $[55] !== sideways) {
     t26 = () => {
       const container_2 = containerRef.current;
       if (!container_2) {
         return;
       }
-      const rows = Array.from(container_2.querySelectorAll("tbody tr[data-row]"));
-      const tallest = Math.max(0, ...rows.map(_temp7));
-      if (tallest > rowHeight) {
-        setRowHeight(tallest);
-      }
-      if (list || sideways || hasExplicitWidths || lockedWidths || !rows.length) {
+      if (list || sideways || hasExplicitWidths || lockedWidths || !container_2.querySelector("tbody tr[data-row]")) {
         return;
       }
       const table = container_2.querySelector("table").getBoundingClientRect().width;
@@ -637,27 +632,26 @@ export function DataTableBody(t0) {
     $[52] = hasExplicitWidths;
     $[53] = list;
     $[54] = lockedWidths;
-    $[55] = rowHeight;
-    $[56] = sideways;
-    $[57] = t26;
+    $[55] = sideways;
+    $[56] = t26;
   } else {
-    t26 = $[57];
+    t26 = $[56];
   }
   useLayoutEffect(t26);
   const fixedWidths = hasExplicitWidths || lockedWidths !== null;
   if (empty) {
     let t27;
-    if ($[58] !== api.filters || $[59] !== api.search) {
+    if ($[57] !== api.filters || $[58] !== api.search) {
       t27 = Boolean(api.search) || countFilterValues(api.filters ?? {}) > 0;
-      $[58] = api.filters;
-      $[59] = api.search;
-      $[60] = t27;
+      $[57] = api.filters;
+      $[58] = api.search;
+      $[59] = t27;
     } else {
-      t27 = $[60];
+      t27 = $[59];
     }
     const filtered = t27;
     let t28;
-    if ($[61] !== api || $[62] !== emptyMessage || $[63] !== errorMessage || $[64] !== filtered || $[65] !== noResultsMessage) {
+    if ($[60] !== api || $[61] !== emptyMessage || $[62] !== errorMessage || $[63] !== filtered || $[64] !== noResultsMessage) {
       t28 = api.error ? errorMessage ?? /*#__PURE__*/_jsxs(Box, {
         sx: {
           display: "flex",
@@ -677,28 +671,28 @@ export function DataTableBody(t0) {
           children: "Try again"
         })]
       }) : filtered ? noResultsMessage : emptyMessage;
-      $[61] = api;
-      $[62] = emptyMessage;
-      $[63] = errorMessage;
-      $[64] = filtered;
-      $[65] = noResultsMessage;
-      $[66] = t28;
+      $[60] = api;
+      $[61] = emptyMessage;
+      $[62] = errorMessage;
+      $[63] = filtered;
+      $[64] = noResultsMessage;
+      $[65] = t28;
     } else {
-      t28 = $[66];
+      t28 = $[65];
     }
     const message = t28;
     let t29;
-    if ($[67] === Symbol.for("react.memo_cache_sentinel")) {
+    if ($[66] === Symbol.for("react.memo_cache_sentinel")) {
       t29 = {
         flex: 1,
         py: "xl"
       };
-      $[67] = t29;
+      $[66] = t29;
     } else {
-      t29 = $[67];
+      t29 = $[66];
     }
     let t30;
-    if ($[68] !== message) {
+    if ($[67] !== message) {
       t30 = typeof message === "string" ? /*#__PURE__*/_jsx(Typography, {
         sx: {
           color: "text.secondary",
@@ -707,22 +701,22 @@ export function DataTableBody(t0) {
         },
         children: message
       }) : message;
-      $[68] = message;
-      $[69] = t30;
+      $[67] = message;
+      $[68] = t30;
     } else {
-      t30 = $[69];
+      t30 = $[68];
     }
     let t31;
-    if ($[70] !== t30) {
+    if ($[69] !== t30) {
       t31 = /*#__PURE__*/_jsx(Box, {
         className: "KyroTable-empty",
         sx: t29,
         children: t30
       });
-      $[70] = t30;
-      $[71] = t31;
+      $[69] = t30;
+      $[70] = t31;
     } else {
-      t31 = $[71];
+      t31 = $[70];
     }
     return t31;
   }
@@ -774,7 +768,7 @@ export function DataTableBody(t0) {
                 sx: {
                   display: "inline-flex"
                 },
-                onClick: _temp8,
+                onClick: _temp7,
                 children: /*#__PURE__*/_jsx(Checkbox, {
                   checked: api.groupAllSelected(item_3.id),
                   indeterminate: api.groupSomeSelected(item_3.id) && !api.groupAllSelected(item_3.id),
@@ -829,20 +823,28 @@ export function DataTableBody(t0) {
       look: look
     }, rowId);
   };
+  let t27;
+  if ($[71] === Symbol.for("react.memo_cache_sentinel")) {
+    t27 = size => setRowHeight(tallest => Math.max(tallest, size));
+    $[71] = t27;
+  } else {
+    t27 = $[71];
+  }
   const rowsProps = {
     count: items.length,
     body: () => containerRef.current?.querySelector("tbody") ?? null,
     view,
     snapshot,
     rowHeight: rowHeight || ESTIMATED_ROW_HEIGHT,
+    onRowSize: t27,
     colSpan,
     render: renderItem
   };
   const T0 = TableContainer;
-  const t27 = pageScroll ? undefined : "";
-  let t28;
+  const t28 = pageScroll ? undefined : "";
+  let t29;
   if ($[72] !== pageScroll || $[73] !== sideways || $[74] !== stickyTop) {
-    t28 = theme => pageScroll ? {
+    t29 = theme => pageScroll ? {
       ...(sideways ? {
         overflowX: "auto",
         overflowY: "hidden"
@@ -859,67 +861,67 @@ export function DataTableBody(t0) {
     $[72] = pageScroll;
     $[73] = sideways;
     $[74] = stickyTop;
-    $[75] = t28;
+    $[75] = t29;
   } else {
-    t28 = $[75];
+    t29 = $[75];
   }
   const T1 = Table;
-  const t29 = "small";
-  let t30;
+  const t30 = "small";
+  let t31;
   if ($[76] !== fixedWidths || $[77] !== sideways) {
-    t30 = fixedWidths && !sideways && {
+    t31 = fixedWidths && !sideways && {
       tableLayout: "fixed"
     };
     $[76] = fixedWidths;
     $[77] = sideways;
-    $[78] = t30;
+    $[78] = t31;
   } else {
-    t30 = $[78];
+    t31 = $[78];
   }
-  let t31;
+  let t32;
   if ($[79] !== sideways) {
-    t31 = sideways && {
+    t32 = sideways && {
       width: "max-content",
       minWidth: "100%"
     };
     $[79] = sideways;
-    $[80] = t31;
+    $[80] = t32;
   } else {
-    t31 = $[80];
+    t32 = $[80];
   }
-  let t32;
+  let t33;
   if ($[81] !== sideways || $[82] !== stickyTop) {
-    t32 = stickyTop && !sideways && {
+    t33 = stickyTop && !sideways && {
       "& thead th": {
         top: stickyTop
       }
     };
     $[81] = sideways;
     $[82] = stickyTop;
-    $[83] = t32;
+    $[83] = t33;
   } else {
-    t32 = $[83];
-  }
-  let t33;
-  if ($[84] !== t30 || $[85] !== t31 || $[86] !== t32) {
-    t33 = {
-      ...t30,
-      ...t31,
-      ...t32
-    };
-    $[84] = t30;
-    $[85] = t31;
-    $[86] = t32;
-    $[87] = t33;
-  } else {
-    t33 = $[87];
+    t33 = $[83];
   }
   let t34;
+  if ($[84] !== t31 || $[85] !== t32 || $[86] !== t33) {
+    t34 = {
+      ...t31,
+      ...t32,
+      ...t33
+    };
+    $[84] = t31;
+    $[85] = t32;
+    $[86] = t33;
+    $[87] = t34;
+  } else {
+    t34 = $[87];
+  }
+  let t35;
   if ($[88] !== api.visibleColumns || $[89] !== checkboxes || $[90] !== hasExplicitWidths || $[91] !== list || $[92] !== lockedWidths || $[93] !== sideways) {
-    t34 = list || sideways ? null : hasExplicitWidths ? /*#__PURE__*/_jsxs("colgroup", {
-      children: [checkboxes && /*#__PURE__*/_jsx("col", {}), api.visibleColumns.map(_temp9)]
+    t35 = list || sideways ? null : hasExplicitWidths ? /*#__PURE__*/_jsxs("colgroup", {
+      children: [checkboxes && /*#__PURE__*/_jsx("col", {}), api.visibleColumns.map(_temp8)]
     }) : lockedWidths ? /*#__PURE__*/_jsxs("colgroup", {
-      children: [checkboxes && /*#__PURE__*/_jsx("col", {}), lockedWidths.map(_temp0)]
+      children: [checkboxes && /*#__PURE__*/_jsx("col", {}), lockedWidths.map(_temp9)]
     }) : null;
     $[88] = api.visibleColumns;
     $[89] = checkboxes;
@@ -927,11 +929,11 @@ export function DataTableBody(t0) {
     $[91] = list;
     $[92] = lockedWidths;
     $[93] = sideways;
-    $[94] = t34;
+    $[94] = t35;
   } else {
-    t34 = $[94];
+    t35 = $[94];
   }
-  const t35 = drilledGroup?.type === "group" && /*#__PURE__*/_jsx(TableHead, {
+  const t36 = drilledGroup?.type === "group" && /*#__PURE__*/_jsx(TableHead, {
     children: /*#__PURE__*/_jsx(TableRow, {
       children: /*#__PURE__*/_jsx(TableCell, {
         variant: "head",
@@ -982,9 +984,9 @@ export function DataTableBody(t0) {
       })
     })
   });
-  let t36;
+  let t37;
   if ($[95] !== api || $[96] !== checkboxes || $[97] !== list) {
-    t36 = !list && /*#__PURE__*/_jsx(TableHead, {
+    t37 = !list && /*#__PURE__*/_jsx(TableHead, {
       children: /*#__PURE__*/_jsxs(TableRow, {
         children: [checkboxes && /*#__PURE__*/_jsx(TableCell, {
           variant: "head",
@@ -1034,12 +1036,12 @@ export function DataTableBody(t0) {
     $[95] = api;
     $[96] = checkboxes;
     $[97] = list;
-    $[98] = t36;
+    $[98] = t37;
   } else {
-    t36 = $[98];
+    t37 = $[98];
   }
   const T2 = TableBody;
-  const t37 = navigating ? /*#__PURE__*/_jsx(TableRow, {
+  const t38 = navigating ? /*#__PURE__*/_jsx(TableRow, {
     children: /*#__PURE__*/_jsx(TableCell, {
       colSpan: colSpan,
       sx: {
@@ -1055,7 +1057,7 @@ export function DataTableBody(t0) {
             sx: {
               display: "inline-flex"
             },
-            onClick: _temp1,
+            onClick: _temp0,
             children: /*#__PURE__*/_jsx(Checkbox, {
               checked: api.groupAllSelected(item_4.id),
               indeterminate: api.groupSomeSelected(item_4.id) && !api.groupAllSelected(item_4.id),
@@ -1092,104 +1094,103 @@ export function DataTableBody(t0) {
     scroller: scroller,
     ...rowsProps
   })) : items.map((_, index_1) => renderItem(index_1));
-  let t38;
-  if ($[99] !== checkboxes || $[100] !== colSpan || $[101] !== infiniteScroll || $[102] !== items || $[103] !== more || $[104] !== scroller || $[105] !== skeletonShape) {
-    t38 = infiniteScroll && more.has && scroller && /*#__PURE__*/_jsx(ScrollEnd, {
+  let t39;
+  if ($[99] !== api.error || $[100] !== checkboxes || $[101] !== colSpan || $[102] !== infiniteScroll || $[103] !== items || $[104] !== more || $[105] !== rowHeight || $[106] !== scroller || $[107] !== skeletonShape) {
+    t39 = infiniteScroll && more.has && scroller && /*#__PURE__*/_jsx(ScrollEnd, {
       scroller: scroller,
       colSpan: colSpan,
       load: more.load,
-      loading: more.loading,
+      rowHeight: rowHeight || ESTIMATED_ROW_HEIGHT,
       count: items.length,
-      placeholder: /*#__PURE__*/_jsx(SkeletonRows, {
-        count: LOADING_MORE_ROWS,
+      placeholder: count => !api.error && /*#__PURE__*/_jsx(SkeletonRows, {
+        count: count,
         selectable: checkboxes,
         shape: skeletonShape,
         colSpan: colSpan,
         delay: 0
       })
     });
-    $[99] = checkboxes;
-    $[100] = colSpan;
-    $[101] = infiniteScroll;
-    $[102] = items;
-    $[103] = more;
-    $[104] = scroller;
-    $[105] = skeletonShape;
-    $[106] = t38;
+    $[99] = api.error;
+    $[100] = checkboxes;
+    $[101] = colSpan;
+    $[102] = infiniteScroll;
+    $[103] = items;
+    $[104] = more;
+    $[105] = rowHeight;
+    $[106] = scroller;
+    $[107] = skeletonShape;
+    $[108] = t39;
   } else {
-    t38 = $[106];
-  }
-  let t39;
-  if ($[107] !== T2 || $[108] !== t37 || $[109] !== t38) {
-    t39 = /*#__PURE__*/_jsxs(T2, {
-      children: [t37, t38]
-    });
-    $[107] = T2;
-    $[108] = t37;
-    $[109] = t38;
-    $[110] = t39;
-  } else {
-    t39 = $[110];
+    t39 = $[108];
   }
   let t40;
-  if ($[111] !== T1 || $[112] !== stickyHeader || $[113] !== t33 || $[114] !== t34 || $[115] !== t35 || $[116] !== t36 || $[117] !== t39) {
-    t40 = /*#__PURE__*/_jsxs(T1, {
-      size: t29,
-      stickyHeader: stickyHeader,
-      sx: t33,
-      children: [t34, t35, t36, t39]
+  if ($[109] !== T2 || $[110] !== t38 || $[111] !== t39) {
+    t40 = /*#__PURE__*/_jsxs(T2, {
+      children: [t38, t39]
     });
-    $[111] = T1;
-    $[112] = stickyHeader;
-    $[113] = t33;
-    $[114] = t34;
-    $[115] = t35;
-    $[116] = t36;
-    $[117] = t39;
-    $[118] = t40;
+    $[109] = T2;
+    $[110] = t38;
+    $[111] = t39;
+    $[112] = t40;
   } else {
-    t40 = $[118];
+    t40 = $[112];
   }
   let t41;
-  if ($[119] !== T0 || $[120] !== t27 || $[121] !== t28 || $[122] !== t40) {
-    t41 = /*#__PURE__*/_jsx(T0, {
-      ref: containerRef,
-      "data-scroll-root": t27,
-      sx: t28,
-      children: t40
+  if ($[113] !== T1 || $[114] !== stickyHeader || $[115] !== t34 || $[116] !== t35 || $[117] !== t36 || $[118] !== t37 || $[119] !== t40) {
+    t41 = /*#__PURE__*/_jsxs(T1, {
+      size: t30,
+      stickyHeader: stickyHeader,
+      sx: t34,
+      children: [t35, t36, t37, t40]
     });
-    $[119] = T0;
-    $[120] = t27;
-    $[121] = t28;
-    $[122] = t40;
-    $[123] = t41;
+    $[113] = T1;
+    $[114] = stickyHeader;
+    $[115] = t34;
+    $[116] = t35;
+    $[117] = t36;
+    $[118] = t37;
+    $[119] = t40;
+    $[120] = t41;
   } else {
-    t41 = $[123];
+    t41 = $[120];
   }
-  return t41;
+  let t42;
+  if ($[121] !== T0 || $[122] !== t28 || $[123] !== t29 || $[124] !== t41) {
+    t42 = /*#__PURE__*/_jsx(T0, {
+      ref: containerRef,
+      "data-scroll-root": t28,
+      sx: t29,
+      children: t41
+    });
+    $[121] = T0;
+    $[122] = t28;
+    $[123] = t29;
+    $[124] = t41;
+    $[125] = t42;
+  } else {
+    t42 = $[125];
+  }
+  return t42;
 }
-function _temp1(e_0) {
+function _temp0(e_0) {
   return e_0.stopPropagation();
 }
-function _temp0(width, index_0) {
+function _temp9(width, index_0) {
   return /*#__PURE__*/_jsx("col", {
     style: {
       width
     }
   }, index_0);
 }
-function _temp9(col_1) {
+function _temp8(col_1) {
   return /*#__PURE__*/_jsx("col", {
     style: col_1.width ? {
       width: col_1.width
     } : undefined
   }, col_1.field);
 }
-function _temp8(e) {
+function _temp7(e) {
   return e.stopPropagation();
-}
-function _temp7(row) {
-  return row.getBoundingClientRect().height;
 }
 function _temp6(item_2) {
   return item_2.type === "group";
@@ -1209,39 +1210,23 @@ function _temp3(col_0) {
 function _temp2(col) {
   return col.width;
 }
-function useMargin(body, scroller, initial) {
-  const $ = _c(4);
-  const [margin, setMargin] = useState(initial);
-  let t0;
-  if ($[0] !== body || $[1] !== margin || $[2] !== scroller) {
-    t0 = () => {
-      const node = body();
-      if (!node) {
-        return;
-      }
-      const next = marginOf(node, scroller);
-      if (Math.abs(next - margin) > 0.5) {
-        setMargin(next);
-      }
-    };
-    $[0] = body;
-    $[1] = margin;
-    $[2] = scroller;
-    $[3] = t0;
-  } else {
-    t0 = $[3];
-  }
-  useLayoutEffect(t0);
-  return margin;
-}
-const virtualOptions = (props, scroller, margin) => ({
+const initialFrame = (scroller, view) => ({
+  margin: view?.margin ?? 0,
+  rect: view?.rect ?? rectOf(scroller)
+});
+const virtualOptions = (props, scroller, frame) => ({
   count: props.count,
-  initialOffset: props.view?.top ?? offsetOf(scroller),
-  initialRect: props.view?.rect ?? rectOf(scroller),
+  initialOffset: () => props.view?.top ?? offsetOf(scroller),
+  initialRect: frame.rect,
   initialMeasurementsCache: props.view?.rows,
   estimateSize: () => props.rowHeight,
-  overscan: Math.max(OVERSCAN, Math.ceil(rectOf(scroller).height / props.rowHeight)),
-  scrollMargin: margin
+  overscan: Math.max(OVERSCAN, Math.ceil(frame.rect.height / props.rowHeight)),
+  scrollMargin: frame.margin,
+  measureElement: (...args) => {
+    const size = measureElement(...args);
+    props.onRowSize(size);
+    return size;
+  }
 });
 function ElementRows({
   scroller,
@@ -1249,42 +1234,59 @@ function ElementRows({
 }) {
   'use no memo';
 
-  const margin = useMargin(props.body, scroller, props.view?.margin ?? 0);
+  const [frame, setFrame] = useState(() => initialFrame(scroller, props.view));
   const virtualizer = useVirtualizer({
-    ...virtualOptions(props, scroller, margin),
+    ...virtualOptions(props, scroller, frame),
     getScrollElement: () => scroller
   });
   return /*#__PURE__*/_jsx(Windowed, {
     virtualizer: virtualizer,
-    margin: margin,
+    scroller: scroller,
+    frame: frame,
+    setFrame: setFrame,
     ...props
   });
 }
 function WindowRows(props) {
   'use no memo';
 
-  const margin = useMargin(props.body, window, props.view?.margin ?? 0);
-  const virtualizer = useWindowVirtualizer(virtualOptions(props, window, margin));
+  const [frame, setFrame] = useState(() => initialFrame(window, props.view));
+  const virtualizer = useWindowVirtualizer(virtualOptions(props, window, frame));
   return /*#__PURE__*/_jsx(Windowed, {
     virtualizer: virtualizer,
-    margin: margin,
+    scroller: window,
+    frame: frame,
+    setFrame: setFrame,
     ...props
   });
 }
-
 /** Only the rows in view, plus a margin, are in the document; spacer rows stand in for the rest so the scrollbar stays true. */
 function Windowed({
   virtualizer,
-  margin,
+  scroller,
+  frame,
+  setFrame,
+  body,
   snapshot,
   colSpan,
   render
 }) {
   'use no memo';
 
+  const margin = frame.margin;
   snapshot.current = () => ({
     rows: virtualizer.takeSnapshot(),
-    margin
+    margin,
+    top: virtualizer.scrollOffset ?? 0
+  });
+  useLayoutEffect(() => {
+    const node = body();
+    if (!node || virtualizer.isScrolling) return;
+    const next = {
+      margin: marginOf(node, scroller),
+      rect: rectOf(scroller)
+    };
+    if (Math.abs(next.margin - frame.margin) > 0.5 || next.rect.height !== frame.rect.height) setFrame(next);
   });
   const windowed = virtualizer.getVirtualItems();
   const above = windowed.length ? windowed[0].start - margin : 0;
@@ -1449,7 +1451,7 @@ const DataRow = /*#__PURE__*/memo(function DataRow(t0) {
       onPointerMove: events.holdMove,
       onPointerUp: events.holdEnd,
       onPointerCancel: events.holdEnd,
-      onContextMenu: _temp10
+      onContextMenu: _temp1
     };
     $[9] = events;
     $[10] = holding;
@@ -1532,7 +1534,7 @@ const DataRow = /*#__PURE__*/memo(function DataRow(t0) {
   if ($[33] !== checkboxes || $[34] !== events || $[35] !== id || $[36] !== selected) {
     t17 = checkboxes && /*#__PURE__*/_jsx(TableCell, {
       padding: "checkbox",
-      onClick: _temp11,
+      onClick: _temp10,
       children: /*#__PURE__*/_jsx(Checkbox, {
         checked: selected,
         onChange: () => events.toggle(id),
@@ -1717,7 +1719,7 @@ function SkeletonRows(t0) {
         }) : /*#__PURE__*/_jsxs(_Fragment, {
           children: [selectable && /*#__PURE__*/_jsx(TableCell, {
             padding: "checkbox"
-          }), api.visibleColumns.map(_temp12)]
+          }), api.visibleColumns.map(_temp11)]
         })
       }, `skeleton-${index}`);
       $[12] = api;
@@ -1742,7 +1744,7 @@ function SkeletonRows(t0) {
   }
   return t6;
 }
-function _temp12(col) {
+function _temp11(col) {
   return /*#__PURE__*/_jsx(TableCell, {
     align: col.align,
     children: /*#__PURE__*/_jsx(Skeleton, {
@@ -1758,120 +1760,113 @@ function _temp12(col) {
   }, col.field);
 }
 function ScrollEnd(t0) {
-  const $ = _c(16);
+  const $ = _c(20);
   const {
     scroller,
     colSpan,
     load,
-    loading,
+    rowHeight,
     count,
     placeholder
   } = t0;
   const marker = useRef(null);
-  const [reached, setReached] = useState(false);
   let t1;
-  if ($[0] !== load || $[1] !== scroller) {
-    t1 = () => {
+  if ($[0] !== scroller) {
+    t1 = () => rectOf(scroller).height;
+    $[0] = scroller;
+    $[1] = t1;
+  } else {
+    t1 = $[1];
+  }
+  const [screen] = useState(t1);
+  let t2;
+  if ($[2] !== load || $[3] !== screen || $[4] !== scroller) {
+    t2 = () => {
       const node = marker.current;
       if (!node) {
         return;
       }
-      const observer = new IntersectionObserver(t2 => {
-        const [entry] = t2;
+      const observer = new IntersectionObserver(t3 => {
+        const [entry] = t3;
         return entry?.isIntersecting && load();
       }, {
         root: scroller instanceof Window ? scroller.document : scroller,
-        rootMargin: `0px 0px ${rectOf(scroller).height * PREFETCH_SCREENS}px 0px`
+        rootMargin: `${screen * PREFETCH_SCREENS}px 0px`
       });
       observer.observe(node);
       return () => observer.disconnect();
     };
-    $[0] = load;
-    $[1] = scroller;
-    $[2] = t1;
+    $[2] = load;
+    $[3] = screen;
+    $[4] = scroller;
+    $[5] = t2;
   } else {
-    t1 = $[2];
+    t2 = $[5];
   }
-  let t2;
-  if ($[3] !== count || $[4] !== load || $[5] !== scroller) {
-    t2 = [load, count, scroller];
-    $[3] = count;
-    $[4] = load;
-    $[5] = scroller;
-    $[6] = t2;
-  } else {
-    t2 = $[6];
-  }
-  useEffect(t1, t2);
   let t3;
-  let t4;
-  if ($[7] !== scroller) {
-    t3 = () => {
-      const node_0 = marker.current;
-      if (!node_0) {
-        return;
-      }
-      const observer_0 = new IntersectionObserver(t5 => {
-        const [entry_0] = t5;
-        return setReached(Boolean(entry_0?.isIntersecting));
-      }, {
-        root: scroller instanceof Window ? scroller.document : scroller
-      });
-      observer_0.observe(node_0);
-      return () => observer_0.disconnect();
-    };
-    t4 = [scroller];
-    $[7] = scroller;
-    $[8] = t3;
-    $[9] = t4;
+  if ($[6] !== count || $[7] !== load || $[8] !== screen || $[9] !== scroller) {
+    t3 = [load, count, scroller, screen];
+    $[6] = count;
+    $[7] = load;
+    $[8] = screen;
+    $[9] = scroller;
+    $[10] = t3;
   } else {
-    t3 = $[8];
-    t4 = $[9];
+    t3 = $[10];
   }
-  useEffect(t3, t4);
-  let t5;
-  if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = {
+  useEffect(t2, t3);
+  let t4;
+  if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
+    t4 = {
       padding: 0,
       height: 1,
       border: 0
     };
-    $[10] = t5;
+    $[11] = t4;
   } else {
-    t5 = $[10];
+    t4 = $[11];
   }
-  let t6;
-  if ($[11] !== colSpan) {
-    t6 = /*#__PURE__*/_jsx("tr", {
+  let t5;
+  if ($[12] !== colSpan) {
+    t5 = /*#__PURE__*/_jsx("tr", {
       ref: marker,
       "aria-hidden": "true",
       children: /*#__PURE__*/_jsx("td", {
         colSpan: colSpan,
-        style: t5
+        style: t4
       })
     });
-    $[11] = colSpan;
-    $[12] = t6;
+    $[12] = colSpan;
+    $[13] = t5;
   } else {
-    t6 = $[12];
+    t5 = $[13];
   }
-  const t7 = reached && loading && placeholder;
-  let t8;
-  if ($[13] !== t6 || $[14] !== t7) {
-    t8 = /*#__PURE__*/_jsxs(_Fragment, {
-      children: [t6, t7]
-    });
-    $[13] = t6;
-    $[14] = t7;
-    $[15] = t8;
+  const t6 = Math.max(LOADING_MORE_ROWS, Math.ceil(screen / rowHeight));
+  let t7;
+  if ($[14] !== placeholder || $[15] !== t6) {
+    t7 = placeholder(t6);
+    $[14] = placeholder;
+    $[15] = t6;
+    $[16] = t7;
   } else {
-    t8 = $[15];
+    t7 = $[16];
+  }
+  let t8;
+  if ($[17] !== t5 || $[18] !== t7) {
+    t8 = /*#__PURE__*/_jsxs(_Fragment, {
+      children: [t5, t7]
+    });
+    $[17] = t5;
+    $[18] = t7;
+    $[19] = t8;
+  } else {
+    t8 = $[19];
   }
   return t8;
 }
-function _temp10(event_0) {
+function _temp1(event_0) {
   return event_0.preventDefault();
 }
-function _temp11(e) {
+function _temp10(e) {
   return e.stopPropagation();
 }
