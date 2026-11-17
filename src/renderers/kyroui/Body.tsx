@@ -189,6 +189,7 @@ export function DataTableBody<Row>({
   const [locked, setLocked] = useState<{ key: string; widths: string[] } | null>(null)
   const lockedWidths = locked?.key === columnsKey ? locked.widths : null
   const snapshot = useRef<() => Snapshot>(() => ({ rows: [], margin: 0 }))
+  const placed = useRef<string>(null)
   const narrowBelow = useTheme().breakpoints.values.sm
   const [narrow, setNarrow] = useState(false)
   const watchWidth = variant === 'auto'
@@ -279,18 +280,22 @@ export function DataTableBody<Row>({
     const container = containerRef.current
     if (!container) return
     const target = pageScroll ? scrollParentOf(container) : container
-    const edge = target instanceof Window ? 0 : target.getBoundingClientRect().top
-    const pin = container.querySelector('thead th')?.getBoundingClientRect().top ?? edge
-    const passed = container.getBoundingClientRect().top < Math.max(edge, pin) - 1
-    if (view) target.scrollTo({ top: view.top, behavior: 'instant' })
-    else if (!pageScroll) container.scrollTop = 0
-    else if (passed) container.scrollIntoView({ block: 'start', behavior: 'instant' })
+    const place = `${api.listKey}\n${groupsKey}\n${drilled ?? ''}`
+    if (placed.current !== place) {
+      placed.current = place
+      const edge = target instanceof Window ? 0 : target.getBoundingClientRect().top
+      const pin = container.querySelector('thead th')?.getBoundingClientRect().top ?? edge
+      const passed = container.getBoundingClientRect().top < Math.max(edge, pin) - 1
+      if (view) target.scrollTo({ top: view.top, behavior: 'instant' })
+      else if (!pageScroll) container.scrollTop = 0
+      else if (passed) container.scrollIntoView({ block: 'start', behavior: 'instant' })
+    }
     return () => {
       if (viewKey === null) return
       const saved = snapshot.current()
       views.set(viewKey, { ...saved, top: saved.top ?? offsetOf(target), rect: rectOf(target) })
     }
-  }, [api.listKey, api.groupBy, drilled])
+  }, [api.listKey, groupsKey, drilled])
 
   useLayoutEffect(() => {
     const container = containerRef.current
