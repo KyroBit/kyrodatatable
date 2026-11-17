@@ -1,5 +1,5 @@
 import { c as _c } from "react/compiler-runtime";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useVirtualizer, useWindowVirtualizer } from '@tanstack/react-virtual';
 import { Box, Button, Card, Checkbox, IconButton, List, ListItemButton, ListItemText, Skeleton, SvgIcon, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useTheme } from '@kyrobit/kyroui';
 import { useDataTableContext, useDrillTrail, useSelectMode } from './context.js';
@@ -301,7 +301,7 @@ const rectOf = scroller => scroller instanceof Window ? {
 const marginOf = (node, scroller) => node.getBoundingClientRect().top + offsetOf(scroller) - (scroller instanceof Window ? 0 : scroller.getBoundingClientRect().top + scroller.clientTop);
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
 export function DataTableBody(t0) {
-  const $ = _c(102);
+  const $ = _c(124);
   const {
     onRowClick,
     onRowIntent,
@@ -353,7 +353,6 @@ export function DataTableBody(t0) {
   const columnsKey = t11;
   const [locked, setLocked] = useState(null);
   const lockedWidths = locked?.key === columnsKey ? locked.widths : null;
-  const intentTimer = useRef(undefined);
   const snapshot = useRef(_temp4);
   const narrowBelow = useTheme().breakpoints.values.sm;
   const [narrow, setNarrow] = useState(false);
@@ -438,62 +437,116 @@ export function DataTableBody(t0) {
   const selecting = holding && selectMode;
   const checkboxes = selectable && !list;
   const colSpan = api.visibleColumns.length + (checkboxes ? 1 : 0);
-  const holdTimer = useRef(undefined);
-  const holdStart = useRef({
-    x: 0,
-    y: 0
-  });
-  const held = useRef(false);
+  const [events] = useState(rowEvents);
   let t16;
-  let t17;
-  if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
-    t16 = () => () => {
-      clearTimeout(intentTimer.current);
-      clearTimeout(holdTimer.current);
+  if ($[12] !== api || $[13] !== events || $[14] !== onRowClick || $[15] !== onRowIntent || $[16] !== selecting || $[17] !== setSelectMode) {
+    t16 = () => {
+      events.sync({
+        api,
+        selecting,
+        setSelectMode,
+        onRowClick,
+        onRowIntent
+      });
     };
-    t17 = [];
-    $[12] = t16;
-    $[13] = t17;
+    $[12] = api;
+    $[13] = events;
+    $[14] = onRowClick;
+    $[15] = onRowIntent;
+    $[16] = selecting;
+    $[17] = setSelectMode;
+    $[18] = t16;
   } else {
-    t16 = $[12];
-    t17 = $[13];
+    t16 = $[18];
   }
-  useEffect(t16, t17);
+  useLayoutEffect(t16);
+  let t17;
+  if ($[19] !== events.dispose) {
+    t17 = () => events.dispose;
+    $[19] = events.dispose;
+    $[20] = t17;
+  } else {
+    t17 = $[20];
+  }
   let t18;
-  if ($[14] !== narrowBelow || $[15] !== watchWidth) {
-    t18 = () => {
+  if ($[21] !== events) {
+    t18 = [events];
+    $[21] = events;
+    $[22] = t18;
+  } else {
+    t18 = $[22];
+  }
+  useEffect(t17, t18);
+  const t19 = Boolean(onRowClick) || selecting;
+  const t20 = Boolean(onRowIntent);
+  let t21;
+  if ($[23] !== api.visibleColumns || $[24] !== cards || $[25] !== checkboxes || $[26] !== colSpan || $[27] !== events || $[28] !== holding || $[29] !== list || $[30] !== renderListItem || $[31] !== rowClass || $[32] !== selectable || $[33] !== t19 || $[34] !== t20) {
+    t21 = {
+      list,
+      cards,
+      checkboxes,
+      selectable,
+      colSpan,
+      holding,
+      clickable: t19,
+      intent: t20,
+      columns: api.visibleColumns,
+      rowClass,
+      renderListItem,
+      events
+    };
+    $[23] = api.visibleColumns;
+    $[24] = cards;
+    $[25] = checkboxes;
+    $[26] = colSpan;
+    $[27] = events;
+    $[28] = holding;
+    $[29] = list;
+    $[30] = renderListItem;
+    $[31] = rowClass;
+    $[32] = selectable;
+    $[33] = t19;
+    $[34] = t20;
+    $[35] = t21;
+  } else {
+    t21 = $[35];
+  }
+  const look = t21;
+  let t22;
+  if ($[36] !== narrowBelow || $[37] !== watchWidth) {
+    t22 = () => {
       const container = containerRef.current;
       if (!container || !watchWidth) {
         return;
       }
       setNarrow(container.clientWidth < narrowBelow);
-      const observer = new ResizeObserver(t19 => {
-        const [entry] = t19;
+      const observer = new ResizeObserver(t23 => {
+        const [entry] = t23;
         return setNarrow(entry.contentRect.width < narrowBelow);
       });
       observer.observe(container);
       return () => observer.disconnect();
     };
-    $[14] = narrowBelow;
-    $[15] = watchWidth;
-    $[16] = t18;
+    $[36] = narrowBelow;
+    $[37] = watchWidth;
+    $[38] = t22;
   } else {
-    t18 = $[16];
+    t22 = $[38];
   }
-  let t19;
-  if ($[17] !== empty || $[18] !== narrowBelow || $[19] !== watchWidth) {
-    t19 = [empty, watchWidth, narrowBelow];
-    $[17] = empty;
-    $[18] = narrowBelow;
-    $[19] = watchWidth;
-    $[20] = t19;
+  let t23;
+  if ($[39] !== empty || $[40] !== narrowBelow || $[41] !== watchWidth) {
+    t23 = [empty, watchWidth, narrowBelow];
+    $[39] = empty;
+    $[40] = narrowBelow;
+    $[41] = watchWidth;
+    $[42] = t23;
   } else {
-    t19 = $[20];
+    t23 = $[42];
   }
-  useLayoutEffect(t18, t19);
-  let t20;
-  if ($[21] !== pageScroll || $[22] !== scroller) {
-    t20 = () => {
+  useLayoutEffect(t22, t23);
+  let t24;
+  if ($[43] !== pageScroll || $[44] !== scroller) {
+    t24 = () => {
       const container_0 = containerRef.current;
       if (!container_0) {
         return;
@@ -503,16 +556,16 @@ export function DataTableBody(t0) {
         setScroller(next);
       }
     };
-    $[21] = pageScroll;
-    $[22] = scroller;
-    $[23] = t20;
+    $[43] = pageScroll;
+    $[44] = scroller;
+    $[45] = t24;
   } else {
-    t20 = $[23];
+    t24 = $[45];
   }
-  useLayoutEffect(t20);
-  let t21;
-  if ($[24] !== pageScroll || $[25] !== view || $[26] !== viewKey) {
-    t21 = () => {
+  useLayoutEffect(t24);
+  let t25;
+  if ($[46] !== pageScroll || $[47] !== view || $[48] !== viewKey) {
+    t25 = () => {
       const container_1 = containerRef.current;
       if (!container_1) {
         return;
@@ -549,17 +602,17 @@ export function DataTableBody(t0) {
         });
       };
     };
-    $[24] = pageScroll;
-    $[25] = view;
-    $[26] = viewKey;
-    $[27] = t21;
+    $[46] = pageScroll;
+    $[47] = view;
+    $[48] = viewKey;
+    $[49] = t25;
   } else {
-    t21 = $[27];
+    t25 = $[49];
   }
-  useLayoutEffect(t21, [api.listKey, api.groupBy, drilled]);
-  let t22;
-  if ($[28] !== checkboxes || $[29] !== columnsKey || $[30] !== hasExplicitWidths || $[31] !== list || $[32] !== lockedWidths || $[33] !== rowHeight || $[34] !== sideways) {
-    t22 = () => {
+  useLayoutEffect(t25, [api.listKey, api.groupBy, drilled]);
+  let t26;
+  if ($[50] !== checkboxes || $[51] !== columnsKey || $[52] !== hasExplicitWidths || $[53] !== list || $[54] !== lockedWidths || $[55] !== rowHeight || $[56] !== sideways) {
+    t26 = () => {
       const container_2 = containerRef.current;
       if (!container_2) {
         return;
@@ -579,33 +632,33 @@ export function DataTableBody(t0) {
         widths: cells.map(cell => `${cell.getBoundingClientRect().width / table * 100}%`)
       });
     };
-    $[28] = checkboxes;
-    $[29] = columnsKey;
-    $[30] = hasExplicitWidths;
-    $[31] = list;
-    $[32] = lockedWidths;
-    $[33] = rowHeight;
-    $[34] = sideways;
-    $[35] = t22;
+    $[50] = checkboxes;
+    $[51] = columnsKey;
+    $[52] = hasExplicitWidths;
+    $[53] = list;
+    $[54] = lockedWidths;
+    $[55] = rowHeight;
+    $[56] = sideways;
+    $[57] = t26;
   } else {
-    t22 = $[35];
+    t26 = $[57];
   }
-  useLayoutEffect(t22);
+  useLayoutEffect(t26);
   const fixedWidths = hasExplicitWidths || lockedWidths !== null;
   if (empty) {
-    let t23;
-    if ($[36] !== api.filters || $[37] !== api.search) {
-      t23 = Boolean(api.search) || countFilterValues(api.filters ?? {}) > 0;
-      $[36] = api.filters;
-      $[37] = api.search;
-      $[38] = t23;
+    let t27;
+    if ($[58] !== api.filters || $[59] !== api.search) {
+      t27 = Boolean(api.search) || countFilterValues(api.filters ?? {}) > 0;
+      $[58] = api.filters;
+      $[59] = api.search;
+      $[60] = t27;
     } else {
-      t23 = $[38];
+      t27 = $[60];
     }
-    const filtered = t23;
-    let t24;
-    if ($[39] !== api || $[40] !== emptyMessage || $[41] !== errorMessage || $[42] !== filtered || $[43] !== noResultsMessage) {
-      t24 = api.error ? errorMessage ?? /*#__PURE__*/_jsxs(Box, {
+    const filtered = t27;
+    let t28;
+    if ($[61] !== api || $[62] !== emptyMessage || $[63] !== errorMessage || $[64] !== filtered || $[65] !== noResultsMessage) {
+      t28 = api.error ? errorMessage ?? /*#__PURE__*/_jsxs(Box, {
         sx: {
           display: "flex",
           flexDirection: "column",
@@ -624,29 +677,29 @@ export function DataTableBody(t0) {
           children: "Try again"
         })]
       }) : filtered ? noResultsMessage : emptyMessage;
-      $[39] = api;
-      $[40] = emptyMessage;
-      $[41] = errorMessage;
-      $[42] = filtered;
-      $[43] = noResultsMessage;
-      $[44] = t24;
+      $[61] = api;
+      $[62] = emptyMessage;
+      $[63] = errorMessage;
+      $[64] = filtered;
+      $[65] = noResultsMessage;
+      $[66] = t28;
     } else {
-      t24 = $[44];
+      t28 = $[66];
     }
-    const message = t24;
-    let t25;
-    if ($[45] === Symbol.for("react.memo_cache_sentinel")) {
-      t25 = {
+    const message = t28;
+    let t29;
+    if ($[67] === Symbol.for("react.memo_cache_sentinel")) {
+      t29 = {
         flex: 1,
         py: "xl"
       };
-      $[45] = t25;
+      $[67] = t29;
     } else {
-      t25 = $[45];
+      t29 = $[67];
     }
-    let t26;
-    if ($[46] !== message) {
-      t26 = typeof message === "string" ? /*#__PURE__*/_jsx(Typography, {
+    let t30;
+    if ($[68] !== message) {
+      t30 = typeof message === "string" ? /*#__PURE__*/_jsx(Typography, {
         sx: {
           color: "text.secondary",
           textAlign: "center",
@@ -654,24 +707,24 @@ export function DataTableBody(t0) {
         },
         children: message
       }) : message;
-      $[46] = message;
-      $[47] = t26;
+      $[68] = message;
+      $[69] = t30;
     } else {
-      t26 = $[47];
+      t30 = $[69];
     }
-    let t27;
-    if ($[48] !== t26) {
-      t27 = /*#__PURE__*/_jsx(Box, {
+    let t31;
+    if ($[70] !== t30) {
+      t31 = /*#__PURE__*/_jsx(Box, {
         className: "KyroTable-empty",
-        sx: t25,
-        children: t26
+        sx: t29,
+        children: t30
       });
-      $[48] = t26;
-      $[49] = t27;
+      $[70] = t30;
+      $[71] = t31;
     } else {
-      t27 = $[49];
+      t31 = $[71];
     }
-    return t27;
+    return t31;
   }
   const renderItem = (index, measure) => {
     const item_3 = items[index];
@@ -765,98 +818,15 @@ export function DataTableBody(t0) {
         })
       }, `group-${item_3.id}`);
     }
-    const row_0 = item_3.row;
-    const rowId = api.getRowId(row_0);
-    const classes = [item_3.type === "group-row" ? "KyroTable-groupChildRow" : "", rowClass ? rowClass(row_0) : ""].filter(Boolean).join(" ");
-    const hold = holding ? {
-      onPointerDown: event => {
-        held.current = false;
-        holdStart.current = {
-          x: event.clientX,
-          y: event.clientY
-        };
-        clearTimeout(holdTimer.current);
-        holdTimer.current = setTimeout(() => {
-          held.current = true;
-          setSelectMode(true);
-          api.toggleSelected(rowId);
-        }, HOLD_DELAY);
-      },
-      onPointerMove: event_0 => {
-        if (Math.hypot(event_0.clientX - holdStart.current.x, event_0.clientY - holdStart.current.y) > HOLD_SLOP) {
-          clearTimeout(holdTimer.current);
-        }
-      },
-      onPointerUp: () => clearTimeout(holdTimer.current),
-      onPointerCancel: () => clearTimeout(holdTimer.current),
-      onContextMenu: _temp9
-    } : {};
-    return /*#__PURE__*/_jsxs(TableRow, {
-      "data-row": "",
-      ...measured,
-      ...hold,
-      hover: true,
-      selected: selectable && api.isSelected(rowId),
-      className: classes || undefined,
-      style: {
-        cursor: onRowClick || selecting ? "pointer" : undefined,
-        ...(holding && {
-          WebkitTouchCallout: "none",
-          userSelect: "none"
-        }),
-        ...(cards && {
-          background: "transparent"
-        })
-      },
-      onClick: () => {
-        if (held.current) {
-          held.current = false;
-        } else {
-          if (selecting) {
-            api.toggleSelected(rowId);
-          } else {
-            onRowClick?.(row_0);
-          }
-        }
-      },
-      tabIndex: onRowIntent ? 0 : undefined,
-      onPointerEnter: onRowIntent && (() => {
-        clearTimeout(intentTimer.current);
-        intentTimer.current = setTimeout(() => onRowIntent(row_0), ROW_INTENT_DELAY);
-      }),
-      onPointerLeave: onRowIntent && (() => clearTimeout(intentTimer.current)),
-      onFocus: onRowIntent && (event_2 => event_2.target === event_2.currentTarget && onRowIntent(row_0)),
-      children: [checkboxes && /*#__PURE__*/_jsx(TableCell, {
-        padding: "checkbox",
-        onClick: _temp0,
-        children: /*#__PURE__*/_jsx(Checkbox, {
-          checked: api.isSelected(rowId),
-          onChange: () => api.toggleSelected(rowId),
-          "aria-label": "Select row"
-        })
-      }), list ? cards ? /*#__PURE__*/_jsx(TableCell, {
-        colSpan: colSpan,
-        sx: {
-          border: "none",
-          px: 0,
-          py: "xs"
-        },
-        children: /*#__PURE__*/_jsx(Card, {
-          sx: {
-            p: "md",
-            ...(api.isSelected(rowId) && {
-              bgcolor: "action.selected"
-            })
-          },
-          children: renderListItem(row_0)
-        })
-      }) : /*#__PURE__*/_jsx(TableCell, {
-        colSpan: colSpan,
-        children: renderListItem(row_0)
-      }) : api.visibleColumns.map(col_1 => /*#__PURE__*/_jsx(TableCell, {
-        align: col_1.align,
-        children: col_1.render ? col_1.render(row_0) : row_0[col_1.field]
-      }, col_1.field))]
+    const rowId = api.getRowId(item_3.row);
+    return /*#__PURE__*/_jsx(DataRow, {
+      row: item_3.row,
+      id: rowId,
+      index: index,
+      measure: measure,
+      child: item_3.type === "group-row",
+      selected: api.isSelected(rowId),
+      look: look
     }, rowId);
   };
   const rowsProps = {
@@ -869,10 +839,10 @@ export function DataTableBody(t0) {
     render: renderItem
   };
   const T0 = TableContainer;
-  const t23 = pageScroll ? undefined : "";
-  let t24;
-  if ($[50] !== pageScroll || $[51] !== sideways || $[52] !== stickyTop) {
-    t24 = theme => pageScroll ? {
+  const t27 = pageScroll ? undefined : "";
+  let t28;
+  if ($[72] !== pageScroll || $[73] !== sideways || $[74] !== stickyTop) {
+    t28 = theme => pageScroll ? {
       ...(sideways ? {
         overflowX: "auto",
         overflowY: "hidden"
@@ -886,82 +856,82 @@ export function DataTableBody(t0) {
       overflowY: "auto",
       contain: "size"
     };
-    $[50] = pageScroll;
-    $[51] = sideways;
-    $[52] = stickyTop;
-    $[53] = t24;
+    $[72] = pageScroll;
+    $[73] = sideways;
+    $[74] = stickyTop;
+    $[75] = t28;
   } else {
-    t24 = $[53];
+    t28 = $[75];
   }
   const T1 = Table;
-  const t25 = "small";
-  let t26;
-  if ($[54] !== fixedWidths || $[55] !== sideways) {
-    t26 = fixedWidths && !sideways && {
+  const t29 = "small";
+  let t30;
+  if ($[76] !== fixedWidths || $[77] !== sideways) {
+    t30 = fixedWidths && !sideways && {
       tableLayout: "fixed"
     };
-    $[54] = fixedWidths;
-    $[55] = sideways;
-    $[56] = t26;
+    $[76] = fixedWidths;
+    $[77] = sideways;
+    $[78] = t30;
   } else {
-    t26 = $[56];
+    t30 = $[78];
   }
-  let t27;
-  if ($[57] !== sideways) {
-    t27 = sideways && {
+  let t31;
+  if ($[79] !== sideways) {
+    t31 = sideways && {
       width: "max-content",
       minWidth: "100%"
     };
-    $[57] = sideways;
-    $[58] = t27;
+    $[79] = sideways;
+    $[80] = t31;
   } else {
-    t27 = $[58];
+    t31 = $[80];
   }
-  let t28;
-  if ($[59] !== sideways || $[60] !== stickyTop) {
-    t28 = stickyTop && !sideways && {
+  let t32;
+  if ($[81] !== sideways || $[82] !== stickyTop) {
+    t32 = stickyTop && !sideways && {
       "& thead th": {
         top: stickyTop
       }
     };
-    $[59] = sideways;
-    $[60] = stickyTop;
-    $[61] = t28;
+    $[81] = sideways;
+    $[82] = stickyTop;
+    $[83] = t32;
   } else {
-    t28 = $[61];
+    t32 = $[83];
   }
-  let t29;
-  if ($[62] !== t26 || $[63] !== t27 || $[64] !== t28) {
-    t29 = {
-      ...t26,
-      ...t27,
-      ...t28
+  let t33;
+  if ($[84] !== t30 || $[85] !== t31 || $[86] !== t32) {
+    t33 = {
+      ...t30,
+      ...t31,
+      ...t32
     };
-    $[62] = t26;
-    $[63] = t27;
-    $[64] = t28;
-    $[65] = t29;
+    $[84] = t30;
+    $[85] = t31;
+    $[86] = t32;
+    $[87] = t33;
   } else {
-    t29 = $[65];
+    t33 = $[87];
   }
-  let t30;
-  if ($[66] !== api.visibleColumns || $[67] !== checkboxes || $[68] !== hasExplicitWidths || $[69] !== list || $[70] !== lockedWidths || $[71] !== sideways) {
-    t30 = list || sideways ? null : hasExplicitWidths ? /*#__PURE__*/_jsxs("colgroup", {
-      children: [checkboxes && /*#__PURE__*/_jsx("col", {}), api.visibleColumns.map(_temp1)]
+  let t34;
+  if ($[88] !== api.visibleColumns || $[89] !== checkboxes || $[90] !== hasExplicitWidths || $[91] !== list || $[92] !== lockedWidths || $[93] !== sideways) {
+    t34 = list || sideways ? null : hasExplicitWidths ? /*#__PURE__*/_jsxs("colgroup", {
+      children: [checkboxes && /*#__PURE__*/_jsx("col", {}), api.visibleColumns.map(_temp9)]
     }) : lockedWidths ? /*#__PURE__*/_jsxs("colgroup", {
-      children: [checkboxes && /*#__PURE__*/_jsx("col", {}), lockedWidths.map(_temp10)]
+      children: [checkboxes && /*#__PURE__*/_jsx("col", {}), lockedWidths.map(_temp0)]
     }) : null;
-    $[66] = api.visibleColumns;
-    $[67] = checkboxes;
-    $[68] = hasExplicitWidths;
-    $[69] = list;
-    $[70] = lockedWidths;
-    $[71] = sideways;
-    $[72] = t30;
+    $[88] = api.visibleColumns;
+    $[89] = checkboxes;
+    $[90] = hasExplicitWidths;
+    $[91] = list;
+    $[92] = lockedWidths;
+    $[93] = sideways;
+    $[94] = t34;
   } else {
-    t30 = $[72];
+    t34 = $[94];
   }
-  const t31 = drilledGroup?.type === "group" && /*#__PURE__*/_jsx(TableHead, {
+  const t35 = drilledGroup?.type === "group" && /*#__PURE__*/_jsx(TableHead, {
     children: /*#__PURE__*/_jsx(TableRow, {
       children: /*#__PURE__*/_jsx(TableCell, {
         variant: "head",
@@ -1012,9 +982,9 @@ export function DataTableBody(t0) {
       })
     })
   });
-  let t32;
-  if ($[73] !== api || $[74] !== checkboxes || $[75] !== list) {
-    t32 = !list && /*#__PURE__*/_jsx(TableHead, {
+  let t36;
+  if ($[95] !== api || $[96] !== checkboxes || $[97] !== list) {
+    t36 = !list && /*#__PURE__*/_jsx(TableHead, {
       children: /*#__PURE__*/_jsxs(TableRow, {
         children: [checkboxes && /*#__PURE__*/_jsx(TableCell, {
           variant: "head",
@@ -1025,16 +995,16 @@ export function DataTableBody(t0) {
             onChange: () => api.toggleSelectAll(),
             "aria-label": "Select all rows"
           })
-        }), api.visibleColumns.map(col_3 => /*#__PURE__*/_jsx(TableCell, {
+        }), api.visibleColumns.map(col_2 => /*#__PURE__*/_jsx(TableCell, {
           variant: "head",
-          align: col_3.align,
-          sortDirection: api.sort?.field === col_3.field ? api.sort.direction : false,
-          onClick: col_3.sortable === false ? undefined : () => api.toggleSort(col_3.field),
-          sx: col_3.sortable === false ? undefined : {
+          align: col_2.align,
+          sortDirection: api.sort?.field === col_2.field ? api.sort.direction : false,
+          onClick: col_2.sortable === false ? undefined : () => api.toggleSort(col_2.field),
+          sx: col_2.sortable === false ? undefined : {
             cursor: "pointer",
             userSelect: "none"
           },
-          children: col_3.sortable === false ? col_3.headerName : /*#__PURE__*/_jsxs("button", {
+          children: col_2.sortable === false ? col_2.headerName : /*#__PURE__*/_jsxs("button", {
             type: "button",
             className: "KyroTable-sortButton",
             style: {
@@ -1054,22 +1024,22 @@ export function DataTableBody(t0) {
               userSelect: "none",
               whiteSpace: "nowrap"
             },
-            children: [col_3.headerName, /*#__PURE__*/_jsx(SortArrows, {
-              direction: api.sort?.field === col_3.field ? api.sort.direction : null
+            children: [col_2.headerName, /*#__PURE__*/_jsx(SortArrows, {
+              direction: api.sort?.field === col_2.field ? api.sort.direction : null
             })]
           })
-        }, col_3.field))]
+        }, col_2.field))]
       })
     });
-    $[73] = api;
-    $[74] = checkboxes;
-    $[75] = list;
-    $[76] = t32;
+    $[95] = api;
+    $[96] = checkboxes;
+    $[97] = list;
+    $[98] = t36;
   } else {
-    t32 = $[76];
+    t36 = $[98];
   }
   const T2 = TableBody;
-  const t33 = navigating ? /*#__PURE__*/_jsx(TableRow, {
+  const t37 = navigating ? /*#__PURE__*/_jsx(TableRow, {
     children: /*#__PURE__*/_jsx(TableCell, {
       colSpan: colSpan,
       sx: {
@@ -1085,7 +1055,7 @@ export function DataTableBody(t0) {
             sx: {
               display: "inline-flex"
             },
-            onClick: _temp11,
+            onClick: _temp1,
             children: /*#__PURE__*/_jsx(Checkbox, {
               checked: api.groupAllSelected(item_4.id),
               indeterminate: api.groupSomeSelected(item_4.id) && !api.groupAllSelected(item_4.id),
@@ -1122,9 +1092,9 @@ export function DataTableBody(t0) {
     scroller: scroller,
     ...rowsProps
   })) : items.map((_, index_1) => renderItem(index_1));
-  let t34;
-  if ($[77] !== checkboxes || $[78] !== colSpan || $[79] !== infiniteScroll || $[80] !== items || $[81] !== more || $[82] !== scroller || $[83] !== skeletonShape) {
-    t34 = infiniteScroll && more.has && scroller && /*#__PURE__*/_jsx(ScrollEnd, {
+  let t38;
+  if ($[99] !== checkboxes || $[100] !== colSpan || $[101] !== infiniteScroll || $[102] !== items || $[103] !== more || $[104] !== scroller || $[105] !== skeletonShape) {
+    t38 = infiniteScroll && more.has && scroller && /*#__PURE__*/_jsx(ScrollEnd, {
       scroller: scroller,
       colSpan: colSpan,
       load: more.load,
@@ -1138,88 +1108,82 @@ export function DataTableBody(t0) {
         delay: 0
       })
     });
-    $[77] = checkboxes;
-    $[78] = colSpan;
-    $[79] = infiniteScroll;
-    $[80] = items;
-    $[81] = more;
-    $[82] = scroller;
-    $[83] = skeletonShape;
-    $[84] = t34;
+    $[99] = checkboxes;
+    $[100] = colSpan;
+    $[101] = infiniteScroll;
+    $[102] = items;
+    $[103] = more;
+    $[104] = scroller;
+    $[105] = skeletonShape;
+    $[106] = t38;
   } else {
-    t34 = $[84];
+    t38 = $[106];
   }
-  let t35;
-  if ($[85] !== T2 || $[86] !== t33 || $[87] !== t34) {
-    t35 = /*#__PURE__*/_jsxs(T2, {
-      children: [t33, t34]
+  let t39;
+  if ($[107] !== T2 || $[108] !== t37 || $[109] !== t38) {
+    t39 = /*#__PURE__*/_jsxs(T2, {
+      children: [t37, t38]
     });
-    $[85] = T2;
-    $[86] = t33;
-    $[87] = t34;
-    $[88] = t35;
+    $[107] = T2;
+    $[108] = t37;
+    $[109] = t38;
+    $[110] = t39;
   } else {
-    t35 = $[88];
+    t39 = $[110];
   }
-  let t36;
-  if ($[89] !== T1 || $[90] !== stickyHeader || $[91] !== t29 || $[92] !== t30 || $[93] !== t31 || $[94] !== t32 || $[95] !== t35) {
-    t36 = /*#__PURE__*/_jsxs(T1, {
-      size: t25,
+  let t40;
+  if ($[111] !== T1 || $[112] !== stickyHeader || $[113] !== t33 || $[114] !== t34 || $[115] !== t35 || $[116] !== t36 || $[117] !== t39) {
+    t40 = /*#__PURE__*/_jsxs(T1, {
+      size: t29,
       stickyHeader: stickyHeader,
-      sx: t29,
-      children: [t30, t31, t32, t35]
+      sx: t33,
+      children: [t34, t35, t36, t39]
     });
-    $[89] = T1;
-    $[90] = stickyHeader;
-    $[91] = t29;
-    $[92] = t30;
-    $[93] = t31;
-    $[94] = t32;
-    $[95] = t35;
-    $[96] = t36;
+    $[111] = T1;
+    $[112] = stickyHeader;
+    $[113] = t33;
+    $[114] = t34;
+    $[115] = t35;
+    $[116] = t36;
+    $[117] = t39;
+    $[118] = t40;
   } else {
-    t36 = $[96];
+    t40 = $[118];
   }
-  let t37;
-  if ($[97] !== T0 || $[98] !== t23 || $[99] !== t24 || $[100] !== t36) {
-    t37 = /*#__PURE__*/_jsx(T0, {
+  let t41;
+  if ($[119] !== T0 || $[120] !== t27 || $[121] !== t28 || $[122] !== t40) {
+    t41 = /*#__PURE__*/_jsx(T0, {
       ref: containerRef,
-      "data-scroll-root": t23,
-      sx: t24,
-      children: t36
+      "data-scroll-root": t27,
+      sx: t28,
+      children: t40
     });
-    $[97] = T0;
-    $[98] = t23;
-    $[99] = t24;
-    $[100] = t36;
-    $[101] = t37;
+    $[119] = T0;
+    $[120] = t27;
+    $[121] = t28;
+    $[122] = t40;
+    $[123] = t41;
   } else {
-    t37 = $[101];
+    t41 = $[123];
   }
-  return t37;
+  return t41;
 }
-function _temp11(e_1) {
-  return e_1.stopPropagation();
+function _temp1(e_0) {
+  return e_0.stopPropagation();
 }
-function _temp10(width, index_0) {
+function _temp0(width, index_0) {
   return /*#__PURE__*/_jsx("col", {
     style: {
       width
     }
   }, index_0);
 }
-function _temp1(col_2) {
+function _temp9(col_1) {
   return /*#__PURE__*/_jsx("col", {
-    style: col_2.width ? {
-      width: col_2.width
+    style: col_1.width ? {
+      width: col_1.width
     } : undefined
-  }, col_2.field);
-}
-function _temp0(e_0) {
-  return e_0.stopPropagation();
-}
-function _temp9(event_1) {
-  return event_1.preventDefault();
+  }, col_1.field);
 }
 function _temp8(e) {
   return e.stopPropagation();
@@ -1322,18 +1286,14 @@ function Windowed({
     rows: virtualizer.takeSnapshot(),
     margin
   });
-  const drawn = useMemo(() => new Map(), [render]);
   const windowed = virtualizer.getVirtualItems();
   const above = windowed.length ? windowed[0].start - margin : 0;
   const below = virtualizer.getTotalSize() - (windowed.length ? windowed.at(-1).end - margin : 0);
-  const shown = new Set(windowed.map(entry => entry.index));
-  for (const index of drawn.keys()) if (!shown.has(index)) drawn.delete(index);
-  for (const index_0 of shown) if (!drawn.has(index_0)) drawn.set(index_0, render(index_0, virtualizer.measureElement));
   return /*#__PURE__*/_jsxs(_Fragment, {
     children: [above > 0 && /*#__PURE__*/_jsx(Spacer, {
       height: above,
       colSpan: colSpan
-    }), windowed.map(entry_0 => drawn.get(entry_0.index)), below > 0 && /*#__PURE__*/_jsx(Spacer, {
+    }), windowed.map(entry => render(entry.index, virtualizer.measureElement)), below > 0 && /*#__PURE__*/_jsx(Spacer, {
       height: below,
       colSpan: colSpan
     })]
@@ -1374,6 +1334,290 @@ function Spacer(t0) {
   }
   return t2;
 }
+const rowEvents = () => {
+  let latest;
+  let intentTimer;
+  let holdTimer;
+  let start = {
+    x: 0,
+    y: 0
+  };
+  let held = false;
+  return {
+    sync: next => {
+      latest = next;
+    },
+    click: (row, id) => {
+      const {
+        api,
+        selecting,
+        onRowClick
+      } = latest;
+      if (held) held = false;else if (selecting) api.toggleSelected(id);else onRowClick?.(row);
+    },
+    toggle: id => latest.api.toggleSelected(id),
+    holdStart: (event, id) => {
+      held = false;
+      start = {
+        x: event.clientX,
+        y: event.clientY
+      };
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(() => {
+        held = true;
+        latest.setSelectMode(true);
+        latest.api.toggleSelected(id);
+      }, HOLD_DELAY);
+    },
+    holdMove: event => {
+      if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > HOLD_SLOP) clearTimeout(holdTimer);
+    },
+    holdEnd: () => clearTimeout(holdTimer),
+    intentStart: row => {
+      clearTimeout(intentTimer);
+      intentTimer = setTimeout(() => latest.onRowIntent?.(row), ROW_INTENT_DELAY);
+    },
+    intentEnd: () => clearTimeout(intentTimer),
+    intentNow: row => latest.onRowIntent?.(row),
+    dispose: () => {
+      clearTimeout(intentTimer);
+      clearTimeout(holdTimer);
+    }
+  };
+};
+const DataRow = /*#__PURE__*/memo(function DataRow(t0) {
+  const $ = _c(59);
+  const {
+    row,
+    id,
+    index,
+    measure,
+    child,
+    selected,
+    look
+  } = t0;
+  const {
+    list,
+    cards,
+    checkboxes,
+    selectable,
+    colSpan,
+    holding,
+    clickable,
+    intent,
+    columns,
+    rowClass,
+    renderListItem,
+    events
+  } = look;
+  const t1 = child ? "KyroTable-groupChildRow" : "";
+  let t2;
+  if ($[0] !== row || $[1] !== rowClass) {
+    t2 = rowClass ? rowClass(row) : "";
+    $[0] = row;
+    $[1] = rowClass;
+    $[2] = t2;
+  } else {
+    t2 = $[2];
+  }
+  let t3;
+  if ($[3] !== t1 || $[4] !== t2) {
+    t3 = [t1, t2].filter(Boolean);
+    $[3] = t1;
+    $[4] = t2;
+    $[5] = t3;
+  } else {
+    t3 = $[5];
+  }
+  const classes = t3.join(" ");
+  let t4;
+  if ($[6] !== index || $[7] !== measure) {
+    t4 = measure && {
+      "data-index": index,
+      ref: measure
+    };
+    $[6] = index;
+    $[7] = measure;
+    $[8] = t4;
+  } else {
+    t4 = $[8];
+  }
+  let t5;
+  if ($[9] !== events || $[10] !== holding || $[11] !== id) {
+    t5 = holding && {
+      onPointerDown: event => events.holdStart(event, id),
+      onPointerMove: events.holdMove,
+      onPointerUp: events.holdEnd,
+      onPointerCancel: events.holdEnd,
+      onContextMenu: _temp10
+    };
+    $[9] = events;
+    $[10] = holding;
+    $[11] = id;
+    $[12] = t5;
+  } else {
+    t5 = $[12];
+  }
+  const t6 = selectable && selected;
+  const t7 = classes || undefined;
+  const t8 = clickable ? "pointer" : undefined;
+  let t9;
+  if ($[13] !== holding) {
+    t9 = holding && {
+      WebkitTouchCallout: "none",
+      userSelect: "none"
+    };
+    $[13] = holding;
+    $[14] = t9;
+  } else {
+    t9 = $[14];
+  }
+  let t10;
+  if ($[15] !== cards) {
+    t10 = cards && {
+      background: "transparent"
+    };
+    $[15] = cards;
+    $[16] = t10;
+  } else {
+    t10 = $[16];
+  }
+  let t11;
+  if ($[17] !== t10 || $[18] !== t8 || $[19] !== t9) {
+    t11 = {
+      cursor: t8,
+      ...t9,
+      ...t10
+    };
+    $[17] = t10;
+    $[18] = t8;
+    $[19] = t9;
+    $[20] = t11;
+  } else {
+    t11 = $[20];
+  }
+  let t12;
+  if ($[21] !== events || $[22] !== id || $[23] !== row) {
+    t12 = () => events.click(row, id);
+    $[21] = events;
+    $[22] = id;
+    $[23] = row;
+    $[24] = t12;
+  } else {
+    t12 = $[24];
+  }
+  const t13 = intent ? 0 : undefined;
+  let t14;
+  if ($[25] !== events || $[26] !== intent || $[27] !== row) {
+    t14 = intent ? () => events.intentStart(row) : undefined;
+    $[25] = events;
+    $[26] = intent;
+    $[27] = row;
+    $[28] = t14;
+  } else {
+    t14 = $[28];
+  }
+  const t15 = intent ? events.intentEnd : undefined;
+  let t16;
+  if ($[29] !== events || $[30] !== intent || $[31] !== row) {
+    t16 = intent ? event_1 => event_1.target === event_1.currentTarget && events.intentNow(row) : undefined;
+    $[29] = events;
+    $[30] = intent;
+    $[31] = row;
+    $[32] = t16;
+  } else {
+    t16 = $[32];
+  }
+  let t17;
+  if ($[33] !== checkboxes || $[34] !== events || $[35] !== id || $[36] !== selected) {
+    t17 = checkboxes && /*#__PURE__*/_jsx(TableCell, {
+      padding: "checkbox",
+      onClick: _temp11,
+      children: /*#__PURE__*/_jsx(Checkbox, {
+        checked: selected,
+        onChange: () => events.toggle(id),
+        "aria-label": "Select row"
+      })
+    });
+    $[33] = checkboxes;
+    $[34] = events;
+    $[35] = id;
+    $[36] = selected;
+    $[37] = t17;
+  } else {
+    t17 = $[37];
+  }
+  let t18;
+  if ($[38] !== cards || $[39] !== colSpan || $[40] !== columns || $[41] !== list || $[42] !== renderListItem || $[43] !== row || $[44] !== selected) {
+    t18 = list ? cards ? /*#__PURE__*/_jsx(TableCell, {
+      colSpan: colSpan,
+      sx: {
+        border: "none",
+        px: 0,
+        py: "xs"
+      },
+      children: /*#__PURE__*/_jsx(Card, {
+        sx: {
+          p: "md",
+          ...(selected && {
+            bgcolor: "action.selected"
+          })
+        },
+        children: renderListItem(row)
+      })
+    }) : /*#__PURE__*/_jsx(TableCell, {
+      colSpan: colSpan,
+      children: renderListItem(row)
+    }) : columns.map(col => /*#__PURE__*/_jsx(TableCell, {
+      align: col.align,
+      children: col.render ? col.render(row) : row[col.field]
+    }, col.field));
+    $[38] = cards;
+    $[39] = colSpan;
+    $[40] = columns;
+    $[41] = list;
+    $[42] = renderListItem;
+    $[43] = row;
+    $[44] = selected;
+    $[45] = t18;
+  } else {
+    t18 = $[45];
+  }
+  let t19;
+  if ($[46] !== t11 || $[47] !== t12 || $[48] !== t13 || $[49] !== t14 || $[50] !== t15 || $[51] !== t16 || $[52] !== t17 || $[53] !== t18 || $[54] !== t4 || $[55] !== t5 || $[56] !== t6 || $[57] !== t7) {
+    t19 = /*#__PURE__*/_jsxs(TableRow, {
+      "data-row": "",
+      ...t4,
+      ...t5,
+      hover: true,
+      selected: t6,
+      className: t7,
+      style: t11,
+      onClick: t12,
+      tabIndex: t13,
+      onPointerEnter: t14,
+      onPointerLeave: t15,
+      onFocus: t16,
+      children: [t17, t18]
+    });
+    $[46] = t11;
+    $[47] = t12;
+    $[48] = t13;
+    $[49] = t14;
+    $[50] = t15;
+    $[51] = t16;
+    $[52] = t17;
+    $[53] = t18;
+    $[54] = t4;
+    $[55] = t5;
+    $[56] = t6;
+    $[57] = t7;
+    $[58] = t19;
+  } else {
+    t19 = $[58];
+  }
+  return t19;
+});
 function SkeletonRows(t0) {
   const $ = _c(17);
   const {
@@ -1624,4 +1868,10 @@ function ScrollEnd(t0) {
     t8 = $[15];
   }
   return t8;
+}
+function _temp10(event_0) {
+  return event_0.preventDefault();
+}
+function _temp11(e) {
+  return e.stopPropagation();
 }

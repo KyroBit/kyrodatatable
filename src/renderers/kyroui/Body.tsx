@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FocusEvent, type MouseEvent, type PointerEvent, type ReactNode, type RefObject } from 'react'
+import { memo, useEffect, useLayoutEffect, useRef, useState, type FocusEvent, type MouseEvent, type PointerEvent, type ReactNode, type RefObject } from 'react'
 import { useVirtualizer, useWindowVirtualizer, type Rect, type VirtualItem, type Virtualizer } from '@tanstack/react-virtual'
 import {
   Box, Button, Card, Checkbox, IconButton, List, ListItemButton, ListItemText, Skeleton, SvgIcon, Table, TableBody,
@@ -189,7 +189,6 @@ export function DataTableBody<Row>({
   const columnsKey = api.visibleColumns.map((col) => col.field).join('|')
   const [locked, setLocked] = useState<{ key: string; widths: string[] } | null>(null)
   const lockedWidths = locked?.key === columnsKey ? locked.widths : null
-  const intentTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const snapshot = useRef<() => Snapshot>(() => ({ rows: [], margin: 0 }))
   const narrowBelow = useTheme().breakpoints.values.sm
   const [narrow, setNarrow] = useState(false)
@@ -238,14 +237,28 @@ export function DataTableBody<Row>({
   const selecting = holding && selectMode
   const checkboxes = selectable && !list
   const colSpan = api.visibleColumns.length + (checkboxes ? 1 : 0)
-  const holdTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const holdStart = useRef({ x: 0, y: 0 })
-  const held = useRef(false)
+  const [events] = useState(rowEvents<Row>)
 
-  useEffect(() => () => {
-    clearTimeout(intentTimer.current)
-    clearTimeout(holdTimer.current)
-  }, [])
+  useLayoutEffect(() => {
+    events.sync({ api, selecting, setSelectMode, onRowClick, onRowIntent })
+  })
+
+  useEffect(() => events.dispose, [events])
+
+  const look: RowLook<Row> = {
+    list,
+    cards,
+    checkboxes,
+    selectable,
+    colSpan,
+    holding,
+    clickable: Boolean(onRowClick) || selecting,
+    intent: Boolean(onRowIntent),
+    columns: api.visibleColumns,
+    rowClass,
+    renderListItem,
+    events,
+  }
 
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -371,82 +384,18 @@ export function DataTableBody<Row>({
         </TableRow>
       )
     }
-    const row = item.row
-    const rowId = api.getRowId(row)
-    const classes = [
-      item.type === 'group-row' ? 'KyroTable-groupChildRow' : '',
-      rowClass ? rowClass(row) : '',
-    ].filter(Boolean).join(' ')
-    const hold = holding ? {
-      onPointerDown: (event: PointerEvent<HTMLTableRowElement>) => {
-        held.current = false
-        holdStart.current = { x: event.clientX, y: event.clientY }
-        clearTimeout(holdTimer.current)
-        holdTimer.current = setTimeout(() => {
-          held.current = true
-          setSelectMode(true)
-          api.toggleSelected(rowId)
-        }, HOLD_DELAY)
-      },
-      onPointerMove: (event: PointerEvent<HTMLTableRowElement>) => {
-        if (Math.hypot(event.clientX - holdStart.current.x, event.clientY - holdStart.current.y) > HOLD_SLOP) clearTimeout(holdTimer.current)
-      },
-      onPointerUp: () => clearTimeout(holdTimer.current),
-      onPointerCancel: () => clearTimeout(holdTimer.current),
-      onContextMenu: (event: MouseEvent<HTMLTableRowElement>) => event.preventDefault(),
-    } : {}
+    const rowId = api.getRowId(item.row)
     return (
-      <TableRow
+      <DataRow
         key={rowId}
-        data-row=""
-        {...measured}
-        {...hold}
-        hover
-        selected={selectable && api.isSelected(rowId)}
-        className={classes || undefined}
-        style={{
-          cursor: onRowClick || selecting ? 'pointer' : undefined,
-          ...(holding && { WebkitTouchCallout: 'none', userSelect: 'none' }),
-          ...(cards && { background: 'transparent' }),
-        }}
-        onClick={() => {
-          if (held.current) held.current = false
-          else if (selecting) api.toggleSelected(rowId)
-          else onRowClick?.(row)
-        }}
-        tabIndex={onRowIntent ? 0 : undefined}
-        onPointerEnter={onRowIntent && (() => {
-          clearTimeout(intentTimer.current)
-          intentTimer.current = setTimeout(() => onRowIntent(row), ROW_INTENT_DELAY)
-        })}
-        onPointerLeave={onRowIntent && (() => clearTimeout(intentTimer.current))}
-        onFocus={onRowIntent && ((event: FocusEvent<HTMLTableRowElement>) => event.target === event.currentTarget && onRowIntent(row))}
-      >
-        {checkboxes && (
-          <TableCell padding="checkbox" onClick={(e: MouseEvent<HTMLTableCellElement>) => e.stopPropagation()}>
-            <Checkbox
-              checked={api.isSelected(rowId)}
-              onChange={() => api.toggleSelected(rowId)}
-              aria-label="Select row"
-            />
-          </TableCell>
-        )}
-        {list ? (
-          cards ? (
-            <TableCell colSpan={colSpan} sx={{ border: 'none', px: 0, py: 'xs' }}>
-              <Card sx={{ p: 'md', ...(api.isSelected(rowId) && { bgcolor: 'action.selected' }) }}>
-                {renderListItem!(row)}
-              </Card>
-            </TableCell>
-          ) : (
-            <TableCell colSpan={colSpan}>{renderListItem!(row)}</TableCell>
-          )
-        ) : api.visibleColumns.map((col) => (
-          <TableCell key={col.field} align={col.align}>
-            {(col.render ? col.render(row) : (row as Record<string, unknown>)[col.field]) as ReactNode}
-          </TableCell>
-        ))}
-      </TableRow>
+        row={item.row}
+        id={rowId}
+        index={index}
+        measure={measure}
+        child={item.type === 'group-row'}
+        selected={api.isSelected(rowId)}
+        look={look}
+      />
     )
   }
 
@@ -671,17 +620,13 @@ function WindowRows(props: RowsProps) {
 function Windowed({ virtualizer, margin, snapshot, colSpan, render }: RowsProps & { virtualizer: Windowing; margin: number }) {
   'use no memo'
   snapshot.current = () => ({ rows: virtualizer.takeSnapshot(), margin })
-  const drawn = useMemo(() => new Map<number, ReactNode>(), [render])
   const windowed = virtualizer.getVirtualItems()
   const above = windowed.length ? windowed[0]!.start - margin : 0
   const below = virtualizer.getTotalSize() - (windowed.length ? windowed.at(-1)!.end - margin : 0)
-  const shown = new Set(windowed.map((entry) => entry.index))
-  for (const index of drawn.keys()) if (!shown.has(index)) drawn.delete(index)
-  for (const index of shown) if (!drawn.has(index)) drawn.set(index, render(index, virtualizer.measureElement))
   return (
     <>
       {above > 0 && <Spacer height={above} colSpan={colSpan} />}
-      {windowed.map((entry) => drawn.get(entry.index))}
+      {windowed.map((entry) => render(entry.index, virtualizer.measureElement))}
       {below > 0 && <Spacer height={below} colSpan={colSpan} />}
     </>
   )
@@ -694,6 +639,137 @@ function Spacer({ height, colSpan }: { height: number; colSpan: number }) {
     </tr>
   )
 }
+
+interface RowHandlers<Row> {
+  api: DataTableApi<Row, string, undefined>
+  selecting: boolean
+  setSelectMode: (on: boolean) => void
+  onRowClick?: (row: Row) => void
+  onRowIntent?: (row: Row) => void
+}
+
+type RowEvents<Row> = ReturnType<typeof rowEvents<Row>>
+
+const rowEvents = <Row,>() => {
+  let latest: RowHandlers<Row> | undefined
+  let intentTimer: ReturnType<typeof setTimeout> | undefined
+  let holdTimer: ReturnType<typeof setTimeout> | undefined
+  let start = { x: 0, y: 0 }
+  let held = false
+  return {
+    sync: (next: RowHandlers<Row>) => {
+      latest = next
+    },
+    click: (row: Row, id: string) => {
+      const { api, selecting, onRowClick } = latest!
+      if (held) held = false
+      else if (selecting) api.toggleSelected(id)
+      else onRowClick?.(row)
+    },
+    toggle: (id: string) => latest!.api.toggleSelected(id),
+    holdStart: (event: PointerEvent<HTMLTableRowElement>, id: string) => {
+      held = false
+      start = { x: event.clientX, y: event.clientY }
+      clearTimeout(holdTimer)
+      holdTimer = setTimeout(() => {
+        held = true
+        latest!.setSelectMode(true)
+        latest!.api.toggleSelected(id)
+      }, HOLD_DELAY)
+    },
+    holdMove: (event: PointerEvent<HTMLTableRowElement>) => {
+      if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > HOLD_SLOP) clearTimeout(holdTimer)
+    },
+    holdEnd: () => clearTimeout(holdTimer),
+    intentStart: (row: Row) => {
+      clearTimeout(intentTimer)
+      intentTimer = setTimeout(() => latest!.onRowIntent?.(row), ROW_INTENT_DELAY)
+    },
+    intentEnd: () => clearTimeout(intentTimer),
+    intentNow: (row: Row) => latest!.onRowIntent?.(row),
+    dispose: () => {
+      clearTimeout(intentTimer)
+      clearTimeout(holdTimer)
+    },
+  }
+}
+
+interface RowLook<Row> {
+  list: boolean
+  cards: boolean
+  checkboxes: boolean
+  selectable: boolean
+  colSpan: number
+  holding: boolean
+  clickable: boolean
+  intent: boolean
+  columns: DataTableApi<Row, string, undefined>['visibleColumns']
+  rowClass?: (row: Row) => string
+  renderListItem?: (row: Row) => ReactNode
+  events: RowEvents<Row>
+}
+
+interface DataRowProps<Row> {
+  row: Row
+  id: string
+  index: number
+  measure?: (row: HTMLTableRowElement | null) => void
+  child: boolean
+  selected: boolean
+  look: RowLook<Row>
+}
+
+const DataRow = memo(function DataRow<Row>({ row, id, index, measure, child, selected, look }: DataRowProps<Row>) {
+  const { list, cards, checkboxes, selectable, colSpan, holding, clickable, intent, columns, rowClass, renderListItem, events } = look
+  const classes = [child ? 'KyroTable-groupChildRow' : '', rowClass ? rowClass(row) : ''].filter(Boolean).join(' ')
+  return (
+    <TableRow
+      data-row=""
+      {...(measure && { 'data-index': index, ref: measure })}
+      {...(holding && {
+        onPointerDown: (event: PointerEvent<HTMLTableRowElement>) => events.holdStart(event, id),
+        onPointerMove: events.holdMove,
+        onPointerUp: events.holdEnd,
+        onPointerCancel: events.holdEnd,
+        onContextMenu: (event: MouseEvent<HTMLTableRowElement>) => event.preventDefault(),
+      })}
+      hover
+      selected={selectable && selected}
+      className={classes || undefined}
+      style={{
+        cursor: clickable ? 'pointer' : undefined,
+        ...(holding && { WebkitTouchCallout: 'none', userSelect: 'none' }),
+        ...(cards && { background: 'transparent' }),
+      }}
+      onClick={() => events.click(row, id)}
+      tabIndex={intent ? 0 : undefined}
+      onPointerEnter={intent ? () => events.intentStart(row) : undefined}
+      onPointerLeave={intent ? events.intentEnd : undefined}
+      onFocus={intent ? (event: FocusEvent<HTMLTableRowElement>) => event.target === event.currentTarget && events.intentNow(row) : undefined}
+    >
+      {checkboxes && (
+        <TableCell padding="checkbox" onClick={(e: MouseEvent<HTMLTableCellElement>) => e.stopPropagation()}>
+          <Checkbox checked={selected} onChange={() => events.toggle(id)} aria-label="Select row" />
+        </TableCell>
+      )}
+      {list ? (
+        cards ? (
+          <TableCell colSpan={colSpan} sx={{ border: 'none', px: 0, py: 'xs' }}>
+            <Card sx={{ p: 'md', ...(selected && { bgcolor: 'action.selected' }) }}>
+              {renderListItem!(row)}
+            </Card>
+          </TableCell>
+        ) : (
+          <TableCell colSpan={colSpan}>{renderListItem!(row)}</TableCell>
+        )
+      ) : columns.map((col) => (
+        <TableCell key={col.field} align={col.align}>
+          {(col.render ? col.render(row) : (row as Record<string, unknown>)[col.field]) as ReactNode}
+        </TableCell>
+      ))}
+    </TableRow>
+  )
+}) as <Row>(props: DataRowProps<Row>) => ReactNode
 
 type SkeletonShape = 'table' | 'list' | 'cards'
 
