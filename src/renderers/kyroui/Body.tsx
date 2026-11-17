@@ -96,7 +96,6 @@ const ESTIMATED_ROW_HEIGHT = 41
 const OVERSCAN = 10
 const PREFETCH_SCREENS = 3
 const ROW_INTENT_DELAY = 80
-const SKELETON_DELAY = 150
 const HOLD_DELAY = 500
 const HOLD_SLOP = 10
 
@@ -541,7 +540,7 @@ export function DataTableBody<Row>({
               </TableCell>
             </TableRow>
           ) : items.length === 0 ? (
-            <SkeletonRows count={Math.min(api.pagination.pageSize, SKELETON_ROWS)} selectable={checkboxes} shape={skeletonShape} colSpan={colSpan} delay={SKELETON_DELAY} />
+            <SkeletonRows count={Math.min(api.pagination.pageSize, SKELETON_ROWS)} selectable={checkboxes} shape={skeletonShape} colSpan={colSpan} />
           ) : (
             infiniteScroll ? (
               scroller && (
@@ -562,7 +561,7 @@ export function DataTableBody<Row>({
               load={more.load}
               rowHeight={estimate}
               count={items.length}
-              placeholder={(count) => !api.error && <SkeletonRows count={count} selectable={checkboxes} shape={skeletonShape} colSpan={colSpan} delay={0} />}
+              placeholder={(count) => !api.error && <SkeletonRows count={count} selectable={checkboxes} shape={skeletonShape} colSpan={colSpan} />}
             />
           )}
         </TableBody>
@@ -793,16 +792,8 @@ const DataRow = memo(function DataRow<Row>({ row, id, index, measure, child, sel
 
 type SkeletonShape = 'table' | 'list' | 'cards'
 
-function SkeletonRows({ count, selectable, shape, colSpan, delay }: { count: number; selectable: boolean; shape: SkeletonShape; colSpan: number; delay: number }) {
+function SkeletonRows({ count, selectable, shape, colSpan }: { count: number; selectable: boolean; shape: SkeletonShape; colSpan: number }) {
   const api = useDataTableContext()
-  const [shown, setShown] = useState(delay === 0)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShown(true), delay)
-    return () => clearTimeout(timer)
-  }, [delay])
-
-  if (!shown) return null
   const lines = (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 'sm', py: 'xs' }}>
       <Skeleton variant="rounded" sx={{ width: '55%', height: 14, borderRadius: 'pill' }} />

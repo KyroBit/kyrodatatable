@@ -1,5 +1,5 @@
 import { c as _c } from "react/compiler-runtime";
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { Box, Button, Checkbox, IconButton, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
@@ -282,7 +282,6 @@ function _temp(e) {
 }
 const SKELETON_ROWS = 10;
 const ROW_INTENT_DELAY = 80;
-const SKELETON_DELAY = 150;
 /** The table itself: sortable headers, rows, and — for grouped items — an expandable header row. Reads `api.visibleItems`, so grouped and flat modes share one render path instead of two. */
 export function DataTableBody(t0) {
   const $ = _c(57);
@@ -744,58 +743,39 @@ function _temp2(col) {
   return col.width;
 }
 function SkeletonRows(t0) {
-  const $ = _c(9);
+  const $ = _c(7);
   const {
     count,
     selectable
   } = t0;
   const api = useDataTableContext();
-  const [shown, setShown] = useState(false);
   let t1;
-  let t2;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = () => {
-      const timer = setTimeout(() => setShown(true), SKELETON_DELAY);
-      return () => clearTimeout(timer);
-    };
-    t2 = [];
-    $[0] = t1;
-    $[1] = t2;
-  } else {
-    t1 = $[0];
-    t2 = $[1];
-  }
-  useEffect(t1, t2);
-  if (!shown) {
-    return null;
-  }
-  let t3;
-  if ($[2] !== api || $[3] !== count || $[4] !== selectable) {
-    let t4;
-    if ($[6] !== api || $[7] !== selectable) {
-      t4 = (_, index) => /*#__PURE__*/_jsxs(TableRow, {
+  if ($[0] !== api || $[1] !== count || $[2] !== selectable) {
+    let t2;
+    if ($[4] !== api || $[5] !== selectable) {
+      t2 = (_, index) => /*#__PURE__*/_jsxs(TableRow, {
         className: "KyroTable-skeletonRow",
         children: [selectable && /*#__PURE__*/_jsx(TableCell, {
           padding: "checkbox"
         }), api.visibleColumns.map(_temp6)]
       }, index);
-      $[6] = api;
-      $[7] = selectable;
-      $[8] = t4;
+      $[4] = api;
+      $[5] = selectable;
+      $[6] = t2;
     } else {
-      t4 = $[8];
+      t2 = $[6];
     }
-    t3 = Array.from({
+    t1 = Array.from({
       length: count
-    }, t4);
-    $[2] = api;
-    $[3] = count;
-    $[4] = selectable;
-    $[5] = t3;
+    }, t2);
+    $[0] = api;
+    $[1] = count;
+    $[2] = selectable;
+    $[3] = t1;
   } else {
-    t3 = $[5];
+    t1 = $[3];
   }
-  return t3;
+  return t1;
 }
 function _temp6(col) {
   return /*#__PURE__*/_jsx(TableCell, {

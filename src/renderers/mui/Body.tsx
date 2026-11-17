@@ -95,7 +95,6 @@ function GroupPager({ groupId, api }: { groupId: string; api: DataTableApi<unkno
 
 const SKELETON_ROWS = 10
 const ROW_INTENT_DELAY = 80
-const SKELETON_DELAY = 150
 
 export interface DataTableBodyProps<Row> {
   onRowClick?: (row: Row) => void
@@ -333,14 +332,6 @@ export function DataTableBody<Row>({
 
 function SkeletonRows({ count, selectable }: { count: number; selectable: boolean }) {
   const api = useDataTableContext()
-  const [shown, setShown] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShown(true), SKELETON_DELAY)
-    return () => clearTimeout(timer)
-  }, [])
-
-  if (!shown) return null
   return Array.from({ length: count }, (_, index) => (
     <TableRow key={index} className="KyroTable-skeletonRow">
       {selectable && <TableCell padding="checkbox" />}

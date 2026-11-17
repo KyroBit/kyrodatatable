@@ -279,7 +279,6 @@ const ESTIMATED_ROW_HEIGHT = 41;
 const OVERSCAN = 10;
 const PREFETCH_SCREENS = 3;
 const ROW_INTENT_DELAY = 80;
-const SKELETON_DELAY = 150;
 const HOLD_DELAY = 500;
 const HOLD_SLOP = 10;
 const views = new Map();
@@ -1087,8 +1086,7 @@ export function DataTableBody(t0) {
     count: Math.min(api.pagination.pageSize, SKELETON_ROWS),
     selectable: checkboxes,
     shape: skeletonShape,
-    colSpan: colSpan,
-    delay: SKELETON_DELAY
+    colSpan: colSpan
   }) : infiniteScroll ? scroller && (scroller instanceof Window ? /*#__PURE__*/_jsx(WindowRows, {
     ...rowsProps
   }) : /*#__PURE__*/_jsx(ElementRows, {
@@ -1107,8 +1105,7 @@ export function DataTableBody(t0) {
         count: count,
         selectable: checkboxes,
         shape: skeletonShape,
-        colSpan: colSpan,
-        delay: 0
+        colSpan: colSpan
       })
     });
     $[99] = api.error;
@@ -1621,50 +1618,29 @@ const DataRow = /*#__PURE__*/memo(function DataRow(t0) {
   return t19;
 });
 function SkeletonRows(t0) {
-  const $ = _c(17);
+  const $ = _c(14);
   const {
     count,
     selectable,
     shape,
-    colSpan,
-    delay
+    colSpan
   } = t0;
   const api = useDataTableContext();
-  const [shown, setShown] = useState(delay === 0);
   let t1;
-  let t2;
-  if ($[0] !== delay) {
-    t1 = () => {
-      const timer = setTimeout(() => setShown(true), delay);
-      return () => clearTimeout(timer);
-    };
-    t2 = [delay];
-    $[0] = delay;
-    $[1] = t1;
-    $[2] = t2;
-  } else {
-    t1 = $[1];
-    t2 = $[2];
-  }
-  useEffect(t1, t2);
-  if (!shown) {
-    return null;
-  }
-  let t3;
-  if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
-    t3 = {
+  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    t1 = {
       display: "flex",
       flexDirection: "column",
       gap: "sm",
       py: "xs"
     };
-    $[3] = t3;
+    $[0] = t1;
   } else {
-    t3 = $[3];
+    t1 = $[0];
   }
-  let t4;
-  if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
-    t4 = /*#__PURE__*/_jsx(Skeleton, {
+  let t2;
+  if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
+    t2 = /*#__PURE__*/_jsx(Skeleton, {
       variant: "rounded",
       sx: {
         width: "55%",
@@ -1672,15 +1648,15 @@ function SkeletonRows(t0) {
         borderRadius: "pill"
       }
     });
-    $[4] = t4;
+    $[1] = t2;
   } else {
-    t4 = $[4];
+    t2 = $[1];
   }
-  let t5;
-  if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = /*#__PURE__*/_jsxs(Box, {
-      sx: t3,
-      children: [t4, /*#__PURE__*/_jsx(Skeleton, {
+  let t3;
+  if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+    t3 = /*#__PURE__*/_jsxs(Box, {
+      sx: t1,
+      children: [t2, /*#__PURE__*/_jsx(Skeleton, {
         variant: "rounded",
         sx: {
           width: "35%",
@@ -1689,16 +1665,16 @@ function SkeletonRows(t0) {
         }
       })]
     });
-    $[5] = t5;
+    $[2] = t3;
   } else {
-    t5 = $[5];
+    t3 = $[2];
   }
-  const lines = t5;
-  let t6;
-  if ($[6] !== api || $[7] !== colSpan || $[8] !== count || $[9] !== selectable || $[10] !== shape) {
-    let t7;
-    if ($[12] !== api || $[13] !== colSpan || $[14] !== selectable || $[15] !== shape) {
-      t7 = (_, index) => /*#__PURE__*/_jsx(TableRow, {
+  const lines = t3;
+  let t4;
+  if ($[3] !== api || $[4] !== colSpan || $[5] !== count || $[6] !== selectable || $[7] !== shape) {
+    let t5;
+    if ($[9] !== api || $[10] !== colSpan || $[11] !== selectable || $[12] !== shape) {
+      t5 = (_, index) => /*#__PURE__*/_jsx(TableRow, {
         className: "KyroTable-skeletonRow",
         children: shape === "cards" ? /*#__PURE__*/_jsx(TableCell, {
           colSpan: colSpan,
@@ -1722,27 +1698,27 @@ function SkeletonRows(t0) {
           }), api.visibleColumns.map(_temp11)]
         })
       }, `skeleton-${index}`);
-      $[12] = api;
-      $[13] = colSpan;
-      $[14] = selectable;
-      $[15] = shape;
-      $[16] = t7;
+      $[9] = api;
+      $[10] = colSpan;
+      $[11] = selectable;
+      $[12] = shape;
+      $[13] = t5;
     } else {
-      t7 = $[16];
+      t5 = $[13];
     }
-    t6 = Array.from({
+    t4 = Array.from({
       length: count
-    }, t7);
-    $[6] = api;
-    $[7] = colSpan;
-    $[8] = count;
-    $[9] = selectable;
-    $[10] = shape;
-    $[11] = t6;
+    }, t5);
+    $[3] = api;
+    $[4] = colSpan;
+    $[5] = count;
+    $[6] = selectable;
+    $[7] = shape;
+    $[8] = t4;
   } else {
-    t6 = $[11];
+    t4 = $[8];
   }
-  return t6;
+  return t4;
 }
 function _temp11(col) {
   return /*#__PURE__*/_jsx(TableCell, {
