@@ -1,5 +1,5 @@
 import { c as _c } from "react/compiler-runtime";
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer, useWindowVirtualizer } from '@tanstack/react-virtual';
 import { Box, Button, Card, Checkbox, IconButton, List, ListItemButton, ListItemText, Skeleton, SvgIcon, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useTheme } from '@kyrobit/kyroui';
 import { useDataTableContext, useDrillTrail, useSelectMode } from './context.js';
@@ -278,6 +278,7 @@ const SKELETON_ROWS = 10;
 const LOADING_MORE_ROWS = 3;
 const ESTIMATED_ROW_HEIGHT = 41;
 const OVERSCAN = 10;
+const PREFETCH_SCREENS = 3;
 const ROW_INTENT_DELAY = 80;
 const SKELETON_DELAY = 150;
 const HOLD_DELAY = 500;
@@ -1113,7 +1114,8 @@ export function DataTableBody(t0) {
     count: Math.min(api.pagination.pageSize, SKELETON_ROWS),
     selectable: checkboxes,
     shape: skeletonShape,
-    colSpan: colSpan
+    colSpan: colSpan,
+    delay: SKELETON_DELAY
   }) : infiniteScroll ? scroller && (scroller instanceof Window ? /*#__PURE__*/_jsx(WindowRows, {
     ...rowsProps
   }) : /*#__PURE__*/_jsx(ElementRows, {
@@ -1132,7 +1134,8 @@ export function DataTableBody(t0) {
         count: LOADING_MORE_ROWS,
         selectable: checkboxes,
         shape: skeletonShape,
-        colSpan: colSpan
+        colSpan: colSpan,
+        delay: 0
       })
     });
     $[77] = checkboxes;
@@ -1273,7 +1276,7 @@ const virtualOptions = (props, scroller, margin) => ({
   initialRect: props.view?.rect ?? rectOf(scroller),
   initialMeasurementsCache: props.view?.rows,
   estimateSize: () => props.rowHeight,
-  overscan: OVERSCAN,
+  overscan: Math.max(OVERSCAN, Math.ceil(rectOf(scroller).height / props.rowHeight)),
   scrollMargin: margin
 });
 function ElementRows({
@@ -1319,14 +1322,18 @@ function Windowed({
     rows: virtualizer.takeSnapshot(),
     margin
   });
+  const drawn = useMemo(() => new Map(), [render]);
   const windowed = virtualizer.getVirtualItems();
   const above = windowed.length ? windowed[0].start - margin : 0;
   const below = virtualizer.getTotalSize() - (windowed.length ? windowed.at(-1).end - margin : 0);
+  const shown = new Set(windowed.map(entry => entry.index));
+  for (const index of drawn.keys()) if (!shown.has(index)) drawn.delete(index);
+  for (const index_0 of shown) if (!drawn.has(index_0)) drawn.set(index_0, render(index_0, virtualizer.measureElement));
   return /*#__PURE__*/_jsxs(_Fragment, {
     children: [above > 0 && /*#__PURE__*/_jsx(Spacer, {
       height: above,
       colSpan: colSpan
-    }), windowed.map(entry => render(entry.index, virtualizer.measureElement)), below > 0 && /*#__PURE__*/_jsx(Spacer, {
+    }), windowed.map(entry_0 => drawn.get(entry_0.index)), below > 0 && /*#__PURE__*/_jsx(Spacer, {
       height: below,
       colSpan: colSpan
     })]
@@ -1368,47 +1375,49 @@ function Spacer(t0) {
   return t2;
 }
 function SkeletonRows(t0) {
-  const $ = _c(16);
+  const $ = _c(17);
   const {
     count,
     selectable,
     shape,
-    colSpan
+    colSpan,
+    delay
   } = t0;
   const api = useDataTableContext();
-  const [shown, setShown] = useState(false);
+  const [shown, setShown] = useState(delay === 0);
   let t1;
   let t2;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[0] !== delay) {
     t1 = () => {
-      const timer = setTimeout(() => setShown(true), SKELETON_DELAY);
+      const timer = setTimeout(() => setShown(true), delay);
       return () => clearTimeout(timer);
     };
-    t2 = [];
-    $[0] = t1;
-    $[1] = t2;
+    t2 = [delay];
+    $[0] = delay;
+    $[1] = t1;
+    $[2] = t2;
   } else {
-    t1 = $[0];
-    t2 = $[1];
+    t1 = $[1];
+    t2 = $[2];
   }
   useEffect(t1, t2);
   if (!shown) {
     return null;
   }
   let t3;
-  if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
     t3 = {
       display: "flex",
       flexDirection: "column",
       gap: "sm",
       py: "xs"
     };
-    $[2] = t3;
+    $[3] = t3;
   } else {
-    t3 = $[2];
+    t3 = $[3];
   }
   let t4;
-  if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
     t4 = /*#__PURE__*/_jsx(Skeleton, {
       variant: "rounded",
       sx: {
@@ -1417,12 +1426,12 @@ function SkeletonRows(t0) {
         borderRadius: "pill"
       }
     });
-    $[3] = t4;
+    $[4] = t4;
   } else {
-    t4 = $[3];
+    t4 = $[4];
   }
   let t5;
-  if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
     t5 = /*#__PURE__*/_jsxs(Box, {
       sx: t3,
       children: [t4, /*#__PURE__*/_jsx(Skeleton, {
@@ -1434,15 +1443,15 @@ function SkeletonRows(t0) {
         }
       })]
     });
-    $[4] = t5;
+    $[5] = t5;
   } else {
-    t5 = $[4];
+    t5 = $[5];
   }
   const lines = t5;
   let t6;
-  if ($[5] !== api || $[6] !== colSpan || $[7] !== count || $[8] !== selectable || $[9] !== shape) {
+  if ($[6] !== api || $[7] !== colSpan || $[8] !== count || $[9] !== selectable || $[10] !== shape) {
     let t7;
-    if ($[11] !== api || $[12] !== colSpan || $[13] !== selectable || $[14] !== shape) {
+    if ($[12] !== api || $[13] !== colSpan || $[14] !== selectable || $[15] !== shape) {
       t7 = (_, index) => /*#__PURE__*/_jsx(TableRow, {
         className: "KyroTable-skeletonRow",
         children: shape === "cards" ? /*#__PURE__*/_jsx(TableCell, {
@@ -1467,25 +1476,25 @@ function SkeletonRows(t0) {
           }), api.visibleColumns.map(_temp12)]
         })
       }, `skeleton-${index}`);
-      $[11] = api;
-      $[12] = colSpan;
-      $[13] = selectable;
-      $[14] = shape;
-      $[15] = t7;
+      $[12] = api;
+      $[13] = colSpan;
+      $[14] = selectable;
+      $[15] = shape;
+      $[16] = t7;
     } else {
-      t7 = $[15];
+      t7 = $[16];
     }
     t6 = Array.from({
       length: count
     }, t7);
-    $[5] = api;
-    $[6] = colSpan;
-    $[7] = count;
-    $[8] = selectable;
-    $[9] = shape;
-    $[10] = t6;
+    $[6] = api;
+    $[7] = colSpan;
+    $[8] = count;
+    $[9] = selectable;
+    $[10] = shape;
+    $[11] = t6;
   } else {
-    t6 = $[10];
+    t6 = $[11];
   }
   return t6;
 }
@@ -1527,8 +1536,8 @@ function ScrollEnd(t0) {
         const [entry] = t2;
         return entry?.isIntersecting && load();
       }, {
-        root: scroller instanceof Window ? null : scroller,
-        rootMargin: `0px 0px ${rectOf(scroller).height}px 0px`
+        root: scroller instanceof Window ? scroller.document : scroller,
+        rootMargin: `0px 0px ${rectOf(scroller).height * PREFETCH_SCREENS}px 0px`
       });
       observer.observe(node);
       return () => observer.disconnect();
@@ -1562,7 +1571,7 @@ function ScrollEnd(t0) {
         const [entry_0] = t5;
         return setReached(Boolean(entry_0?.isIntersecting));
       }, {
-        root: scroller instanceof Window ? null : scroller
+        root: scroller instanceof Window ? scroller.document : scroller
       });
       observer_0.observe(node_0);
       return () => observer_0.disconnect();
